@@ -28,7 +28,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
     
     /* ##################################################################
-                                KEEPER FUNCTIONS
+                                AGGREGATOR FUNCTIONS
     ################################################################## */
     /** @dev See {settle-IPaycrest}. */
     function settle(bytes20 _transactionId, address _primaryValidator, address[] calldata _secondaryValidators, address _liquidityProvider, uint96 _settlePercent)  external onlyAggregator() returns(bool) {
