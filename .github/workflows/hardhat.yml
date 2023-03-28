@@ -2,7 +2,7 @@ name: Solidity unit test
 
 on:
   push:
-  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
