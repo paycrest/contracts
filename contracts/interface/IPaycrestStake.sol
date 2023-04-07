@@ -7,6 +7,6 @@ pragma solidity 0.8.18;
  */
 interface IPaycrestStake {
     
-    function rewardValidators(address primaryValidator, address[] memory secondaryValidators, uint256 primaryValidatorsReward, uint256 secondaryValidatorsReward) external returns(bool);
+    function rewardValidators(bytes32 orderId, address primaryValidator, address[] memory secondaryValidators, uint256 primaryValidatorsReward, uint256 secondaryValidatorsReward) external returns(bool);
     
 }
