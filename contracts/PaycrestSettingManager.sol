@@ -4,9 +4,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract PaycrestSettingManager is Ownable { 
     uint256 internal constant MAX_BPS = 100_000;
-    uint64 internal protocolFee = 5000; // 5%
-    uint64 internal primaryValidatorFee = 500; // 0.5%
-    uint64 internal secondaryValidatorFee = 500; // 0.5%
+    uint64 internal protocolFeePercent = 5000; // 5%
+    uint64 internal primaryValidatorFeePercent = 500; // 0.5%
+    uint64 internal secondaryValidatorFeePercent = 500; // 0.5%
     address internal feeRecipient;
     address internal PaycrestStakingContract;
 
@@ -52,9 +52,9 @@ contract PaycrestSettingManager is Ownable {
     }
 
     function updateProtocolFees(uint64 _protocolFee, uint64 _primaryvalidator, uint64 _secondaryValidator) external onlyOwner {
-        protocolFee = _protocolFee;
-        primaryValidatorFee = _primaryvalidator;
-        secondaryValidatorFee = _secondaryValidator;
+        protocolFeePercent = _protocolFee;
+        primaryValidatorFeePercent = _primaryvalidator;
+        secondaryValidatorFeePercent = _secondaryValidator;
         emit PaycrestFees(_protocolFee, _primaryvalidator, _secondaryValidator);
     }
 

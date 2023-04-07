@@ -12,9 +12,9 @@ interface IPaycrest {
                                 EVENTS
     ################################################################## */
     /// @dev Emitted when deposit is made.
-    event Deposit(bytes32 indexed transactionId, uint256 indexed amount, uint256 indexed rate, TransactionMetadata transactionMetadata);
+    event Deposit(bytes32 indexed orderId, uint256 indexed amount, uint256 indexed rate, bytes32 hash, bytes signature);
     /// @dev Emitted when aggregator settle transaction.
-    event Settle(bytes32 indexed transactionId, address indexed liquidityProvider, uint96 settlePercent);
+    event Settled(bytes32 indexed transactionId, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
     event Refund(bytes32 indexed transactionId);
 
@@ -23,10 +23,12 @@ interface IPaycrest {
     ################################################################## */
     /// @notice Revert when caller is not an aggregator
     error OnlyAggregator();
+    /// @notice Revert with invalid signer
+    error InvalidSigner();
     /// @notice Revert when input amount is zero
     error Unsuported();
     /// @notice Revert when trx has been fulfilled
-    error TXFulfilled();
+    error OrderFulfilled();
     /// @notice Revert when rewards are not been distributed.
     error UnableToProcessRewards();
 
@@ -41,13 +43,13 @@ interface IPaycrest {
         uint256 liquidityProviderID;       //                                                                   slot 1
     }
 
-    struct Transaction {
+    struct OrderRecipient {
         address seller;                     //                                                                   slot 0
         address token;                      //                                                                   slot 1
         uint96 rate;                        //                                                                   slot 1
         bool isFulfilled;                   //                                                                   slot 2 {11 bytes available}
         address refundAddress;              //                                                                   slot 2 {12 bytes available}
-        uint96 unlockTime;                 //                                                                   slot 2 {12 bytes available}
+        uint96 currentBPS;                  //                                                                   slot 2 {}
         uint256 amount;                     //                                                                   slot 3
     }
 
@@ -61,13 +63,14 @@ interface IPaycrest {
     /// `_token` must be an acceptable token. @dev See {isTokenSupported}.
     /// `amount` must be greater than minimum
     /// `_refundable` refundable address must not be zero address
-    /// @param _data sender metadata.
     /// @param _token address of the token.
     /// @param _amount amount in the decimal of `_token` above.
     /// @param _refundAddress address that is going to recieve `_amount` in `_token` when there is a need to refund.
     /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
+    /// @param hash hash must be the result of a hash operation for the verification to be secure. message
+    /// @param signature sig
     /// @return _transactionId the bytes20 which is the transactionId
-    function deposit(TransactionMetadata memory _data, address _token, uint256 _amount, address _refundAddress, uint96 _rate)  external returns(bytes32 _transactionId);
+    function newPositionOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 _transactionId);
 
     /// @notice settle transaction and distribute rewards accordingly.
     /// Requirements:
@@ -111,13 +114,11 @@ interface IPaycrest {
     function getSupportedInstitutions(bytes8 _currency) external view returns(bytes32 institution);
 
     /// @notice get every rewards and address on Paycrest.
-    /// @return recipient protocol fee recipient.
     /// @return protocolReward amount that will be taken in percentage on all trade.
     /// @return primaryValidatorReward amount that will be given to primary validator in percentage from `protocolReward`
     /// @return secondaryValidatorReward amount that will be shared between secondary validator in percentage from `protocolReward`
     /// @return max_bps maximum amount in bps "100% == 100_000".
-    function getProtocolFees() external view returns(
-        address recipient, 
+    function getFeeDetails() external view returns(
         uint64 protocolReward, 
         uint64 primaryValidatorReward, 
         uint64 secondaryValidatorReward,

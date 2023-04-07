@@ -1,18 +1,18 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
-import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {PaycrestSettingManager} from "./PaycrestSettingManager.sol";
 import {IPaycrestStake} from "./interface/IPaycrestStake.sol";
+import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
 contract Paycrest is IPaycrest, PaycrestSettingManager { 
     using SafeERC20 for IERC20;
-    address immutable public USDC;
+    using ECDSA for bytes32;
     uint256 constant public TimeLock = 12 hours;
-    mapping(bytes32 => Transaction) private transaction;
+    mapping(bytes32 => OrderRecipient) private orderRecipient;
     mapping(address => uint256) private _nonce;
 
     constructor(address _usdc) {
-        USDC = _usdc;
         _isTokenSupported[_usdc] = true;
     }
 
@@ -24,36 +24,36 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     /* ##################################################################
                                 USER CALLS
     ################################################################## */
-    /** @dev See {deposit-IPaycrest}. */
-    function deposit(TransactionMetadata memory metadata, address _token, uint256 _amount, address _refundAddress, uint96 _rate)  external returns(bytes32 transactionId) {
+    /** @dev See {newPositionOrder-IPaycrest}. */
+    function newPositionOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 orderId) {
         // checks that are required
-        _handler(_token, _amount, _refundAddress, metadata.currency);
+        bool status = _verify(hash, signature);
+        _handler(_token, _amount, _refundAddress, status);
         // first transfer token from msg.sender
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
-        // increase users noce to avoid replay attacks
+        // increase users nonce to avoid replay attacks
         _nonce[msg.sender] ++;
         // generate transaction id for the transaction
-        transactionId = keccak256(abi.encode(metadata, _nonce[msg.sender]));
+        orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
         // update transaction
-        transaction[transactionId] = Transaction({
+        orderRecipient[orderId] = OrderRecipient({
             seller: msg.sender,
             token: _token,
             rate: _rate,
             isFulfilled: false,
             refundAddress: _refundAddress,
-            unlockTime: uint96(block.timestamp + TimeLock),
+            currentBPS: uint96(MAX_BPS),
             amount: _amount
         });
         // emit deposit event
-        emit Deposit(transactionId, _amount, _rate, metadata);
+        emit Deposit(orderId, _amount, _rate, hash, signature);
     }
 
-    function _handler(address _token, uint256 _amount, address _refundAddress, bytes8 currency) internal view {
+    function _handler(address _token, uint256 _amount, address _refundAddress, bool status) internal view {
         if(!_isTokenSupported[_token]) revert TokenNotSupported();
         if(_amount == 0) revert AmountIsZero();
         if(_refundAddress == address(0)) revert ThrowZeroAddress();
-        // saving 2115
-        if(supportedIntitutions[currency] == bytes4(0)) revert ThrowZeroAddress();
+        if(!status) revert InvalidSigner();
     }
 
     /* ##################################################################
@@ -61,82 +61,83 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     ################################################################## */
     /** @dev See {settle-IPaycrest}. */
     function settle(
-        bytes32 _transactionId, 
+        bytes32 _orderId, 
         address _primaryValidator, 
         address[] calldata _secondaryValidators, 
         address _liquidityProvider, 
         uint96 _settlePercent
         )  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
-        if(transaction[_transactionId].isFulfilled) revert TXFulfilled();
+        if(orderRecipient[_orderId].isFulfilled) revert OrderFulfilled();
         // load the token into memory
-        address token = transaction[_transactionId].token;
+        address token = orderRecipient[_orderId].token;
+        // substract sum of amount based on the input _settlePercent
+        orderRecipient[_orderId].currentBPS -= _settlePercent     ;
+        // if transaction amount is zero
+        if(orderRecipient[_orderId].currentBPS == 0) {
+            // update the transaction to be fulfilled
+            orderRecipient[_orderId].isFulfilled = true;
+        }
+
         // load the fees and transfer associated protocol fees to protocol fee recipient
         (
-            uint256 sumAmount,
+            uint256 protocolFee,
             uint256 liquidityProviderAmount, 
-            uint256 primaryValidatorsReward, 
+            uint256 primaryValidatorReward, 
             uint256 secondaryValidatorsReward
-        ) = calculateFees(token, _transactionId, _settlePercent); // verify that this wont have impart on the protocol cause of reentrancy
-        // substract sum of amount based on the input _settlePercent
-        transaction[_transactionId].amount -= sumAmount;
-        // if transaction amount is zero
-        if(transaction[_transactionId].amount == 0) {
-            // update the transaction to be fulfilled
-            transaction[_transactionId].isFulfilled = true;
-        }
+        ) = _calculateFees(_orderId, _settlePercent);
+        // transfer protocol fee
+        IERC20(token).transfer(feeRecipient, protocolFee);
         // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
         // distribute rewards
         bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
+            _orderId,
             _primaryValidator, 
             _secondaryValidators, 
-            primaryValidatorsReward, 
+            primaryValidatorReward, 
             secondaryValidatorsReward
         );
         if(!status) revert UnableToProcessRewards();
         // emit event
-        emit Settle(_transactionId, _liquidityProvider, _settlePercent);
+        emit Settled(_orderId, _liquidityProvider, _settlePercent);
         return true;
     }
 
     /** @dev See {refund-IPaycrest}. */
-    function refund(bytes32 _transactionId)  external onlyAggregator() returns(bool) {
+    function refund(bytes32 _orderId)  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
-        if(transaction[_transactionId].isFulfilled) revert TXFulfilled();
-        // load the amount
-        uint256 amount = transaction[_transactionId].amount;
-        // @todo might not be necessary to check this but verify during unit test
-        if(amount == 0) revert TXFulfilled();
+        if(orderRecipient[_orderId].isFulfilled) revert OrderFulfilled();
         // reser state values
-        transaction[_transactionId].isFulfilled = true;
-        transaction[_transactionId].amount = 0;
+        orderRecipient[_orderId].isFulfilled = true;
+        orderRecipient[_orderId].currentBPS = 0;
         // transfer to liquidity provider 
-        IERC20(transaction[_transactionId].token).transfer(transaction[_transactionId].refundAddress, amount);
+        IERC20(orderRecipient[_orderId].token).transfer(orderRecipient[_orderId].refundAddress, orderRecipient[_orderId].amount);
         // emit
-        emit Refund(_transactionId);
+        emit Refund(_orderId);
         return true;
     }
 
-    function calculateFees(address token, bytes32 _transactionId, uint96 _settlePercent) private returns(uint256 sumAmount, uint256 liquidityProviderAmount, uint256 primaryValidatorsReward, uint256 secondaryValidatorsReward) {
+    function _calculateFees(bytes32 _transactionId, uint96 _settlePercent) private view returns(uint256 protocolFee, uint256 liquidityProviderAmount, uint256 primaryValidatorReward, uint256 secondaryValidatorsReward) {
         // get the total amount associated with the _transactionId
-        uint256 amount = transaction[_transactionId].amount;
+        uint256 amount = orderRecipient[_transactionId].amount;
         // get the settled percent that is scheduled for this amount
         liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
-        // return sum amount 
-        sumAmount = amount - liquidityProviderAmount;
         // deduct protocol fees from the new total amount
-        uint256 totalFees = (liquidityProviderAmount * protocolFee) * MAX_BPS; 
+        protocolFee = (liquidityProviderAmount * protocolFeePercent) * MAX_BPS; 
         // substract total fees from the new amount after getting the scheduled amount
-        liquidityProviderAmount = (liquidityProviderAmount - totalFees);
+        liquidityProviderAmount = (liquidityProviderAmount - protocolFee);
         // get primary validators fees primaryValidatorsReward
-        primaryValidatorsReward = (totalFees * primaryValidatorFee) / MAX_BPS;
+        primaryValidatorReward = (protocolFee * primaryValidatorFeePercent) / MAX_BPS;
         // get primary validators fees secondaryValidatorsReward
-        secondaryValidatorsReward = (totalFees * secondaryValidatorFee) / MAX_BPS;
+        secondaryValidatorsReward = (protocolFee * secondaryValidatorFeePercent) / MAX_BPS;
         // update new protocol fee
-        totalFees = totalFees - (primaryValidatorsReward + secondaryValidatorsReward);
-        // transfer protocol fee
-        IERC20(token).transfer(feeRecipient, totalFees);
+        protocolFee = protocolFee - (primaryValidatorReward + secondaryValidatorsReward);
+    }
+
+    function _verify(bytes32 messageHash, bytes memory signature) private view returns (bool) {
+        bytes32 prefixedHash = messageHash.toEthSignedMessageHash();
+        return _liquidityAggregator[prefixedHash.recover(signature)];
     }
     
     /* ##################################################################
@@ -149,9 +150,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
 
     /** @dev See {getSupportedCurrencies-IPaycrest}. */
     function getSupportedCurrencies() external view returns(bytes8[] memory) {
-        uint256 getlenght = supportedCurrencies.length;
-        bytes8[] memory allCurrencies = new bytes8[](getlenght);
-        for(uint256 i; i < getlenght; ) {
+        uint256 getlength = supportedCurrencies.length;
+        bytes8[] memory allCurrencies = new bytes8[](getlength);
+        for(uint256 i; i < getlength; ) {
             allCurrencies[i] = supportedCurrencies[i];
             unchecked {
                 i++;
@@ -166,18 +167,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     /** @dev See {getProtocolFees-IPaycrest}. */
-    function getProtocolFees() external view returns(
-        address recipient, 
-        uint64 protocolReward, 
-        uint64 primaryValidatorReward, 
-        uint64 secondaryValidatorReward,
-        uint256 max_bps
+    function getFeeDetails() external view returns(
+        uint64, 
+        uint64, 
+        uint64,
+        uint256
     ) {
-        recipient = feeRecipient;
-        protocolReward = protocolFee;
-        primaryValidatorReward = primaryValidatorFee;
-        secondaryValidatorReward = secondaryValidatorFee;
-        max_bps = MAX_BPS;
+        protocolFeePercent;
+        primaryValidatorFeePercent;
+        secondaryValidatorFeePercent;
+        MAX_BPS;
     }
 
     /** @dev See {getSupportedInstitutions-IPaycrest}. */
