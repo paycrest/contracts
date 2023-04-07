@@ -18,7 +18,7 @@ contract PaycrestSettingManager is Ownable {
 
     /// @notice Revert when zero address is passed in
     error ThrowZeroAddress();
-        /// @notice Revert when zero address is passed in
+    /// @notice Revert when zero address is passed in
     error ThrowZeroValue();
     /// @notice Revert when zero address is passed in
     error InvalidParameter(bytes32 what);
@@ -30,7 +30,7 @@ contract PaycrestSettingManager is Ownable {
     /// @dev Emitted when aggregator refund transaction.
     event SettingManagerBool(bytes32 what, address value, bool status);
     event SettingManagerForInstitution(bytes32 what, bytes8 value, bytes8 status);
-    event PaycrestFees(uint64 protocolFee, uint64 primaryvalidator, uint64 secondaryValidator);
+    event PaycrestFees(uint64 protocolFee, uint64 primaryValidator, uint64 secondaryValidator);
     
     /* ##################################################################
                                 OWNER FUNCTIONS
