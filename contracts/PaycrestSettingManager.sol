@@ -9,9 +9,10 @@ contract PaycrestSettingManager is Ownable {
     uint64 internal secondaryValidatorFeePercent = 500; // 0.5%
     address internal feeRecipient;
     address internal PaycrestStakingContract;
+    address internal _liquidityAggregator;
 
     mapping(address => bool) internal _isTokenSupported;
-    mapping(address => bool) internal _liquidityAggregator;
+    // mapping(address => bool) internal _liquidityAggregator;
     mapping(bytes8 => bytes8) internal supportedIntitutions;
     bytes8[] internal supportedCurrencies;
 
@@ -37,7 +38,6 @@ contract PaycrestSettingManager is Ownable {
     function settingManagerBool(bytes32 what, address value, bool status) external onlyOwner {
         if (value == address(0)) revert ThrowZeroAddress();
         if (what == "token") _isTokenSupported[value] = status;
-        else if (what == "aggregator") _liquidityAggregator[value] = status;
         else revert InvalidParameter(what);
         emit SettingManagerBool(what, value, status);
     }
@@ -61,6 +61,7 @@ contract PaycrestSettingManager is Ownable {
     function updateFeeRecipient(bytes32 what, address value) external onlyOwner {
         if (value == address(0)) revert ThrowZeroAddress();
         if (what == "fee") feeRecipient = value;
+        if (what == "aggregator") _liquidityAggregator = value;
         else if (what == "stake") PaycrestStakingContract = value;
     }
 

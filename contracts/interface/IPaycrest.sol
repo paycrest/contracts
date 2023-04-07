@@ -125,8 +125,8 @@ interface IPaycrest {
         uint256 max_bps
     );
 
-    /// @notice get status of liquidity aggregator.
-    /// @return status of `liquidityAggregator`.
-    function getLiquidityAggregatorStatus(address liquidityAggregator) external view returns(bool);
+    /// @notice get address of liquidity aggregator.
+    /// @return address of `liquidityAggregator`.
+    function getLiquidityAggregator() external view returns(address);
     
 }

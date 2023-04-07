@@ -17,7 +17,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     modifier onlyAggregator {
-        if(!_liquidityAggregator[msg.sender]) revert OnlyAggregator();
+        if(msg.sender != _liquidityAggregator) revert OnlyAggregator();
         _;
     }
     
@@ -137,7 +137,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
 
     function _verify(bytes32 messageHash, bytes memory signature) private view returns (bool) {
         bytes32 prefixedHash = messageHash.toEthSignedMessageHash();
-        return _liquidityAggregator[prefixedHash.recover(signature)];
+        return prefixedHash.recover(signature) == _liquidityAggregator;
     }
     
     /* ##################################################################
@@ -180,8 +180,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     /** @dev See {getSupportedInstitutions-IPaycrest}. */
-    function getLiquidityAggregatorStatus(address liquidityAggregator) external view returns(bool) {
-        return _liquidityAggregator[liquidityAggregator];
+    function getLiquidityAggregator() external view returns(address) {
+        return _liquidityAggregator;
     }
 
 }
