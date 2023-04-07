@@ -118,9 +118,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return true;
     }
 
-    function _calculateFees(bytes32 _transactionId, uint96 _settlePercent) private view returns(uint256 protocolFee, uint256 liquidityProviderAmount, uint256 primaryValidatorReward, uint256 secondaryValidatorsReward) {
+    function _calculateFees(bytes32 _orderId, uint96 _settlePercent) private view returns(uint256 protocolFee, uint256 liquidityProviderAmount, uint256 primaryValidatorReward, uint256 secondaryValidatorsReward) {
         // get the total amount associated with the _transactionId
-        uint256 amount = orderRecipient[_transactionId].amount;
+        uint256 amount = orderRecipient[_orderId].amount;
         // get the settled percent that is scheduled for this amount
         liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
         // deduct protocol fees from the new total amount
