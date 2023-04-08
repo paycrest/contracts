@@ -13,7 +13,7 @@ contract PaycrestSettingManager is Ownable {
 
     mapping(address => bool) internal _isTokenSupported;
     // mapping(address => bool) internal _liquidityAggregator;
-    mapping(bytes8 => bytes8) internal supportedIntitutions;
+    mapping(bytes8 => bytes8) internal supportedInstitutions;
     bytes8[] internal supportedCurrencies;
 
     /// @notice Revert when zero address is passed in
@@ -27,7 +27,6 @@ contract PaycrestSettingManager is Ownable {
     /// @notice Revert when input amount is zero
     error AmountIsZero();
 
-    /// @dev Emitted when aggregator refund transaction.
     event SettingManagerBool(bytes32 what, address value, bool status);
     event SettingManagerForInstitution(bytes32 what, bytes8 value, bytes8 status);
     event PaycrestFees(uint64 protocolFee, uint64 primaryValidator, uint64 secondaryValidator);
@@ -45,17 +44,17 @@ contract PaycrestSettingManager is Ownable {
     function settingManagerForInstitution(bytes32 what, bytes8 value, bytes8 status) external onlyOwner {
         if (value == bytes8(0)) revert ThrowZeroValue();
         if (what == "currency") {
-            supportedIntitutions[value] = status;
+            supportedInstitutions[value] = status;
             supportedCurrencies.push(value);
         } else revert InvalidParameter(what);
         emit SettingManagerForInstitution(what, value, status);
     }
 
-    function updateProtocolFees(uint64 _protocolFee, uint64 _primaryvalidator, uint64 _secondaryValidator) external onlyOwner {
+    function updateProtocolFees(uint64 _protocolFee, uint64 _primaryValidator, uint64 _secondaryValidator) external onlyOwner {
         protocolFeePercent = _protocolFee;
-        primaryValidatorFeePercent = _primaryvalidator;
+        primaryValidatorFeePercent = _primaryValidator;
         secondaryValidatorFeePercent = _secondaryValidator;
-        emit PaycrestFees(_protocolFee, _primaryvalidator, _secondaryValidator);
+        emit PaycrestFees(_protocolFee, _primaryValidator, _secondaryValidator);
     }
 
     function updateFeeRecipient(bytes32 what, address value) external onlyOwner {

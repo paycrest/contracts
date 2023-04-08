@@ -14,9 +14,9 @@ interface IPaycrest {
     /// @dev Emitted when deposit is made.
     event Deposit(bytes32 indexed orderId, uint256 indexed amount, uint256 indexed rate, bytes32 hash, bytes signature);
     /// @dev Emitted when aggregator settle transaction.
-    event Settled(bytes32 indexed transactionId, address indexed liquidityProvider, uint96 settlePercent);
+    event Settled(bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
-    event Refund(bytes32 indexed transactionId);
+    event Refunded(bytes32 indexed orderId);
 
     /* ##################################################################
                                 CUSTOM ERRORS
@@ -43,7 +43,7 @@ interface IPaycrest {
         uint256 liquidityProviderID;       //                                                                   slot 1
     }
 
-    struct OrderRecipient {
+    struct Order {
         address seller;                     //                                                                   slot 0
         address token;                      //                                                                   slot 1
         uint96 rate;                        //                                                                   slot 1
@@ -69,35 +69,35 @@ interface IPaycrest {
     /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
     /// @param hash hash must be the result of a hash operation for the verification to be secure. message
     /// @param signature sig
-    /// @return _transactionId the bytes20 which is the transactionId
-    function newPositionOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 _transactionId);
+    /// @return _orderId the bytes20 which is the orderId
+    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 _orderId);
 
     /// @notice settle transaction and distribute rewards accordingly.
     /// Requirements:
     /// {only aggregators call}.
-    /// `_transactionId` it must be less than total ids.
-    /// `_transactionId` it must be an open Id.
+    /// `_orderId` it must be less than total ids.
+    /// `_orderId` it must be an open Id.
     /// `_primaryValidator` must have stake on the Paycrest staking platform.
     /// `_secondaryValidators` must have stake on the Paycrest staking platform.
     /// `amount` must be greater than minimum
     /// `_refundable` refundable address must not be zero address
-    /// @param _transactionId transaction Id.
+    /// @param _orderId transaction Id.
     /// @param _primaryValidator address primary validator.
     /// @param _secondaryValidators arrays of secondary validators.
     /// @param _liquidityProvider address of the liquidity provider.
     /// @param _settlePercent rate at which the transaction is settled.
     /// @return return the status of transaction {bool}
-    function settle(bytes32 _transactionId, address _primaryValidator, address[] calldata _secondaryValidators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
+    function settle(bytes32 _orderId, address _primaryValidator, address[] calldata _secondaryValidators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
 
     /// @notice refund to the specified refundable address.
     /// Requirements:
     /// {only aggregators call}.
-    /// `_transactionId` it must be less than total ids.
-    /// `_transactionId` it must be an open Id.
+    /// `_orderId` it must be less than total ids.
+    /// `_orderId` it must be an open Id.
     /// `isFulfilled` must be false.
-    /// @param _transactionId transaction Id.
+    /// @param _orderId transaction Id.
     /// @return return the status of transaction {bool}
-    function refund(bytes32 _transactionId)  external returns(bool);
+    function refund(bytes32 _orderId)  external returns(bool);
 
     /// @notice get supported token from Paycrest.
     /// @param _token address of the token to check.

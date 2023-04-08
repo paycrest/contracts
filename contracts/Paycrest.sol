@@ -9,7 +9,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
     uint256 constant public TimeLock = 12 hours;
-    mapping(bytes32 => OrderRecipient) private orderRecipient;
+    mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
 
     constructor(address _usdc) {
@@ -25,7 +25,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
                                 USER CALLS
     ################################################################## */
     /** @dev See {newPositionOrder-IPaycrest}. */
-    function newPositionOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 orderId) {
+    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 orderId) {
         // checks that are required
         bool status = _verify(hash, signature);
         _handler(_token, _amount, _refundAddress, status);
@@ -36,7 +36,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // generate transaction id for the transaction
         orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
         // update transaction
-        orderRecipient[orderId] = OrderRecipient({
+        order[orderId] = Order({
             seller: msg.sender,
             token: _token,
             rate: _rate,
@@ -68,15 +68,15 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         uint96 _settlePercent
         )  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
-        if(orderRecipient[_orderId].isFulfilled) revert OrderFulfilled();
+        if(order[_orderId].isFulfilled) revert OrderFulfilled();
         // load the token into memory
-        address token = orderRecipient[_orderId].token;
+        address token = order[_orderId].token;
         // substract sum of amount based on the input _settlePercent
-        orderRecipient[_orderId].currentBPS -= _settlePercent     ;
+        order[_orderId].currentBPS -= _settlePercent     ;
         // if transaction amount is zero
-        if(orderRecipient[_orderId].currentBPS == 0) {
+        if(order[_orderId].currentBPS == 0) {
             // update the transaction to be fulfilled
-            orderRecipient[_orderId].isFulfilled = true;
+            order[_orderId].isFulfilled = true;
         }
 
         // load the fees and transfer associated protocol fees to protocol fee recipient
@@ -107,20 +107,20 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     /** @dev See {refund-IPaycrest}. */
     function refund(bytes32 _orderId)  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
-        if(orderRecipient[_orderId].isFulfilled) revert OrderFulfilled();
+        if(order[_orderId].isFulfilled) revert OrderFulfilled();
         // reser state values
-        orderRecipient[_orderId].isFulfilled = true;
-        orderRecipient[_orderId].currentBPS = 0;
+        order[_orderId].isFulfilled = true;
+        order[_orderId].currentBPS = 0;
         // transfer to liquidity provider 
-        IERC20(orderRecipient[_orderId].token).transfer(orderRecipient[_orderId].refundAddress, orderRecipient[_orderId].amount);
+        IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, order[_orderId].amount);
         // emit
-        emit Refund(_orderId);
+        emit Refunded(_orderId);
         return true;
     }
 
     function _calculateFees(bytes32 _orderId, uint96 _settlePercent) private view returns(uint256 protocolFee, uint256 liquidityProviderAmount, uint256 primaryValidatorReward, uint256 secondaryValidatorsReward) {
-        // get the total amount associated with the _transactionId
-        uint256 amount = orderRecipient[_orderId].amount;
+        // get the total amount associated with the orderId
+        uint256 amount = order[_orderId].amount;
         // get the settled percent that is scheduled for this amount
         liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
         // deduct protocol fees from the new total amount
@@ -163,7 +163,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
 
     /** @dev See {getSupportedInstitutions-IPaycrest}. */
     function getSupportedInstitutions(bytes8 _currency) external view returns(bytes32 institution) {
-        return supportedIntitutions[_currency];
+        return supportedInstitutions[_currency];
     }
 
     /** @dev See {getProtocolFees-IPaycrest}. */
@@ -179,7 +179,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         MAX_BPS;
     }
 
-    /** @dev See {getSupportedInstitutions-IPaycrest}. */
+    /** @dev See {getLiquidityAggregator-IPaycrest}. */
     function getLiquidityAggregator() external view returns(address) {
         return _liquidityAggregator;
     }
