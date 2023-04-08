@@ -6,15 +6,15 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Paycrest is Ownable { 
     using SafeERC20 for IERC20;
-    struct UserInfor {
+    struct ValidatorInfo {
         uint256 amount;
         uint256 rewards;
     }
     
     address immutable private Paycrest;    
     bool private initialization;
-    mapping(address => uint256) private _isTokenSupported;
-    mapping(address => mapping (address => UserInfor)) private userInfo;
+    mapping(address => uint256) private minimumAmount;
+    mapping(address => mapping (address => ValidatorInfo)) private validatorInfo;
 
     constructor(address _paycrest) {
         Paycrest = _paycrest;
@@ -24,15 +24,15 @@ contract Paycrest is Ownable {
     event NewTokenSupported(address indexed token, uint256 indexed minimumStakeAmount);
     event Initialized(bool indexed status);
     event Staked(address indexed user, uint256 indexed amount);
-    event UnStaked(address indexed user, uint256 indexed amount);
+    event Withdrawn(address indexed user, uint256 indexed amount);
 
     error ThrowInitPaused();
     error TokenNotSupported();
     error MinimumRequired();
     error Insufficient();
 
-    function setSupportTokens(address _token, uint256 minimumStakeAmount) external onlyOwner {
-        _isTokenSupported[_token] = minimumStakeAmount;
+    function setMinimumAmountForTokens(address _token, uint256 minimumStakeAmount) external onlyOwner {
+        minimumAmount[_token] = minimumStakeAmount;
         emit NewTokenSupported(_token, minimumStakeAmount);
     }
 
@@ -43,21 +43,22 @@ contract Paycrest is Ownable {
 
     function stake(address token, uint256 amount)  external {
         if(!initialization) revert ThrowInitPaused();
-        if(_isTokenSupported[token] == 0) revert TokenNotSupported();
-        if(amount < _isTokenSupported[token]) revert MinimumRequired();
+        if(!_isTokenSupported(token)) revert TokenNotSupported();
+        if(amount < minimumAmount[token]) revert MinimumRequired();
         IERC20(token).transferFrom(msg.sender, address(this), amount);
-        userInfo[msg.sender][token].amount += amount;
+        validatorInfo[msg.sender][token].amount += amount;
         emit Staked(msg.sender, amount);
     }
 
-    function unStake(uint256 amount, address token, address recipient) external {
-        uint256 previouslyStakedAmount = userInfo[msg.sender][token].amount;
+    function withdraw(uint256 amount, address token, address recipient) external {
+        uint256 previouslyStakedAmount = validatorInfo[msg.sender][token].amount;
         if(amount > previouslyStakedAmount) revert Insufficient();
         
     }
-
-
-
+    function _isTokenSupported(address token) private view returns(bool) {
+        (, bytes memory result) = Paycrest.staticcall(abi.encodeWithSignature("isTokenSupported(address)", token));
+        return abi.decode(result, (bool));
+    }
 
     function getPaycrest() external view returns(address) {
         return Paycrest;
@@ -68,11 +69,11 @@ contract Paycrest is Ownable {
     }
 
     function getMinimumAmountRequiredFor(address token) external view returns(uint256) {
-        return _isTokenSupported[token];
+        return minimumAmount[token];
     }
 
-    function getUserinfo(address user, address token) external view returns(UserInfor memory) {
-        return userInfo[user][token];
+    function getUserinfo(address user, address token) external view returns(ValidatorInfo memory) {
+        return validatorInfo[user][token];
     }
 
 }
