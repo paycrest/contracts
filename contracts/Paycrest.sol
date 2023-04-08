@@ -25,10 +25,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
                                 USER CALLS
     ################################################################## */
     /** @dev See {newPositionOrder-IPaycrest}. */
-    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 orderId) {
+    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _code, bytes32 messageHash, bytes memory signature)  external returns(bytes32 orderId) {
         // checks that are required
-        bool status = _verify(hash, signature);
-        _handler(_token, _amount, _refundAddress, status);
+        bool status = _verify(messageHash, signature);
+        _handler(_token, _amount, _refundAddress, status, _code);
         // first transfer token from msg.sender
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
         // increase users nonce to avoid replay attacks
@@ -46,14 +46,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             amount: _amount
         });
         // emit deposit event
-        emit Deposit(orderId, _amount, _rate, hash, signature);
+        emit Deposit(orderId, _amount, _rate, messageHash, signature);
     }
+    
 
-    function _handler(address _token, uint256 _amount, address _refundAddress, bool status) internal view {
+    function _handler(address _token, uint256 _amount, address _refundAddress, bool status, bytes32 _code) internal view {
         if(!_isTokenSupported[_token]) revert TokenNotSupported();
         if(_amount == 0) revert AmountIsZero();
         if(_refundAddress == address(0)) revert ThrowZeroAddress();
         if(!status) revert InvalidSigner();
+        if(supportedInstitutionsByCode[_code] == bytes32(0)) revert InvalidInstitutionCode();
     }
 
     /* ##################################################################
@@ -93,6 +95,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // distribute rewards
         bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
             _orderId,
+            token,
             _primaryValidator, 
             _secondaryValidators, 
             primaryValidatorReward, 
@@ -148,23 +151,26 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return _isTokenSupported[_token];
     }
 
-    /** @dev See {getSupportedCurrencies-IPaycrest}. */
-    function getSupportedCurrencies() external view returns(bytes8[] memory) {
-        uint256 getlength = supportedCurrencies.length;
-        bytes8[] memory allCurrencies = new bytes8[](getlength);
-        for(uint256 i; i < getlength; ) {
-            allCurrencies[i] = supportedCurrencies[i];
+    /** @dev See {getSupportedInstitutions-IPaycrest}. */
+    function getSupportedName(bytes32 code) external view returns (bytes32) {
+        return supportedInstitutionsByCode[code];
+    }
+
+    function getSupportedInstitutions(bytes32 currency) external view returns (Institution[] memory) {
+        Institution[] memory institutions = supportedInstitutions[currency];
+        uint256 length = institutions.length;
+        Institution[] memory result = new Institution[](length);
+        
+        for (uint256 i = 0; i < length; ) {
+            result[i] = institutions[i];
             unchecked {
                 i++;
             }
         }
-        return allCurrencies;
+        
+        return result;
     }
 
-    /** @dev See {getSupportedInstitutions-IPaycrest}. */
-    function getSupportedInstitutions(bytes8 _currency) external view returns(bytes32 institution) {
-        return supportedInstitutions[_currency];
-    }
 
     /** @dev See {getProtocolFees-IPaycrest}. */
     function getFeeDetails() external view returns(
@@ -183,5 +189,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function getLiquidityAggregator() external view returns(address) {
         return _liquidityAggregator;
     }
+
 
 }

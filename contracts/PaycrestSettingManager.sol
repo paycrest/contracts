@@ -3,6 +3,10 @@ pragma solidity 0.8.18;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract PaycrestSettingManager is Ownable { 
+    struct Institution {
+        bytes32 code; // usually not more than 8 letters
+        bytes32 name; // 
+    }
     uint256 internal constant MAX_BPS = 100_000;
     uint64 internal protocolFeePercent = 5000; // 5%
     uint64 internal primaryValidatorFeePercent = 500; // 0.5%
@@ -13,8 +17,9 @@ contract PaycrestSettingManager is Ownable {
 
     mapping(address => bool) internal _isTokenSupported;
     // mapping(address => bool) internal _liquidityAggregator;
-    mapping(bytes8 => bytes8) internal supportedInstitutions;
-    bytes8[] internal supportedCurrencies;
+
+    mapping(bytes32 => Institution[]) internal supportedInstitutions;
+    mapping(bytes32 => bytes32) internal supportedInstitutionsByCode;
 
     /// @notice Revert when zero address is passed in
     error ThrowZeroAddress();
@@ -41,13 +46,15 @@ contract PaycrestSettingManager is Ownable {
         emit SettingManagerBool(what, value, status);
     }
 
-    function settingManagerForInstitution(bytes32 what, bytes8 value, bytes8 status) external onlyOwner {
-        if (value == bytes8(0)) revert ThrowZeroValue();
-        if (what == "currency") {
-            supportedInstitutions[value] = status;
-            supportedCurrencies.push(value);
-        } else revert InvalidParameter(what);
-        emit SettingManagerForInstitution(what, value, status);
+    function setSupportedInstitutions(bytes32 currency, Institution[] memory institutions) external onlyOwner { 
+        uint256 length = supportedInstitutions[currency].length;
+        for (uint i = 0; i < length; ) {
+            supportedInstitutions[currency].push(institutions[i]);
+            supportedInstitutionsByCode[institutions[i].code] = institutions[i].name;
+            unchecked {
+                i++;
+            }
+        }
     }
 
     function updateProtocolFees(uint64 _protocolFee, uint64 _primaryValidator, uint64 _secondaryValidator) external onlyOwner {

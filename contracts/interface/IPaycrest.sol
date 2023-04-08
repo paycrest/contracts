@@ -31,6 +31,7 @@ interface IPaycrest {
     error OrderFulfilled();
     /// @notice Revert when rewards are not been distributed.
     error UnableToProcessRewards();
+    error InvalidInstitutionCode();
 
     /* ##################################################################
                                 STRUCTS
@@ -70,7 +71,7 @@ interface IPaycrest {
     /// @param hash hash must be the result of a hash operation for the verification to be secure. message
     /// @param signature sig
     /// @return _orderId the bytes20 which is the orderId
-    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 hash, bytes memory signature)  external returns(bytes32 _orderId);
+    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _code, bytes32 hash, bytes memory signature)  external returns(bytes32 _orderId);
 
     /// @notice settle transaction and distribute rewards accordingly.
     /// Requirements:
@@ -103,15 +104,6 @@ interface IPaycrest {
     /// @param _token address of the token to check.
     /// @return return the status of `_token` {bool}
     function isTokenSupported(address _token) external view returns(bool);
-
-    /// @notice get supported currencies from Paycrest.
-    /// @return return the arrays of all supported currencies
-    function getSupportedCurrencies() external view returns(bytes8[] memory);
-
-    /// @notice get institution that supports the {`_currency`} Paycrest.
-    /// @param _currency symbol of the currency to check for.
-    /// @return institution the institution that supports inpute `_currency` {bytes32}
-    function getSupportedInstitutions(bytes8 _currency) external view returns(bytes32 institution);
 
     /// @notice get every rewards and address on Paycrest.
     /// @return protocolReward amount that will be taken in percentage on all trade.
