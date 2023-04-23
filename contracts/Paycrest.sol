@@ -171,7 +171,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return result;
     }
 
-
     /** @dev See {getProtocolFees-IPaycrest}. */
     function getFeeDetails() external view returns(
         uint64, 

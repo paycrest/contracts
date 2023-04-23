@@ -80,6 +80,7 @@ contract PaycrestValidator is Ownable, ReentrancyGuard {
         }
         _balance[primaryValidator][token] += primaryValidatorsReward;
         emit RewardValidators(orderId, token, primaryValidator, primaryValidatorsReward);
+        return true;
     }
 
 
