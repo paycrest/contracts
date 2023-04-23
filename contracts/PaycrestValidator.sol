@@ -33,6 +33,12 @@ contract PaycrestValidator is Ownable, ReentrancyGuard {
     error TokenNotSupported();
     error MinimumRequired();
     error Insufficient();
+    error ThrowPaycrest();
+
+    modifier OnlyPaycrest() {
+        if(msg.sender != Paycrest) revert ThrowPaycrest();
+        _;
+    }
 
     function setMinimumAmountForTokens(address _token, uint256 minimumStakeAmount) external onlyOwner {
         minimumAmount[_token] = minimumStakeAmount;
@@ -68,7 +74,7 @@ contract PaycrestValidator is Ownable, ReentrancyGuard {
         address[] memory secondaryValidators,
         uint256 primaryValidatorsReward, 
         uint256 secondaryValidatorsReward
-    ) external returns(bool) {
+    ) external OnlyPaycrest() returns(bool) {
         uint256 lengthOfSecondaryValidators = secondaryValidators.length;
         uint256 secondaryValidatorsShares = secondaryValidatorsReward / lengthOfSecondaryValidators;
         for(uint256 i = 0; i < lengthOfSecondaryValidators; ) {
