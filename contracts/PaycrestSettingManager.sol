@@ -47,7 +47,7 @@ contract PaycrestSettingManager is Ownable {
     }
 
     function setSupportedInstitutions(bytes32 currency, Institution[] memory institutions) external onlyOwner { 
-        uint256 length = supportedInstitutions[currency].length;
+        uint256 length = institutions.length;
         for (uint i = 0; i < length; ) {
             supportedInstitutions[currency].push(institutions[i]);
             supportedInstitutionsByCode[institutions[i].code] = institutions[i].name;
