@@ -28,7 +28,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _institutionCode, bytes32 messageHash, bytes memory signature)  external returns(bytes32 orderId) {
         // checks that are required
         bool status = _verify(messageHash, signature);
-        _handler(_token, _amount, _refundAddress, status, _code);
+        _handler(_token, _amount, _refundAddress, status, _institutionCode);
         // first transfer token from msg.sender
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
         // increase users nonce to avoid replay attacks
@@ -50,12 +50,12 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
     
 
-    function _handler(address _token, uint256 _amount, address _refundAddress, bool status, bytes32 _code) internal view {
+    function _handler(address _token, uint256 _amount, address _refundAddress, bool status, bytes32 _institutionCode) internal view {
         if(!_isTokenSupported[_token]) revert TokenNotSupported();
         if(_amount == 0) revert AmountIsZero();
         if(_refundAddress == address(0)) revert ThrowZeroAddress();
         if(!status) revert InvalidSigner();
-        if(supportedInstitutionsByCode[_code] == bytes32(0)) revert InvalidInstitutionCode();
+        if(supportedInstitutionsByCode[_institutionCode] == bytes32(0)) revert InvalidInstitutionCode();
     }
 
     /* ##################################################################
