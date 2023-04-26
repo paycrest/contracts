@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {PaycrestSettingManager} from "./PaycrestSettingManager.sol";
-import {IPaycrestStake} from "./interface/IPaycrestStake.sol";
+import {IPaycrestValidator} from "./interface/IPaycrestValidator.sol";
 import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
 contract Paycrest is IPaycrest, PaycrestSettingManager { 
     using SafeERC20 for IERC20;
@@ -24,7 +24,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     /* ##################################################################
                                 USER CALLS
     ################################################################## */
-    /** @dev See {newPositionOrder-IPaycrest}. */
+    /** @dev See {createOrder-IPaycrest}. */
     function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _institutionCode, bytes32 messageHash, bytes memory signature)  external returns(bytes32 orderId) {
         // checks that are required
         bool status = _verify(messageHash, signature);
@@ -93,7 +93,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
         // distribute rewards
-        bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
+        bool status = IPaycrestValidator(PaycrestStakingContract).rewardValidators(
             _orderId,
             token,
             _primaryValidator, 
