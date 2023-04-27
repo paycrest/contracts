@@ -5,16 +5,18 @@ const path = require("path");
 const { BigNumber } = require("@ethersproject/bignumber");
 
 require("dotenv").config();
-const { DEPLOYER_PRIVATE_KEY } =  process.env;
+const { DEPLOYER_PRIVATE_KEY } = process.env;
 
 async function deployPaycrest(USDC_ADDRESS) {
-    const Paycrest = await ethers.getContractFactory("Paycrest");
-    const paycrest = await Paycrest.deploy(USDC_ADDRESS);
-    return paycrest;
+  const Paycrest = await ethers.getContractFactory("Paycrest");
+  const paycrest = await Paycrest.deploy(USDC_ADDRESS);
+  return paycrest;
 }
 
 async function deployValidator(paycrest) {
-  const PaycrestValidator = await ethers.getContractFactory("PaycrestValidator");
+  const PaycrestValidator = await ethers.getContractFactory(
+    "PaycrestValidator"
+  );
   const paycrestValidator = await PaycrestValidator.deploy(paycrest);
   return paycrestValidator;
 }
