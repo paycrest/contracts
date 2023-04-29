@@ -25,7 +25,15 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
                                 USER CALLS
     ################################################################## */
     /** @dev See {newPositionOrder-IPaycrest}. */
-    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _institutionCode, bytes32 messageHash, bytes memory signature)  external returns(bytes32 orderId) {
+    function createOrder(
+        address _token, 
+        uint256 _amount, 
+        address _refundAddress, 
+        uint96 _rate, 
+        bytes32 _institutionCode, 
+        bytes32 messageHash, 
+        bytes memory signature
+    )  external returns(bytes32 orderId) {
         // checks that are required
         bool status = _verify(messageHash, signature);
         _handler(_token, _amount, _refundAddress, status, _institutionCode);
@@ -184,6 +192,4 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function getLiquidityAggregator() external view returns(address) {
         return _liquidityAggregator;
     }
-
-
 }

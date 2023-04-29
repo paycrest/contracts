@@ -48,7 +48,7 @@ async function main() {
     "======================================================= DEPLOYING PAYCREST VALIDATORS ======================================================="
   );
 
-  const paycrestValidator = await deployValidator(paycrest);
+  const paycrestValidator = await deployValidator(paycrest.address);
 
   console.log(
     "======================================================= SETTING MANAGER FOR SUPPORTED INSTITUTIONS ======================================================="
@@ -120,7 +120,7 @@ async function main() {
 
   fs.access(dirResolver, fs.F_OK, (err) => {
     if (err) {
-      fs.writeFileSync(dirResolver, JSON.stringify(network, null, 4));
+      fs.writeFileSync(dirResolver, JSON.stringify(NETWORKS, null, 4));
     }
   });
 }

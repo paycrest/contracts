@@ -47,15 +47,20 @@ const Events = {
 };
 
 async function deployContract(name, args = [], value = 0) {
-  // if (!name) throw new Error("Cannot be null");
-  // if (value < 0) throw new Error("Invalid value");
-
   const Contract = await ethers.getContractFactory(name);
   let instance;
 
   if (value > 0) instance = await Contract.deploy(...args, { value });
   else instance = await Contract.deploy(...args);
   return instance;
+}
+
+
+async function calculateFee(instance, amount) {
+  const feeBps = await instance.getFeeBPS();
+  const feeBN = amount.mul(feeBps).div(MAX_BPS);
+  const userDeductedFee = amount.sub(feeBN);
+  return userDeductedFee;
 }
 
 async function mockMintDeposit(paycrest, account, usdc, amount) {
