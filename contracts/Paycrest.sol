@@ -127,7 +127,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // get the settled percent that is scheduled for this amount
         liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
         // deduct protocol fees from the new total amount
-        protocolFee = (liquidityProviderAmount * protocolFeePercent) * MAX_BPS; 
+        protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS; 
         // substract total fees from the new amount after getting the scheduled amount
         liquidityProviderAmount = (liquidityProviderAmount - protocolFee);
         // get primary validators fees primaryValidatorsReward
@@ -178,10 +178,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         uint64,
         uint256
     ) {
-        protocolFeePercent;
-        primaryValidatorFeePercent;
-        secondaryValidatorFeePercent;
-        MAX_BPS;
+        return(protocolFeePercent, primaryValidatorFeePercent, secondaryValidatorFeePercent, MAX_BPS);
     }
 
     /** @dev See {getLiquidityAggregator-IPaycrest}. */

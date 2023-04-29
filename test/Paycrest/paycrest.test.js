@@ -7,7 +7,7 @@ const {
   FEE_BPS,
   Errors,
   Events,
-} = require("./utils/utils.manager.js");
+} = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
 describe("Ownable settings", function () {
@@ -23,7 +23,7 @@ describe("Ownable settings", function () {
     ] = await ethers.getSigners();
 
     this.mockUSDC = await deployContract("MockUSDC");
-    this.mockUSDCT = await deployContract("MockUSDC");
+    this.mockUSDT = await deployContract("MockUSDC");
     this.paycrest = await deployContract("Paycrest", [this.mockUSDC.address]);
     this.paycrestValidator = await deployContract("PaycrestValidator", [
       this.paycrest.address,
