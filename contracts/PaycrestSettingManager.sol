@@ -63,11 +63,11 @@ contract PaycrestSettingManager is Ownable {
         }
     }
 
-    function updateProtocolFees(uint64 _protocolFee, uint64 _primaryValidator, uint64 _secondaryValidator) external onlyOwner {
-        protocolFeePercent = _protocolFee;
-        primaryValidatorFeePercent = _primaryValidator;
-        secondaryValidatorFeePercent = _secondaryValidator;
-        emit PaycrestFees(_protocolFee, _primaryValidator, _secondaryValidator);
+    function updateProtocolFees(uint64 _protocolFeePercent, uint64 _primaryValidatorPercent, uint64 _secondaryValidatorPercent) external onlyOwner {
+        protocolFeePercent = _protocolFeePercent;
+        primaryValidatorFeePercent = _primaryValidatorPercent;
+        secondaryValidatorFeePercent = _secondaryValidatorPercent;
+        emit PaycrestFees(_protocolFeePercent, _primaryValidatorPercent, _secondaryValidatorPercent);
     }
 
     function updateFeeRecipient(bytes32 what, address value) external onlyOwner {
