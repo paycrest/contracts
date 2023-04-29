@@ -48,14 +48,13 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // emit deposit event
         emit Deposit(orderId, _amount, _rate, messageHash, signature);
     }
-    
 
     function _handler(address _token, uint256 _amount, address _refundAddress, bool status, bytes32 _institutionCode) internal view {
         if(!_isTokenSupported[_token]) revert TokenNotSupported();
         if(_amount == 0) revert AmountIsZero();
         if(_refundAddress == address(0)) revert ThrowZeroAddress();
         if(!status) revert InvalidSigner();
-        if(supportedInstitutionsByCode[_institutionCode] == bytes32(0)) revert InvalidInstitutionCode();
+        if(supportedInstitutionsByCode[_institutionCode].name == bytes32(0)) revert InvalidInstitutionCode();
     }
 
     /* ##################################################################
@@ -151,8 +150,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return _isTokenSupported[_token];
     }
 
-    /** @dev See {getSupportedInstitutions-IPaycrest}. */
-    function getSupportedName(bytes32 code) external view returns (bytes32) {
+    /** @dev See {getSupportedInstitutionName-IPaycrest}. */
+    function getSupportedInstitutionName(bytes32 code) external view returns (InstitutionByCode memory) {
         return supportedInstitutionsByCode[code];
     }
 
