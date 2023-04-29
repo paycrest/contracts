@@ -1,4 +1,5 @@
 require("@nomiclabs/hardhat-ethers");
+const { ethers } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 require("@nomiclabs/hardhat-etherscan");
