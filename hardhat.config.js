@@ -6,7 +6,6 @@ module.exports = {
   solidity: "0.8.18",
 };
 // require("@nomiclabs/hardhat-ethers");
-// const { ethers } = require("hardhat");
 // const fs = require("fs");
 // const path = require("path");
 // require("@nomiclabs/hardhat-etherscan");
