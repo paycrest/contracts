@@ -8,7 +8,6 @@ import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
 contract Paycrest is IPaycrest, PaycrestSettingManager { 
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
-    uint256 constant public TimeLock = 12 hours;
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
 
@@ -31,12 +30,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         address _refundAddress, 
         uint96 _rate, 
         bytes32 _institutionCode, 
-        bytes32 messageHash, 
-        bytes memory signature
+        string calldata messageHash
     )  external returns(bytes32 orderId) {
         // checks that are required
-        bool status = _verify(messageHash, signature);
-        _handler(_token, _amount, _refundAddress, status, _institutionCode);
+        _handler(_token, _amount, _refundAddress, _institutionCode);
         // first transfer token from msg.sender
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
         // increase users nonce to avoid replay attacks
@@ -54,14 +51,13 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             amount: _amount
         });
         // emit deposit event
-        emit Deposit(orderId, _amount, _rate, messageHash, signature);
+        emit Deposit(orderId, _amount, _rate, _institutionCode, messageHash);
     }
 
-    function _handler(address _token, uint256 _amount, address _refundAddress, bool status, bytes32 _institutionCode) internal view {
+    function _handler(address _token, uint256 _amount, address _refundAddress, bytes32 _institutionCode) internal view {
         if(!_isTokenSupported[_token]) revert TokenNotSupported();
         if(_amount == 0) revert AmountIsZero();
         if(_refundAddress == address(0)) revert ThrowZeroAddress();
-        if(!status) revert InvalidSigner();
         if(supportedInstitutionsByCode[_institutionCode].name == bytes32(0)) revert InvalidInstitutionCode();
     }
 
@@ -144,15 +140,15 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // update new protocol fee
         protocolFee = protocolFee - (primaryValidatorReward + secondaryValidatorsReward);
     }
-
-    function _verify(bytes32 messageHash, bytes memory signature) private view returns (bool) {
-        bytes32 prefixedHash = messageHash.toEthSignedMessageHash();
-        return prefixedHash.recover(signature) == _liquidityAggregator;
-    }
     
     /* ##################################################################
                                 VIEW CALLS
     ################################################################## */
+    /** @dev See {getOrderInfo-IPaycrest}. */
+    function getOrderInfo(bytes32 _orderId) external view returns(Order memory) {
+        return order[_orderId];
+    }
+
     /** @dev See {isTokenSupported-IPaycrest}. */
     function isTokenSupported(address _token) external view returns(bool) {
         return _isTokenSupported[_token];

@@ -235,23 +235,23 @@ describe("Ownable settings", function () {
     expect(this.secondaryValidatorPercent).to.eq(secondaryValidatorsFees);
   });
 
-    it("should not be able to set protocol fees by non-owner", async function () {
-      // charge 10% as protocol fee
-      const protocolFeePercent = BigNumber.from(10_000);
-      const primaryValidatorsFees = BigNumber.from(5_000); // 5%
-      const secondaryValidatorsFees = BigNumber.from(3_000); // 3%
+  it("should not be able to set protocol fees by non-owner", async function () {
+    // charge 10% as protocol fee
+    const protocolFeePercent = BigNumber.from(10_000);
+    const primaryValidatorsFees = BigNumber.from(5_000); // 5%
+    const secondaryValidatorsFees = BigNumber.from(3_000); // 3%
 
-      await expect(
-        this.paycrest
-          .connect(this.hacker)
-          .updateProtocolFees(
-            protocolFeePercent,
-            primaryValidatorsFees,
-            secondaryValidatorsFees
-          )
-      )
-        .to.be.revertedWith(Errors.Ownable.onlyOwner);
-    });
+    await expect(
+      this.paycrest
+        .connect(this.hacker)
+        .updateProtocolFees(
+          protocolFeePercent,
+          primaryValidatorsFees,
+          secondaryValidatorsFees
+        )
+    )
+      .to.be.revertedWith(Errors.Ownable.onlyOwner);
+  });
 
   it("should update fee recipients, stake contract and aggregator", async function () {
     const fee = ethers.utils.formatBytes32String("fee");
