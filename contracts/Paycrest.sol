@@ -77,7 +77,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // load the token into memory
         address token = order[_orderId].token;
         // substract sum of amount based on the input _settlePercent
-        order[_orderId].currentBPS -= _settlePercent     ;
+        order[_orderId].currentBPS -= _settlePercent;
         // if transaction amount is zero
         if(order[_orderId].currentBPS == 0) {
             // update the transaction to be fulfilled
@@ -93,9 +93,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         ) = _calculateFees(_orderId, _settlePercent);
         // transfer protocol fee
         IERC20(token).transfer(feeRecipient, protocolFee);
-        // transfer to liquidity provider 
+        // // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
-        // distribute rewards
+        IERC20(token).transfer(address(PaycrestStakingContract), (primaryValidatorReward + secondaryValidatorsReward));
+        // // distribute rewards
         bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
             _orderId,
             token,
