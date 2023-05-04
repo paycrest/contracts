@@ -4,49 +4,57 @@ const { confirmContinue, assertEnvironment } = require("./utils");
 
 assertEnvironment();
 
-async function main() {
-  // Wait 10 blocks for re-org protection
-  const blocksToWait = network.name === "hardhat" ? 0 : 10;
-
-  // Deploy Paycrest
+async function deployPaycrest(USDC_ADDRESS) {
   await confirmContinue({
     contract: "Paycrest",
     network: network.name,
     chainId: network.config.chainId,
   });
 
-  const paycrest = await ethers.getContractFactory("Paycrest");
-  const paycrestContract = await paycrest.deploy(network.config.USDC_ADDRESS);
+  const Paycrest = await ethers.getContractFactory("Paycrest");
+  const paycrest = await Paycrest.deploy(USDC_ADDRESS);
 
-  console.log(`Deploying Paycrest to ${paycrestContract.address}`);
+  console.log(`Deploying Paycrest to ${paycrest.address}`);
 
-  await paycrestContract.deployTransaction.wait(blocksToWait);
+  await paycrest.deployTransaction.wait(blocksToWait);
 
-  console.log("✅ Deployed Paycrest.");
+  return paycrest;
+}
 
-  // Deploy PaycrestValidator
+async function deployPaycrestValidator(paycrest) {
   await confirmContinue({
     contract: "PaycrestValidator",
     network: network.name,
     chainId: network.config.chainId,
   });
 
-  const paycrestValidator = await ethers.getContractFactory(
+  const PaycrestValidator = await ethers.getContractFactory(
     "PaycrestValidator"
   );
-  const paycrestValidatorContract = await paycrestValidator.deploy(
-    paycrestContract.address
-  );
+  const paycrestValidator = await PaycrestValidator.deploy(paycrest.address);
 
-  console.log(
-    `Deploying PaycrestValidator to ${paycrestValidatorContract.address}`
-  );
+  console.log(`Deploying PaycrestValidator to ${paycrestValidator.address}`);
 
-  await paycrestValidatorContract.deployTransaction.wait(blocksToWait);
+  await paycrestValidator.deployTransaction.wait(blocksToWait);
+
+  return paycrestValidator;
+}
+
+async function main() {
+  // Wait 10 blocks for re-org protection
+  const blocksToWait = network.name === "hardhat" ? 0 : 10;
+
+  // Deploy Paycrest
+  const paycrest = await deployPaycrest(network.config.USDC_ADDRESS);
+
+  console.log("✅ Deployed Paycrest.");
+
+  // Deploy PaycrestValidator
+  const paycrestValidator = await deployPaycrestValidator(paycrest);
 
   console.log("✅ Deployed PaycrestValidator.");
 
-  return paycrestValidatorContract.address;
+  return paycrestValidator.address;
 }
 
 main().catch((error) => {
