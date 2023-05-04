@@ -24,13 +24,15 @@ describe("Paycrest create order", function () {
       this.alice,
       this.bob,
       this.liquidityProvider,
+      this.sender,
       this.hacker,
       ...this.accounts
     ] = await ethers.getSigners();
 
     this.mockUSDC = await deployContract("MockUSDC");
     this.mockUSDT = await deployContract("MockUSDC");
-    this.mintAmount = ethers.utils.parseEther("1000000");
+    this.mintAmount = ethers.utils.parseEther("1000100");
+    this.senderFee = ethers.utils.parseEther("100");
     this.stakeAmount = ethers.utils.parseEther("1000000");
 
     this.liquidityProviderAmount = ethers.utils.parseEther("950000");
@@ -48,6 +50,14 @@ describe("Paycrest create order", function () {
     expect(await this.mockUSDC.balanceOf(this.bob.address)).to.eq(
       this.stakeAmount
     );
+    await this.mockUSDC
+      .connect(this.alice)
+      .transfer(this.sender.address, this.mintAmount);
+
+    expect(await this.mockUSDC.balanceOf(this.alice.address)).to.eq(
+      ZERO_AMOUNT
+    );
+
     expect(await this.mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(
       ZERO_AMOUNT
     );
@@ -95,17 +105,27 @@ describe("Paycrest create order", function () {
         this.paycrestValidator.address
       )
     ).to.equal(ZERO_AMOUNT);
+
+    const whitelist = ethers.utils.formatBytes32String("whitelist");
+
+    await expect(
+      this.paycrest
+        .connect(this.deployer)
+        .settingManagerBool(whitelist, this.sender.address, true)
+    )
+      .to.emit(this.paycrest, Events.Paycrest.SettingManagerBool)
+      .withArgs(whitelist, this.sender.address, true);
   });
 
-  it("Should be able to create order by Alice and settled by liquidity aggregator", async function () {
+  it("Should be able to create order by the sender and settled by liquidity aggregator", async function () {
     const ret = await setSupportedInstitution(this.paycrest, this.deployer);
 
     await this.mockUSDC
-      .connect(this.alice)
+      .connect(this.sender)
       .approve(this.paycrest.address, this.mintAmount);
 
     expect(
-      await this.mockUSDC.allowance(this.alice.address, this.paycrest.address)
+      await this.mockUSDC.allowance(this.sender.address, this.paycrest.address)
     ).to.equal(this.mintAmount);
 
     await this.mockUSDC
@@ -117,7 +137,7 @@ describe("Paycrest create order", function () {
         this.bob.address,
         this.paycrestValidator.address
       )
-    ).to.equal(this.mintAmount);
+    ).to.equal(this.stakeAmount);
 
     const rate = 750;
     const institutionCode = ret.firstBank.code;
@@ -135,7 +155,7 @@ describe("Paycrest create order", function () {
 
     const messageHash = "0x" + cipher;
 
-    const argOrderID = [this.alice.address, 1];
+    const argOrderID = [this.sender.address, 1];
 
     const encoded = ethers.utils.defaultAbiCoder.encode(
       ["address", "uint256"],
@@ -145,11 +165,13 @@ describe("Paycrest create order", function () {
 
     await expect(
       this.paycrest
-        .connect(this.alice)
+        .connect(this.sender)
         .createOrder(
           this.mockUSDC.address,
           this.mintAmount,
           this.alice.address,
+          this.sender.address,
+          this.senderFee,
           rate,
           institutionCode,
           messageHash.toString()
@@ -167,6 +189,8 @@ describe("Paycrest create order", function () {
     [
       this.seller,
       this.token,
+      this.senderRecipient,
+      this.senderFee,
       this.rate,
       this.isFulfilled,
       this.refundAddress,
@@ -174,8 +198,10 @@ describe("Paycrest create order", function () {
       this.amount,
     ] = await this.paycrest.getOrderInfo(orderId);
 
-    expect(this.seller).to.eq(this.alice.address);
+    expect(this.seller).to.eq(this.sender.address);
     expect(this.token).to.eq(this.mockUSDC.address);
+    expect(this.senderRecipient).to.eq(this.sender.address);
+    expect(this.senderFee).to.eq(this.senderFee);
     expect(this.rate).to.eq(rate);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(this.alice.address);
@@ -248,11 +274,11 @@ describe("Paycrest create order", function () {
     const ret = await setSupportedInstitution(this.paycrest, this.deployer);
 
     await this.mockUSDC
-      .connect(this.alice)
+      .connect(this.sender)
       .approve(this.paycrest.address, this.mintAmount);
 
     expect(
-      await this.mockUSDC.allowance(this.alice.address, this.paycrest.address)
+      await this.mockUSDC.allowance(this.sender.address, this.paycrest.address)
     ).to.equal(this.mintAmount);
 
     await this.mockUSDC
@@ -264,7 +290,7 @@ describe("Paycrest create order", function () {
         this.bob.address,
         this.paycrestValidator.address
       )
-    ).to.equal(this.mintAmount);
+    ).to.equal(this.stakeAmount);
 
     const rate = 750;
     const institutionCode = ret.firstBank.code;
@@ -282,7 +308,7 @@ describe("Paycrest create order", function () {
 
     const messageHash = "0x" + cipher;
 
-    const argOrderID = [this.alice.address, 1];
+    const argOrderID = [this.sender.address, 1];
 
     const encoded = ethers.utils.defaultAbiCoder.encode(
       ["address", "uint256"],
@@ -292,11 +318,13 @@ describe("Paycrest create order", function () {
 
     await expect(
       this.paycrest
-        .connect(this.alice)
+        .connect(this.sender)
         .createOrder(
           this.mockUSDC.address,
           this.mintAmount,
           this.alice.address,
+          this.sender.address,
+          this.senderFee,
           rate,
           institutionCode,
           messageHash.toString()
@@ -314,6 +342,8 @@ describe("Paycrest create order", function () {
     [
       this.seller,
       this.token,
+      this.senderRecipient,
+      this.senderFee,
       this.rate,
       this.isFulfilled,
       this.refundAddress,
@@ -321,8 +351,10 @@ describe("Paycrest create order", function () {
       this.amount,
     ] = await this.paycrest.getOrderInfo(orderId);
 
-    expect(this.seller).to.eq(this.alice.address);
+    expect(this.seller).to.eq(this.sender.address);
     expect(this.token).to.eq(this.mockUSDC.address);
+    expect(this.senderRecipient).to.eq(this.sender.address);
+    expect(this.senderFee).to.eq(this.senderFee);
     expect(this.rate).to.eq(rate);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(this.alice.address);
@@ -388,21 +420,6 @@ describe("Paycrest create order", function () {
         this.mockUSDC.address
       )
     ).to.eq(this.primaryValidatorReward);
-
-    // expect(
-    //   await this.paycrest
-    //     .connect(this.aggregator)
-    //     .settle(
-    //       orderId,
-    //       this.primaryValidator.address,
-    //       [this.bob.address],
-    //       this.liquidityProvider.address,
-    //       MAX_BPS
-    //     )
-    // ).to.be.revertedWithCustomError(
-    //   this.paycrest,
-    //   Errors.Paycrest.OrderFulfilled
-    // );
       
   });
 

@@ -54,7 +54,17 @@ async function main() {
 
   console.log("✅ Deployed PaycrestValidator.");
 
-  return paycrestValidator.address;
+  const network = {
+    paycrest: paycrest.address,
+    paycrestValidator: paycrestValidator.address,
+  };
+
+  fs.access(dirResolver, fs.F_OK, (err) => {
+    if (err) {
+      fs.writeFileSync(dirResolver, JSON.stringify(network, null, 4));
+    }
+  });
+
 }
 
 main().catch((error) => {

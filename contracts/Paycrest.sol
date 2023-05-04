@@ -10,7 +10,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     using ECDSA for bytes32;
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
-    mapping(address => uint256) private _senderBalance;
     constructor(address _usdc) {
         _isTokenSupported[_usdc] = true;
     }
@@ -28,13 +27,14 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         address _token, 
         uint256 _amount, 
         address _refundAddress, 
+        address _senderFeeRecipient,
+        uint256 _senderFee,
         uint96 _rate, 
-        bytes32 _institutionCode, 
+        bytes32 _institutionCode,
         string calldata messageHash
     )  external returns(bytes32 orderId) {
-        // @todo sender whitelist
-        // @todo add sender fee is an amount
-        // @todo add sender fee recipient
+        // sender must be a whitelisted address
+        if(!_isWhitelisted[msg.sender]) revert NotWhitelisted();
         // checks that are required
         _handler(_token, _amount, _refundAddress, _institutionCode);
         // first transfer token from msg.sender
@@ -47,6 +47,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         order[orderId] = Order({
             seller: msg.sender,
             token: _token,
+            senderFeeRecipient: _senderFeeRecipient,
+            senderFee: _senderFee,
             rate: _rate,
             isFulfilled: false,
             refundAddress: _refundAddress,
@@ -94,6 +96,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             uint256 primaryValidatorReward, 
             uint256 secondaryValidatorsReward
         ) = _calculateFees(_orderId, _settlePercent);
+        transferSenderFee(_orderId);
         // transfer protocol fee
         IERC20(token).transfer(feeRecipient, protocolFee);
         // // transfer to liquidity provider 
@@ -114,6 +117,15 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return true;
     }
 
+    function transferSenderFee(bytes32 _orderId) internal {
+        address recipient = order[_orderId].senderFeeRecipient;
+        uint256 fee = order[_orderId].senderFee;
+        // transfer sender fee
+        IERC20(order[_orderId].token).transfer(recipient, fee);
+        // emmit event
+        emit TransferSenderFee(recipient, fee);
+    }
+
     /** @dev See {refund-IPaycrest}. */
     function refund(bytes32 _orderId)  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
@@ -131,6 +143,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function _calculateFees(bytes32 _orderId, uint96 _settlePercent) private view returns(uint256 protocolFee, uint256 liquidityProviderAmount, uint256 primaryValidatorReward, uint256 secondaryValidatorsReward) {
         // get the total amount associated with the orderId
         uint256 amount = order[_orderId].amount;
+        // get sender fee from amount
+        amount = amount - order[_orderId].senderFee;
         // get the settled percent that is scheduled for this amount
         liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
         // deduct protocol fees from the new total amount
@@ -192,4 +206,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function getLiquidityAggregator() external view returns(address) {
         return _liquidityAggregator;
     }
+
+    /** @dev See {getWhitelistedStatus-IPaycrest}. */
+    function getWhitelistedStatus(address sender) external view returns(bool) {
+        return _isWhitelisted[sender];
+    }
+
 }
