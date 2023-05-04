@@ -56,11 +56,13 @@ describe("Paycrest create order", function () {
       .approve(this.paycrest.address, this.mintAmount);
     const rate = 750;
     const institutionCode = ret.firstBank.code;
+
     const data = [
       { bank_account: 09090990901 },
       { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { account_name: "opay opay" },
     ];
+    
     const password = "123";
 
     const cipher = CryptoJS.AES.encrypt(

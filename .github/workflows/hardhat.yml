@@ -15,5 +15,7 @@ jobs:
           node-version: 16
       - name: Install node modules
         run: yarn install
-      - name: Unit test solidity
-        run: npx hardhat test
+      - name: Unit test hardhat
+        run: |
+          npx hardhat node &
+          npm test

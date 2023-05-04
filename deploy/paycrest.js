@@ -5,7 +5,7 @@ const path = require("path");
 const { BigNumber } = require("@ethersproject/bignumber");
 
 require("dotenv").config();
-const { DEPLOYER_PRIVATE_KEY } = process.env;
+const { DEPLOYER_PRIVATE_KEY, FEE_RECIPIENT_PRIVATE_KEY } = process.env;
 
 async function deployPaycrest(USDC_ADDRESS) {
   const Paycrest = await ethers.getContractFactory("Paycrest");
@@ -24,9 +24,9 @@ async function deployValidator(paycrest) {
 async function main() {
   const [deployer, aggregator, feeRecipient] = await ethers.getSigners();
 
-  // const feeRecipientAddress = new ethers.Wallet(
-  //   FEE_RECIPIENT_PRIVATE_KEY ?? feeRecipient
-  // ).address;
+  const feeRecipientAddress = new ethers.Wallet(
+    FEE_RECIPIENT_PRIVATE_KEY ?? feeRecipient
+  ).address;
 
   const { chainId } = await ethers.provider.getNetwork();
   const dirResolver = path.resolve(__dirname + `/deployment-${chainId}.json`);

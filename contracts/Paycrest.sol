@@ -10,7 +10,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     using ECDSA for bytes32;
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
-
+    mapping(address => uint256) private _senderBalance;
     constructor(address _usdc) {
         _isTokenSupported[_usdc] = true;
     }
@@ -32,6 +32,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         bytes32 _institutionCode, 
         string calldata messageHash
     )  external returns(bytes32 orderId) {
+        // @todo sender whitelist
+        // @todo add sender fee is an amount
+        // @todo add sender fee recipient
         // checks that are required
         _handler(_token, _amount, _refundAddress, _institutionCode);
         // first transfer token from msg.sender
