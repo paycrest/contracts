@@ -1,31 +1,54 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+// This script deals with deploying the Paycrest on a given network
+const { ethers, network } = require("hardhat");
+const { confirmContinue, assertEnvironment } = require("./utils");
+
+assertEnvironment();
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  // Wait 10 blocks for re-org protection
+  const blocksToWait = network.name === "hardhat" ? 0 : 10;
 
-  const lockedAmount = hre.ethers.utils.parseEther("0.001");
+  // Deploy Paycrest
+  await confirmContinue({
+    contract: "Paycrest",
+    network: network.name,
+    chainId: network.config.chainId,
+  });
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const paycrest = await ethers.getContractFactory("Paycrest");
+  const paycrestContract = await paycrest.deploy(network.config.USDC_ADDRESS);
 
-  await lock.deployed();
+  console.log(`Deploying Paycrest to ${paycrestContract.address}`);
+
+  await paycrestContract.deployTransaction.wait(blocksToWait);
+
+  console.log("✅ Deployed Paycrest.");
+
+  // Deploy PaycrestValidator
+  await confirmContinue({
+    contract: "PaycrestValidator",
+    network: network.name,
+    chainId: network.config.chainId,
+  });
+
+  const paycrestValidator = await ethers.getContractFactory(
+    "PaycrestValidator"
+  );
+  const paycrestValidatorContract = await paycrestValidator.deploy(
+    paycrestContract.address
+  );
 
   console.log(
-    `Lock with ${ethers.utils.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
+    `Deploying PaycrestValidator to ${paycrestValidatorContract.address}`
   );
+
+  await paycrestValidatorContract.deployTransaction.wait(blocksToWait);
+
+  console.log("✅ Deployed PaycrestValidator.");
+
+  return paycrestValidatorContract.address;
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
