@@ -7,6 +7,10 @@ contract PaycrestSettingManager is Ownable {
         bytes32 code; // usually not more than 8 letters
         bytes32 name; // 
     }
+    struct InstitutionByCode {
+        bytes32 name;
+        bytes32 currency;
+    }
     uint256 internal constant MAX_BPS = 100_000;
     uint64 internal protocolFeePercent = 5000; // 5%
     uint64 internal primaryValidatorFeePercent = 500; // 0.5%
@@ -19,7 +23,7 @@ contract PaycrestSettingManager is Ownable {
     // mapping(address => bool) internal _liquidityAggregator;
 
     mapping(bytes32 => Institution[]) internal supportedInstitutions;
-    mapping(bytes32 => bytes32) internal supportedInstitutionsByCode;
+    mapping(bytes32 => InstitutionByCode) internal supportedInstitutionsByCode;
 
     /// @notice Revert when zero address is passed in
     error ThrowZeroAddress();
@@ -50,18 +54,20 @@ contract PaycrestSettingManager is Ownable {
         uint256 length = institutions.length;
         for (uint i = 0; i < length; ) {
             supportedInstitutions[currency].push(institutions[i]);
-            supportedInstitutionsByCode[institutions[i].code] = institutions[i].name;
+            supportedInstitutionsByCode[institutions[i].code] = InstitutionByCode({
+                name: institutions[i].name, currency: currency
+            });
             unchecked {
                 i++;
             }
         }
     }
 
-    function updateProtocolFees(uint64 _protocolFee, uint64 _primaryValidator, uint64 _secondaryValidator) external onlyOwner {
-        protocolFeePercent = _protocolFee;
-        primaryValidatorFeePercent = _primaryValidator;
-        secondaryValidatorFeePercent = _secondaryValidator;
-        emit PaycrestFees(_protocolFee, _primaryValidator, _secondaryValidator);
+    function updateProtocolFees(uint64 _protocolFeePercent, uint64 _primaryValidatorPercent, uint64 _secondaryValidatorPercent) external onlyOwner {
+        protocolFeePercent = _protocolFeePercent;
+        primaryValidatorFeePercent = _primaryValidatorPercent;
+        secondaryValidatorFeePercent = _secondaryValidatorPercent;
+        emit PaycrestFees(_protocolFeePercent, _primaryValidatorPercent, _secondaryValidatorPercent);
     }
 
     function updateFeeRecipient(bytes32 what, address value) external onlyOwner {

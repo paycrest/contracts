@@ -12,7 +12,7 @@ interface IPaycrest {
                                 EVENTS
     ################################################################## */
     /// @dev Emitted when deposit is made.
-    event Deposit(bytes32 indexed orderId, uint256 indexed amount, uint256 indexed rate, bytes32 hash, bytes signature);
+    event Deposit(bytes32 indexed orderId, uint256 indexed amount, uint256 indexed rate, bytes32 institutionCode, string messageHash);
     /// @dev Emitted when aggregator settle transaction.
     event Settled(bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
@@ -68,10 +68,9 @@ interface IPaycrest {
     /// @param _amount amount in the decimal of `_token` above.
     /// @param _refundAddress address that is going to recieve `_amount` in `_token` when there is a need to refund.
     /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
-    /// @param hash hash must be the result of a hash operation for the verification to be secure. message
-    /// @param signature sig
+    /// @param messageHash hash must be the result of a hash operation for the verification to be secure. message
     /// @return _orderId the bytes20 which is the orderId
-    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _code, bytes32 hash, bytes memory signature)  external returns(bytes32 _orderId);
+    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _code, string memory messageHash)  external returns(bytes32 _orderId);
 
     /// @notice settle transaction and distribute rewards accordingly.
     /// Requirements:
@@ -104,6 +103,10 @@ interface IPaycrest {
     /// @param _token address of the token to check.
     /// @return return the status of `_token` {bool}
     function isTokenSupported(address _token) external view returns(bool);
+
+    /// @notice get order details.
+    /// @param _orderId transaction Id.
+    function getOrderInfo(bytes32 _orderId) external view returns(Order memory);
 
     /// @notice get every rewards and address on Paycrest.
     /// @return protocolReward amount that will be taken in percentage on all trade.

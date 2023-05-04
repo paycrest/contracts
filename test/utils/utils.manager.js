@@ -13,6 +13,9 @@ const Errors = {
 
   Paycrest: {
     OnlyAggregator: "OnlyAggregator",
+    TokenNotSupported: "TokenNotSupported",
+    AmountIsZero: "AmountIsZero",
+    ThrowZeroAddress: "ThrowZeroAddress",
     InvalidSigner: "InvalidSigner",
     Unsuported: "Unsuported",
     OrderFulfilled: "OrderFulfilled",
@@ -47,15 +50,41 @@ const Events = {
 };
 
 async function deployContract(name, args = [], value = 0) {
-  // if (!name) throw new Error("Cannot be null");
-  // if (value < 0) throw new Error("Invalid value");
-
   const Contract = await ethers.getContractFactory(name);
   let instance;
 
   if (value > 0) instance = await Contract.deploy(...args, { value });
   else instance = await Contract.deploy(...args);
   return instance;
+}
+
+async function setSupportedInstitution(instance, signer) {
+  const currency = ethers.utils.formatBytes32String("NGN");
+
+  const firstBank = {
+    code: ethers.utils.formatBytes32String("191"),
+    name: ethers.utils.formatBytes32String("First Bank"),
+  };
+  const opay = {
+    code: ethers.utils.formatBytes32String("192"),
+    name: ethers.utils.formatBytes32String("Opay"),
+  };
+  const palmpay = {
+    code: ethers.utils.formatBytes32String("193"),
+    name: ethers.utils.formatBytes32String("Palmpay Bank"),
+  };
+
+  instance
+    .connect(signer)
+    .setSupportedInstitutions(currency, [firstBank, opay, palmpay]);
+  return { currency, firstBank, opay, palmpay };
+}
+
+async function calculateFee(instance, amount) {
+  const feeBps = await instance.getFeeBPS();
+  const feeBN = amount.mul(feeBps).div(MAX_BPS);
+  const userDeductedFee = amount.sub(feeBN);
+  return userDeductedFee;
 }
 
 async function mockMintDeposit(paycrest, account, usdc, amount) {
@@ -72,4 +101,5 @@ module.exports = {
   Events,
   deployContract,
   mockMintDeposit,
+  setSupportedInstitution,
 };

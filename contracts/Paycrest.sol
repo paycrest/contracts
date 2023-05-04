@@ -8,7 +8,6 @@ import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
 contract Paycrest is IPaycrest, PaycrestSettingManager { 
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
-    uint256 constant public TimeLock = 12 hours;
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
 
@@ -25,10 +24,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
                                 USER CALLS
     ################################################################## */
     /** @dev See {newPositionOrder-IPaycrest}. */
-    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _institutionCode, bytes32 messageHash, bytes memory signature)  external returns(bytes32 orderId) {
+    function createOrder(
+        address _token, 
+        uint256 _amount, 
+        address _refundAddress, 
+        uint96 _rate, 
+        bytes32 _institutionCode, 
+        string calldata messageHash
+    )  external returns(bytes32 orderId) {
         // checks that are required
-        bool status = _verify(messageHash, signature);
-        _handler(_token, _amount, _refundAddress, status, _institutionCode);
+        _handler(_token, _amount, _refundAddress, _institutionCode);
         // first transfer token from msg.sender
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
         // increase users nonce to avoid replay attacks
@@ -46,16 +51,14 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             amount: _amount
         });
         // emit deposit event
-        emit Deposit(orderId, _amount, _rate, messageHash, signature);
+        emit Deposit(orderId, _amount, _rate, _institutionCode, messageHash);
     }
-    
 
-    function _handler(address _token, uint256 _amount, address _refundAddress, bool status, bytes32 _institutionCode) internal view {
+    function _handler(address _token, uint256 _amount, address _refundAddress, bytes32 _institutionCode) internal view {
         if(!_isTokenSupported[_token]) revert TokenNotSupported();
         if(_amount == 0) revert AmountIsZero();
         if(_refundAddress == address(0)) revert ThrowZeroAddress();
-        if(!status) revert InvalidSigner();
-        if(supportedInstitutionsByCode[_institutionCode] == bytes32(0)) revert InvalidInstitutionCode();
+        if(supportedInstitutionsByCode[_institutionCode].name == bytes32(0)) revert InvalidInstitutionCode();
     }
 
     /* ##################################################################
@@ -74,7 +77,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // load the token into memory
         address token = order[_orderId].token;
         // substract sum of amount based on the input _settlePercent
-        order[_orderId].currentBPS -= _settlePercent     ;
+        order[_orderId].currentBPS -= _settlePercent;
         // if transaction amount is zero
         if(order[_orderId].currentBPS == 0) {
             // update the transaction to be fulfilled
@@ -90,9 +93,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         ) = _calculateFees(_orderId, _settlePercent);
         // transfer protocol fee
         IERC20(token).transfer(feeRecipient, protocolFee);
-        // transfer to liquidity provider 
+        // // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
-        // distribute rewards
+        IERC20(token).transfer(address(PaycrestStakingContract), (primaryValidatorReward + secondaryValidatorsReward));
+        // // distribute rewards
         bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
             _orderId,
             token,
@@ -127,7 +131,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // get the settled percent that is scheduled for this amount
         liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
         // deduct protocol fees from the new total amount
-        protocolFee = (liquidityProviderAmount * protocolFeePercent) * MAX_BPS; 
+        protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS; 
         // substract total fees from the new amount after getting the scheduled amount
         liquidityProviderAmount = (liquidityProviderAmount - protocolFee);
         // get primary validators fees primaryValidatorsReward
@@ -137,22 +141,22 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // update new protocol fee
         protocolFee = protocolFee - (primaryValidatorReward + secondaryValidatorsReward);
     }
-
-    function _verify(bytes32 messageHash, bytes memory signature) private view returns (bool) {
-        bytes32 prefixedHash = messageHash.toEthSignedMessageHash();
-        return prefixedHash.recover(signature) == _liquidityAggregator;
-    }
     
     /* ##################################################################
                                 VIEW CALLS
     ################################################################## */
+    /** @dev See {getOrderInfo-IPaycrest}. */
+    function getOrderInfo(bytes32 _orderId) external view returns(Order memory) {
+        return order[_orderId];
+    }
+
     /** @dev See {isTokenSupported-IPaycrest}. */
     function isTokenSupported(address _token) external view returns(bool) {
         return _isTokenSupported[_token];
     }
 
-    /** @dev See {getSupportedInstitutions-IPaycrest}. */
-    function getSupportedName(bytes32 code) external view returns (bytes32) {
+    /** @dev See {getSupportedInstitutionName-IPaycrest}. */
+    function getSupportedInstitutionName(bytes32 code) external view returns (InstitutionByCode memory) {
         return supportedInstitutionsByCode[code];
     }
 
@@ -178,16 +182,11 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         uint64,
         uint256
     ) {
-        protocolFeePercent;
-        primaryValidatorFeePercent;
-        secondaryValidatorFeePercent;
-        MAX_BPS;
+        return(protocolFeePercent, primaryValidatorFeePercent, secondaryValidatorFeePercent, MAX_BPS);
     }
 
     /** @dev See {getLiquidityAggregator-IPaycrest}. */
     function getLiquidityAggregator() external view returns(address) {
         return _liquidityAggregator;
     }
-
-
 }
