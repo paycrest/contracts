@@ -1,31 +1,62 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+// This script deals with deploying the Paycrest on a given network
+const { ethers, network } = require("hardhat");
+const { confirmContinue, assertEnvironment } = require("./utils");
 
-async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+assertEnvironment();
 
-  const lockedAmount = hre.ethers.utils.parseEther("0.001");
+async function deployPaycrest(USDC_ADDRESS) {
+  await confirmContinue({
+    contract: "Paycrest",
+    network: network.name,
+    chainId: network.config.chainId,
+  });
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const Paycrest = await ethers.getContractFactory("Paycrest");
+  const paycrest = await Paycrest.deploy(USDC_ADDRESS);
 
-  await lock.deployed();
+  console.log(`Deploying Paycrest to ${paycrest.address}`);
 
-  console.log(
-    `Lock with ${ethers.utils.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+  await paycrest.deployTransaction.wait(blocksToWait);
+
+  return paycrest;
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
+async function deployPaycrestValidator(paycrest) {
+  await confirmContinue({
+    contract: "PaycrestValidator",
+    network: network.name,
+    chainId: network.config.chainId,
+  });
+
+  const PaycrestValidator = await ethers.getContractFactory(
+    "PaycrestValidator"
+  );
+  const paycrestValidator = await PaycrestValidator.deploy(paycrest.address);
+
+  console.log(`Deploying PaycrestValidator to ${paycrestValidator.address}`);
+
+  await paycrestValidator.deployTransaction.wait(blocksToWait);
+
+  return paycrestValidator;
+}
+
+async function main() {
+  // Wait 10 blocks for re-org protection
+  const blocksToWait = network.name === "hardhat" ? 0 : 10;
+
+  // Deploy Paycrest
+  const paycrest = await deployPaycrest(network.config.USDC_ADDRESS);
+
+  console.log("✅ Deployed Paycrest.");
+
+  // Deploy PaycrestValidator
+  const paycrestValidator = await deployPaycrestValidator(paycrest);
+
+  console.log("✅ Deployed PaycrestValidator.");
+
+  return paycrestValidator.address;
+}
+
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
