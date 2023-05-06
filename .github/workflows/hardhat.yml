@@ -18,4 +18,4 @@ jobs:
       - name: Unit test hardhat
         run:
           npx hardhat node &
-          npm test
+          npx hardhat test
