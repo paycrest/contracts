@@ -133,7 +133,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // reser state values
         order[_orderId].isFulfilled = true;
         order[_orderId].currentBPS = 0;
-        // transfer to liquidity provider 
+        // transfer to seller 
         IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, order[_orderId].amount);
         // emit
         emit Refunded(_orderId);
