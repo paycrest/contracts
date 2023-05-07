@@ -6,11 +6,12 @@ require("dotenv").config();
 
 module.exports = {
   networks: {
+    defaultNetwork: "hardhat",
     hardhat: {
       allowUnlimitedContractSize: true,
     },
     mumbai: {
-      url: `${process.env.POLYGON_MUMBAI_RPC_URL}`,
+      url: process.env.POLYGON_MUMBAI_RPC_URL,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY],
       chainId: 80001,
       saveDeployments: true,
