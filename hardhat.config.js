@@ -1,4 +1,3 @@
-const fs = require("fs");
 require("@nomicfoundation/hardhat-toolbox");
 require("@typechain/hardhat");
 require("@nomiclabs/hardhat-ethers");
@@ -10,13 +9,18 @@ module.exports = {
     hardhat: {
       allowUnlimitedContractSize: true,
     },
-    // mumbai: {
-    //   url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}}`,
-    //   accounts: [process.env.pKey],
-    //   chainId: 80001,
-    //   USDC_ADDRESS: "0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747",
-    //   saveDeployments: true,
-    // },
+    mumbai: {
+      url: `${process.env.POLYGON_MUMBAI_RPC_URL}`,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+      chainId: 80001,
+      saveDeployments: true,
+    },
+    bscTestnet: {
+      url: `${process.env.BINANCE_TESTNET_RPC_URL}`,
+      accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+      chainId: 97,
+      saveDeployments: true,
+    },
   },
   solidity: {
     settings: {
