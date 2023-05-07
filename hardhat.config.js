@@ -10,7 +10,6 @@ let { DEPLOYER_PRIVATE_KEY } = process.env;
     networks: {
       hardhat: {
         allowUnlimitedContractSize: true,
-        mnemonic: "test test test test test test test test test test test junk",
       },
       mumbai: {
         url: "https://matic-mumbai.chainstacklabs.com",
