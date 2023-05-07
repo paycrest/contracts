@@ -6,7 +6,6 @@ require("dotenv").config();
 
 module.exports = {
   networks: {
-    defaultNetwork: "hardhat",
     hardhat: {
       allowUnlimitedContractSize: true,
     },
