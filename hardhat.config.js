@@ -10,13 +10,13 @@ module.exports = {
       allowUnlimitedContractSize: true,
     },
     mumbai: {
-      url: process.env.POLYGON_MUMBAI_RPC_URL,
+      url: "https://matic-mumbai.chainstacklabs.com",
       accounts: [process.env.DEPLOYER_PRIVATE_KEY],
       chainId: 80001,
       saveDeployments: true,
     },
     bscTestnet: {
-      url: process.env.BINANCE_TESTNET_RPC_URL,
+      url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
       accounts: [process.env.DEPLOYER_PRIVATE_KEY],
       chainId: 97,
       saveDeployments: true,
