@@ -11,13 +11,17 @@ module.exports = {
     },
     mumbai: {
       url: "https://matic-mumbai.chainstacklabs.com",
-      accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+      accounts: [
+        "df1fac1892fa24350521292740fb6bf0d3d981181dbeabffa0aa928b5a54f188",
+      ],
       chainId: 80001,
       saveDeployments: true,
     },
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
-      accounts: [process.env.DEPLOYER_PRIVATE_KEY],
+      accounts: [
+        "df1fac1892fa24350521292740fb6bf0d3d981181dbeabffa0aa928b5a54f188",
+      ],
       chainId: 97,
       saveDeployments: true,
     },
@@ -42,8 +46,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      arbitrumGoerli: process.env.ETHERSCAN_KEY,
-      // arbitrumOne: ETHERSCAN_KEY,
+      // arbitrumGoerli: process.env.ETHERSCAN_KEY,÷      // arbitrumOne: ETHERSCAN_KEY,
     },
   },
 };
