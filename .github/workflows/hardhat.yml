@@ -16,6 +16,6 @@ jobs:
       - name: Install node modules
         run: yarn install
       - name: Unit test hardhat
-        run:
+        run: |
           npx hardhat node &
           npx hardhat test --network localhost
