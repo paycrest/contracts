@@ -17,7 +17,7 @@ module.exports = {
       saveDeployments: true,
     },
     bscTestnet: {
-      url: `${process.env.BINANCE_TESTNET_RPC_URL}`,
+      url: process.env.BINANCE_TESTNET_RPC_URL,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY],
       chainId: 97,
       saveDeployments: true,
