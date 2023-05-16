@@ -17,6 +17,8 @@ interface IPaycrest {
     event Settled(bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
     event Refunded(bytes32 indexed orderId);
+    /// @dev Emitted when sender get therir rewards.
+    event TransferSenderFee(address indexed sender, uint256 indexed amount);
 
     /* ##################################################################
                                 CUSTOM ERRORS
@@ -32,6 +34,7 @@ interface IPaycrest {
     /// @notice Revert when rewards are not been distributed.
     error UnableToProcessRewards();
     error InvalidInstitutionCode();
+    error NotWhitelisted();
 
     /* ##################################################################
                                 STRUCTS
@@ -47,6 +50,8 @@ interface IPaycrest {
     struct Order {
         address seller;                     //                                                                   slot 0
         address token;                      //                                                                   slot 1
+        address senderFeeRecipient;
+        uint256 senderFee;
         uint96 rate;                        //                                                                   slot 1
         bool isFulfilled;                   //                                                                   slot 2 {11 bytes available}
         address refundAddress;              //                                                                   slot 2 {12 bytes available}
@@ -70,7 +75,7 @@ interface IPaycrest {
     /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
     /// @param messageHash hash must be the result of a hash operation for the verification to be secure. message
     /// @return _orderId the bytes20 which is the orderId
-    function createOrder(address _token, uint256 _amount, address _refundAddress, uint96 _rate, bytes32 _code, string memory messageHash)  external returns(bytes32 _orderId);
+    function createOrder(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, uint96 _rate, bytes32 _code, string memory messageHash)  external returns(bytes32 _orderId);
 
     /// @notice settle transaction and distribute rewards accordingly.
     /// Requirements:
@@ -123,5 +128,11 @@ interface IPaycrest {
     /// @notice get address of liquidity aggregator.
     /// @return address of `liquidityAggregator`.
     function getLiquidityAggregator() external view returns(address);
+
     
+    /// @notice get address of sender whitelisting status.
+    /// @param sender address of the sender.
+    /// @return address of `status`.
+    function getWhitelistedStatus(address sender) external view returns(bool);
+
 }

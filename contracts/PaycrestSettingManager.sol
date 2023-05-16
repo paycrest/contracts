@@ -20,7 +20,7 @@ contract PaycrestSettingManager is Ownable {
     address internal _liquidityAggregator;
 
     mapping(address => bool) internal _isTokenSupported;
-    // mapping(address => bool) internal _liquidityAggregator;
+    mapping(address => bool) internal _isWhitelisted;
 
     mapping(bytes32 => Institution[]) internal supportedInstitutions;
     mapping(bytes32 => InstitutionByCode) internal supportedInstitutionsByCode;
@@ -46,6 +46,7 @@ contract PaycrestSettingManager is Ownable {
     function settingManagerBool(bytes32 what, address value, bool status) external onlyOwner {
         if (value == address(0)) revert ThrowZeroAddress();
         if (what == "token") _isTokenSupported[value] = status;
+        if (what == "whitelist") _isWhitelisted[value] = status;
         else revert InvalidParameter(what);
         emit SettingManagerBool(what, value, status);
     }

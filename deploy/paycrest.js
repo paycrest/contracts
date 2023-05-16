@@ -5,7 +5,13 @@ const path = require("path");
 const { BigNumber } = require("@ethersproject/bignumber");
 
 require("dotenv").config();
-const { DEPLOYER_PRIVATE_KEY } = process.env;
+const { AGGREGATOR_ADDRESS, FEE_COLLECTOR_ADDRESS } = process.env;
+
+async function deployUSDC() {
+  const MockUSDC = await ethers.getContractFactory("MockUSDC");
+  const mockUSDC = await MockUSDC.deploy();
+  return mockUSDC;
+}
 
 async function deployPaycrest(USDC_ADDRESS) {
   const Paycrest = await ethers.getContractFactory("Paycrest");
@@ -22,7 +28,7 @@ async function deployValidator(paycrest) {
 }
 
 async function main() {
-  const [deployer, aggregator, feeRecipient] = await ethers.getSigners();
+  // const [deployer, aggregator, feeRecipient] = await ethers.getSigners();
 
   // const feeRecipientAddress = new ethers.Wallet(
   //   FEE_RECIPIENT_PRIVATE_KEY ?? feeRecipient
@@ -32,15 +38,25 @@ async function main() {
   const dirResolver = path.resolve(__dirname + `/deployment-${chainId}.json`);
 
   // @todo move all initialization into the utils file
-  const USDC_ADDRESS = NETWORKS[chainId]["USDC_ADDRESS"];
   const protocolFeePercent = BigNumber.from(10_000);
   const primaryValidatorsFees = BigNumber.from(5_000); // 5%
   const secondaryValidatorsFees = BigNumber.from(3_000); // 3%
   const usdcMinimumStakeAmount = ethers.utils.parseUnits("500", 6); // not usdc has 6 decimals
 
   console.log(
-    "======================================================= DEPLOYING PAYCREST ======================================================="
+    chainId.toString(), "======================================================= DEPLOYING PAYCREST ======================================================="
   );
+
+  let USDC_ADDRESS;
+  if (
+    chainId.toString() === '97' ||
+    chainId.toString() === '80001'
+  ) {
+    const mockUSDC = await deployUSDC();
+    USDC_ADDRESS = mockUSDC.address;
+  } else {
+    USDC_ADDRESS = NETWORKS[chainId]["USDC_ADDRESS"];
+  }
 
   const paycrest = await deployPaycrest(USDC_ADDRESS);
 
@@ -105,22 +121,36 @@ async function main() {
   const aggregatorInit = ethers.utils.formatBytes32String("aggregator");
   const stakeContract = ethers.utils.formatBytes32String("stakeContract");
 
-  await paycrest.settingManagerBool(fee, this.feeRecipient.address);
-  await paycrest.settingManagerBool(aggregatorInit, this.aggregator.address);
-  await paycrest.settingManagerBool(stakeContract, this.stakeContract.address);
+  await paycrest.updateFeeRecipient(fee, FEE_COLLECTOR_ADDRESS);
+  await paycrest.updateFeeRecipient(aggregatorInit, AGGREGATOR_ADDRESS);
+  await paycrest.updateFeeRecipient(
+    stakeContract,
+    paycrestValidator.address
+  );
 
   console.log(
     "======================================================= SETTING MANAGER FOR MINIMUM AND MAXIMUM ON PAYCREST VALIDATOR======================================================="
   );
+
+
+  const whitelist = ethers.utils.formatBytes32String("whitelist");
+  await paycrest.settingManagerBool(whitelist, FEE_COLLECTOR_ADDRESS, true);
+
 
   await paycrestValidator.setMinimumAmountForTokens(
     USDC_ADDRESS,
     usdcMinimumStakeAmount
   );
 
+  const network = {
+    paycrestValidator: paycrestValidator.address,
+    paycrest: paycrest.address,
+    USDC: USDC_ADDRESS,
+  };
+
   fs.access(dirResolver, fs.F_OK, (err) => {
     if (err) {
-      fs.writeFileSync(dirResolver, JSON.stringify(NETWORKS, null, 4));
+      fs.writeFileSync(dirResolver, JSON.stringify(network, null, 4));
     }
   });
 }
