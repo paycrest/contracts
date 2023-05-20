@@ -37,7 +37,6 @@ async function main() {
   const { chainId } = await ethers.provider.getNetwork();
   const dirResolver = path.resolve(__dirname + `/deployment-${chainId}.json`);
 
-  // @todo move all initialization into the utils file
   const protocolFeePercent = BigNumber.from(10_000);
   const primaryValidatorsFees = BigNumber.from(5_000); // 5%
   const secondaryValidatorsFees = BigNumber.from(3_000); // 3%
