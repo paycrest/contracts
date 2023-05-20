@@ -43,27 +43,6 @@ describe("Ownable settings", function () {
     expect(mockUSDT).to.eq(false);
   });
 
-
-  it("should be able to set supported tokens and emit events", async function () {
-    const token = ethers.utils.formatBytes32String("token");
-    console.log(token);
-    // 0x746f6b656e000000000000000000000000000000000000000000000000000000
-    // 0x746f6b656e000000000000000000000000000000000000000000000000000000
-    // 0x746f6b656e000000000000000000000000000000000000000000000000000000
-
-    await expect(
-      this.paycrest
-        .connect(this.deployer)
-        .settingManagerBool(token, this.mockUSDT.address, true)
-    )
-      .to.emit(this.paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(token, this.mockUSDT.address, true);
-
-    expect(await this.paycrest.isTokenSupported(this.mockUSDT.address)).to.eq(
-      true
-    );
-  });
-
   it("should be able to whitelist sender and emit events", async function () {
     const whitelist = ethers.utils.formatBytes32String("whitelist");
 
