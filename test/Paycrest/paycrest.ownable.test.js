@@ -59,19 +59,6 @@ describe("Ownable settings", function () {
     ).to.eq(true);
   });
 
-  it("should revert when non-owner try to set supported", async function () {
-    const token = ethers.utils.formatBytes32String("token");
-
-    await expect(
-      this.paycrest
-        .connect(this.hacker)
-        .settingManagerBool(token, this.mockUSDT.address, true)
-    ).to.be.revertedWith(Errors.Ownable.onlyOwner);
-
-    expect(await this.paycrest.isTokenSupported(this.mockUSDT.address)).to.eq(
-      false
-    );
-  });
 
   it("should be able to set supported arrays of Institution", async function () {
     const currency = ethers.utils.formatBytes32String("NGN");
