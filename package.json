@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.2",
-    "crypto-js": "^4.1.1"
+    "crypto-js": "^4.1.1",
+    "tronweb": "^5.2.0"
   }
 }

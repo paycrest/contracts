@@ -4,16 +4,29 @@
 </p>
 
 # Paycrest
+An escrow contract is a type of smart contract that holds cryptocurrency or other digital assets temporarily until a transaction is completed. It acts as an intermediary between the parties involved in the transaction, ensuring that the funds are secure and released to the appropriate parties at the appropriate time.
 
+In the case of a cryptocurrency transaction, the escrow contract receives the agreed-upon amount of cryptocurrency from the sender and holds it until the provider fulfills the order and the recipient confirms that they have received the payment. Once the validator confirms the payment, the escrow contract sends the cryptocurrency to the seller's and validators' wallets.
+
+- [ ] Escrow Contract
+- [ ] Enable multiple currencies
+# 
+# Paycrest validator
+A validator contract is a smart contract designed to reward transaction validators and enable them to stake cryptocurrency. Validators play an essential role in maintaining the paycrest protocol security and integrity by validating transactions.
+
+In a validator contract, validators are incentivized to perform their duties correctly by earning rewards in the form of cryptocurrency. The contract uses a specific algorithm to determine which validator gets the transaction to validate, the validator's performance and allocate rewards accordingly.
+
+The validator contract also enables validators to stake cryptocurrency, which means locking up a certain amount of cryptocurrency as collateral to guarantee their performance. Validators who perform their duties correctly and meet the contract's requirements will receive their staked cryptocurrency back, plus rewards for their services. Validators who fail to meet the contract's requirements may lose their staked cryptocurrency as a penalty.
 This project demonstrates a basic Hardhat use case. and how the contract can be depolyed
-
+# 
 Try running some of the following tasks:
 
 ```shell
 $ REPORT_GAS=true npx hardhat test
 $ npx hardhat node
-$ npx hardhat run scripts/deploy.js
+$ npx hardhat run deploy/paycrest.js
 ```
+
 ## Testing
 
 Contract tests are defined under the tests directory. To run all the tests, run:
@@ -32,8 +45,73 @@ You can find a deployment utility with hardhat to easily deploy the smart contra
 1. run the command below, list of tags will be added later, you can choos to use one of the available `--tags` if required.
 
 ```bash
-$ npx hardhat deploy --network local --tags <options> --reset
+$ npx hardhat deploy --network <network>
 ```
+
+## BSC and Matic Testnet Contracts
+
+<table>
+  <thead>
+    <tr>
+      <th>Contracts</th>
+      <th>Address</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Mock USDC</td>
+      <td>0xe6123B5A202868cFe59d829b2E1F9A320B8E0f4A</td>
+    </tr>
+    <tr>
+      <td>Paycrest</td>
+      <td>0xd39074fe0B5A571b7F09F42C736a88b01298d70D</td>
+    </tr>
+    <tr>
+      <td>Paycrest Validator</td>
+      <td>0x92368Ad043cCe95b02F4F3beA9765Aa9caF3E070</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+    </tr>
+    </tr>
+  </tbody>
+</table>
+
+## Tron Shasta Contracts
+
+<table>
+  <thead>
+    <tr>
+      <th>Contracts</th>
+      <th>Address</th>
+      <th>link</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Mock USDC</td>
+      <td>TS9byD5hoYMc5jQTUj974wyxcKP3bMwpvf</td>
+      <td>https://shasta.tronscan.org/#/contract/TS9byD5hoYMc5jQTUj974wyxcKP3bMwpvf/code</td>
+    </tr>
+    <tr>
+      <td>Paycrest</td>
+      <td>TVR1Rm6JKBBCBUu4hmgGGvqr2exQHQQ612</td>
+      <td>https://shasta.tronscan.org/#/contract/TVR1Rm6JKBBCBUu4hmgGGvqr2exQHQQ612/code</td>
+    </tr>
+    <tr>
+      <td>Paycrest Validator</td>
+      <td>TBdCenqaMtHpvKSoUoLJJN5k6bxYbUtUyR</td>
+      <td>https://shasta.tronscan.org/#/contract/TBdCenqaMtHpvKSoUoLJJN5k6bxYbUtUyR/code</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    </tr>
+  </tbody>
+</table>
 
 ## **Commits and PRs**
 
