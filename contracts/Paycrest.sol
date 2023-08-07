@@ -22,7 +22,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     /* ##################################################################
                                 USER CALLS
     ################################################################## */
-    /** @dev See {newPositionOrder-IPaycrest}. */
+    /** @dev See {createOrder-IPaycrest}. */
     function createOrder(
         address _token, 
         uint256 _amount, 
@@ -96,7 +96,11 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             uint256 primaryValidatorReward, 
             uint256 secondaryValidatorsReward
         ) = _calculateFees(_orderId, _settlePercent);
-        transferSenderFee(_orderId);
+        uint256 fee = order[_orderId].senderFee;
+        if (fee > 0) {
+            // transfer sender fee
+            transferSenderFee(_orderId);
+        }
         // transfer protocol fee
         IERC20(token).transfer(feeRecipient, protocolFee);
         // // transfer to liquidity provider 
@@ -192,7 +196,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return result;
     }
 
-    /** @dev See {getProtocolFees-IPaycrest}. */
+    /** @dev See {getFeeDetails-IPaycrest}. */
     function getFeeDetails() external view returns(
         uint64, 
         uint64, 
