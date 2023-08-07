@@ -75,7 +75,14 @@ interface IPaycrest {
     /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
     /// @param messageHash hash must be the result of a hash operation for the verification to be secure. message
     /// @return _orderId the bytes20 which is the orderId
-    function createOrder(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, uint96 _rate, bytes32 _code, string memory messageHash)  external returns(bytes32 _orderId);
+    function createOrder(address _token, 
+        uint256 _amount, 
+        bytes32 _institutionCode,
+        uint96 _rate, 
+        address _senderFeeRecipient,
+        uint256 _senderFee,
+        address _refundAddress, 
+        string calldata messageHash)  external returns(bytes32 _orderId);
 
     /// @notice settle transaction and distribute rewards accordingly.
     /// Requirements:
