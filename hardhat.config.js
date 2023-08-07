@@ -8,19 +8,24 @@ let { DEPLOYER_PRIVATE_KEY } = process.env;
 
 
   module.exports = {
+    namedAccounts: {
+      deployer: {
+        default: 0, // here this will by default take the first account as deployer
+      },
+    },
     networks: {
       hardhat: {
         allowUnlimitedContractSize: true,
       },
       mumbai: {
         url: "https://matic-mumbai.chainstacklabs.com",
-        accounts: DEPLOYER_PRIVATE_KEY,
+        accounts: [DEPLOYER_PRIVATE_KEY],
         chainId: 80001,
         saveDeployments: true,
       },
       bscTestnet: {
         url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
-        accounts: DEPLOYER_PRIVATE_KEY,
+        accounts: [DEPLOYER_PRIVATE_KEY],
         chainId: 97,
         saveDeployments: true,
       },

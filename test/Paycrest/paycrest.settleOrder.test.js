@@ -142,7 +142,7 @@ describe("Paycrest create order", function () {
     const rate = 750;
     const institutionCode = ret.firstBank.code;
     const data = [
-      { bank_account: 09090990901 },
+      { bank_account: "09090990901" },
       { bank_name: "opay" },
       { accoun_name: "opay opay" },
     ];
@@ -169,11 +169,11 @@ describe("Paycrest create order", function () {
         .createOrder(
           this.mockUSDC.address,
           this.mintAmount,
-          this.alice.address,
+          institutionCode,
+          rate,
           this.sender.address,
           this.senderFee,
-          rate,
-          institutionCode,
+          this.alice.address,
           messageHash.toString()
         )
     )
@@ -295,7 +295,7 @@ describe("Paycrest create order", function () {
     const rate = 750;
     const institutionCode = ret.firstBank.code;
     const data = [
-      { bank_account: 09090990901 },
+      { bank_account: "09090990901" },
       { bank_name: "opay" },
       { accoun_name: "opay opay" },
     ];
@@ -322,11 +322,11 @@ describe("Paycrest create order", function () {
         .createOrder(
           this.mockUSDC.address,
           this.mintAmount,
-          this.alice.address,
+          institutionCode,
+          rate,
           this.sender.address,
           this.senderFee,
-          rate,
-          institutionCode,
+          this.alice.address,
           messageHash.toString()
         )
     )

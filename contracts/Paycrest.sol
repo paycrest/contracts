@@ -8,6 +8,12 @@ import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
 contract Paycrest is IPaycrest, PaycrestSettingManager { 
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
+    struct fee {
+        uint256 protocolFee;
+        uint256 liquidityProviderAmount;
+        uint256 primaryValidatorReward;
+        uint256 secondaryValidatorsReward;
+    }
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
     constructor(address _usdc) {
@@ -91,30 +97,25 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         }
 
         // load the fees and transfer associated protocol fees to protocol fee recipient
-        (
-            uint256 protocolFee,
-            uint256 liquidityProviderAmount, 
-            uint256 primaryValidatorReward, 
-            uint256 secondaryValidatorsReward
-        ) = _calculateFees(_orderId, _settlePercent);
-        uint256 fee = order[_orderId].senderFee;
-        if (fee > 0) {
+        ( fee memory _feeParams  ) = _calculateFees(_orderId, _settlePercent);
+        uint256 _fee = order[_orderId].senderFee;
+        if (_fee > 0) {
             // transfer sender fee
             transferSenderFee(_orderId);
         }
         // transfer protocol fee
-        IERC20(token).transfer(feeRecipient, protocolFee);
+        IERC20(token).transfer(feeRecipient, _feeParams.protocolFee);
         // // transfer to liquidity provider 
-        IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
-        IERC20(token).transfer(address(PaycrestStakingContract), (primaryValidatorReward + secondaryValidatorsReward));
+        IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
+        IERC20(token).transfer(address(PaycrestStakingContract), (_feeParams.primaryValidatorReward + _feeParams.secondaryValidatorsReward));
         // // distribute rewards
         bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
             _orderId,
             token,
             _primaryValidator, 
             _secondaryValidators, 
-            primaryValidatorReward, 
-            secondaryValidatorsReward
+            _feeParams.primaryValidatorReward, 
+            _feeParams.secondaryValidatorsReward
         );
         if(!status) revert UnableToProcessRewards();
         // emit event
@@ -124,11 +125,11 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
 
     function transferSenderFee(bytes32 _orderId) internal {
         address recipient = order[_orderId].senderFeeRecipient;
-        uint256 fee = order[_orderId].senderFee;
+        uint256 _fee = order[_orderId].senderFee;
         // transfer sender fee
-        IERC20(order[_orderId].token).transfer(recipient, fee);
+        IERC20(order[_orderId].token).transfer(recipient, _fee);
         // emmit event
-        emit TransferSenderFee(recipient, fee);
+        emit TransferSenderFee(recipient, _fee);
     }
 
     /** @dev See {refund-IPaycrest}. */
@@ -145,23 +146,23 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return true;
     }
 
-    function _calculateFees(bytes32 _orderId, uint96 _settlePercent) private view returns(uint256 protocolFee, uint256 liquidityProviderAmount, uint256 primaryValidatorReward, uint256 secondaryValidatorsReward) {
+    function _calculateFees(bytes32 _orderId, uint96 _settlePercent) private view returns(fee memory _feeParams ) {
         // get the total amount associated with the orderId
         uint256 amount = order[_orderId].amount;
         // get sender fee from amount
         amount = amount - order[_orderId].senderFee;
         // get the settled percent that is scheduled for this amount
-        liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
+        _feeParams.liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
         // deduct protocol fees from the new total amount
-        protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS; 
+        _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS; 
         // substract total fees from the new amount after getting the scheduled amount
-        liquidityProviderAmount = (liquidityProviderAmount - protocolFee);
+        _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
         // get primary validators fees primaryValidatorsReward
-        primaryValidatorReward = (protocolFee * primaryValidatorFeePercent) / MAX_BPS;
+        _feeParams.primaryValidatorReward = (_feeParams.protocolFee * primaryValidatorFeePercent) / MAX_BPS;
         // get primary validators fees secondaryValidatorsReward
-        secondaryValidatorsReward = (protocolFee * secondaryValidatorFeePercent) / MAX_BPS;
+        _feeParams.secondaryValidatorsReward = (_feeParams.protocolFee * secondaryValidatorFeePercent) / MAX_BPS;
         // update new protocol fee
-        protocolFee = protocolFee - (primaryValidatorReward + secondaryValidatorsReward);
+        _feeParams.protocolFee = _feeParams.protocolFee - (_feeParams.primaryValidatorReward + _feeParams.secondaryValidatorsReward);
     }
     
     /* ##################################################################

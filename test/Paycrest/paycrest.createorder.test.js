@@ -59,9 +59,9 @@ describe("Paycrest create order", function () {
   });
 
   it("Should be able to create order by Sender for Alice", async function () {
-    const ret = await setSupportedInstitution( this.paycrest, this.deployer);
+    const ret = await setSupportedInstitution(this.paycrest, this.deployer);
     const fee = ethers.utils.formatBytes32String("fee");
-  
+
     await this.paycrest
       .connect(this.deployer)
       .updateFeeRecipient(fee, this.feeRecipient.address);
@@ -73,11 +73,11 @@ describe("Paycrest create order", function () {
     const institutionCode = ret.firstBank.code;
 
     const data = [
-      { bank_account: 09090990901 },
+      { bank_account: "09090990901" },
       { bank_name: "opay" },
       { account_name: "opay opay" },
     ];
-    
+
     const password = "123";
 
     const cipher = CryptoJS.AES.encrypt(
@@ -101,11 +101,11 @@ describe("Paycrest create order", function () {
         .createOrder(
           this.mockUSDC.address,
           this.mintAmount,
-          this.alice.address,
+          institutionCode,
+          rate,
           this.sender.address,
           this.senderFee,
-          rate,
-          institutionCode,
+          this.alice.address,
           messageHash.toString()
         )
     )
@@ -179,7 +179,7 @@ describe("Paycrest create order", function () {
     const rate = 750;
     const institutionCode = ret.firstBank.code;
     const data = [
-      { bank_account: 09090990901 },
+      { bank_account: "09090990901" },
       { bank_name: "opay" },
       { accoun_name: "opay opay" },
     ];
@@ -201,16 +201,18 @@ describe("Paycrest create order", function () {
     const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
 
     await expect(
-      this.paycrest.connect(this.sender).createOrder(
-        this.mockUSDT.address,
-        this.mintAmount,
-        this.alice.address,
-        this.sender.address,
-        this.senderFee,
-        rate,
-        institutionCode,
-        messageHash.toString()
-      )
+      this.paycrest
+        .connect(this.sender)
+        .createOrder(
+          this.mockUSDT.address,
+          this.mintAmount,
+          institutionCode,
+          rate,
+          this.sender.address,
+          this.senderFee,
+          this.alice.address,
+          messageHash.toString()
+        )
     ).to.be.revertedWithCustomError(
       this.paycrest,
       Errors.Paycrest.TokenNotSupported
@@ -239,7 +241,6 @@ describe("Paycrest create order", function () {
     expect(await this.mockUSDT.balanceOf(this.alice.address)).to.eq(
       this.mintAmount
     );
-
   });
 
   it("Should revert when creating order with zero input amount", async function () {
@@ -256,7 +257,7 @@ describe("Paycrest create order", function () {
     const rate = 750;
     const institutionCode = ret.firstBank.code;
     const data = [
-      { bank_account: 09090990901 },
+      { bank_account: "09090990901" },
       { bank_name: "opay" },
       { accoun_name: "opay opay" },
     ];
@@ -283,11 +284,11 @@ describe("Paycrest create order", function () {
         .createOrder(
           this.mockUSDC.address,
           ZERO_AMOUNT,
-          this.alice.address,
+          institutionCode,
+          rate,
           this.sender.address,
           this.senderFee,
-          rate,
-          institutionCode,
+          this.alice.address,
           messageHash.toString()
         )
     ).to.be.revertedWithCustomError(
@@ -334,7 +335,7 @@ describe("Paycrest create order", function () {
     const rate = 750;
     const institutionCode = ret.firstBank.code;
     const data = [
-      { bank_account: 09090990901 },
+      { bank_account: "09090990901" },
       { bank_name: "opay" },
       { accoun_name: "opay opay" },
     ];
@@ -361,11 +362,11 @@ describe("Paycrest create order", function () {
         .createOrder(
           this.mockUSDC.address,
           this.mintAmount,
-          ZERO_ADDRESS,
+          institutionCode,
+          rate,
           this.sender.address,
           this.senderFee,
-          rate,
-          institutionCode,
+          ZERO_ADDRESS,
           messageHash.toString()
         )
     ).to.be.revertedWithCustomError(
@@ -412,7 +413,7 @@ describe("Paycrest create order", function () {
     const rate = 750;
     const invalidInstitutionCode = ethers.utils.formatBytes32String("0000");
     const data = [
-      { bank_account: 09090990901 },
+      { bank_account: "09090990901" },
       { bank_name: "opay" },
       { accoun_name: "opay opay" },
     ];
@@ -439,11 +440,11 @@ describe("Paycrest create order", function () {
         .createOrder(
           this.mockUSDC.address,
           this.mintAmount,
-          this.alice.address,
+          invalidInstitutionCode,
+          rate,
           this.sender.address,
           this.senderFee,
-          rate,
-          invalidInstitutionCode,
+          this.alice.address,
           messageHash.toString()
         )
     ).to.be.revertedWithCustomError(
@@ -475,5 +476,4 @@ describe("Paycrest create order", function () {
       this.mintAmount
     );
   });
-
 });
