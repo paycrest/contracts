@@ -10,12 +10,14 @@ const { AGGREGATOR_ADDRESS, FEE_COLLECTOR_ADDRESS } = process.env;
 async function deployUSDC() {
   const MockUSDC = await ethers.getContractFactory("MockUSDC");
   const mockUSDC = await MockUSDC.deploy();
+  console.log("mockUSDC deployed to:", mockUSDC.address)
   return mockUSDC;
 }
 
 async function deployPaycrest(USDC_ADDRESS) {
   const Paycrest = await ethers.getContractFactory("Paycrest");
   const paycrest = await Paycrest.deploy(USDC_ADDRESS);
+  console.log("paycrest deployed to:", paycrest.address)
   return paycrest;
 }
 
@@ -24,6 +26,7 @@ async function deployValidator(paycrest) {
     "PaycrestValidator"
   );
   const paycrestValidator = await PaycrestValidator.deploy(paycrest);
+  console.log("paycrestValidator deployed to:", paycrestValidator.address)
   return paycrestValidator;
 }
 
@@ -43,19 +46,22 @@ async function main() {
   const usdcMinimumStakeAmount = ethers.utils.parseUnits("500", 6); // not usdc has 6 decimals
 
   console.log(
-    chainId.toString(), "======================================================= DEPLOYING PAYCREST ======================================================="
+    chainId.toString(),
+    "======================================================= DEPLOYING PAYCREST ======================================================="
   );
 
   let USDC_ADDRESS;
-  if (
-    chainId.toString() === '97' ||
-    chainId.toString() === '80001'
-  ) {
+  if (chainId.toString() === "97" || chainId.toString() === "80001") {
     const mockUSDC = await deployUSDC();
+    // minting 1000000 USDC to deployer
+    await mockUSDC.mint(
+      ethers.utils.parseUnits("1000000", 6)
+    );
     USDC_ADDRESS = mockUSDC.address;
   } else {
     USDC_ADDRESS = NETWORKS[chainId]["USDC_ADDRESS"];
   }
+  console.log("USDC_ADDRESS is deployed to:", USDC_ADDRESS);
 
   const paycrest = await deployPaycrest(USDC_ADDRESS);
 
@@ -107,6 +113,7 @@ async function main() {
     "======================================================= SETTING MANAGER FOR PROTOCOL FEES RECIPIENTS ======================================================="
   );
 
+
   await paycrest.updateProtocolFees(
     protocolFeePercent,
     primaryValidatorsFees,
@@ -122,19 +129,14 @@ async function main() {
 
   await paycrest.updateFeeRecipient(fee, FEE_COLLECTOR_ADDRESS);
   await paycrest.updateFeeRecipient(aggregatorInit, AGGREGATOR_ADDRESS);
-  await paycrest.updateFeeRecipient(
-    stakeContract,
-    paycrestValidator.address
-  );
+  await paycrest.updateFeeRecipient(stakeContract, paycrestValidator.address);
 
   console.log(
     "======================================================= SETTING MANAGER FOR MINIMUM AND MAXIMUM ON PAYCREST VALIDATOR======================================================="
   );
 
-
   const whitelist = ethers.utils.formatBytes32String("whitelist");
   await paycrest.settingManagerBool(whitelist, FEE_COLLECTOR_ADDRESS, true);
-
 
   await paycrestValidator.setMinimumAmountForTokens(
     USDC_ADDRESS,
@@ -147,9 +149,30 @@ async function main() {
     USDC: USDC_ADDRESS,
   };
 
-  fs.access(dirResolver, fs.F_OK, (err) => {
+  // fs.access(dirResolver, fs.F_OK, (err) => {
+  //   if (err) {
+  //     fs.writeFileSync(dirResolver, JSON.stringify(network, null, 4));
+  //   }
+  // });
+
+  const fileName = `deployment-${chainId}.json`; // Create the desired file name
+
+  const parentDir = path.resolve(__dirname, ".."); // Go up one level from the current directory
+  const deploymentDir = path.join(parentDir, `deployment`); // Combine with 'deployment' folder name
+
+  // Check if the deployment folder exists
+  fs.access(deploymentDir, fs.constants.F_OK, (err) => {
     if (err) {
-      fs.writeFileSync(dirResolver, JSON.stringify(network, null, 4));
+      // Folder doesn't exist, create it
+      fs.mkdirSync(deploymentDir);
+
+      // Now you can write the data to a file inside the deployment folder
+      const filePath = path.join(deploymentDir, fileName);
+      fs.writeFileSync(filePath, JSON.stringify(network, null, 4));
+    } else {
+      // Folder exists, you can still write the data to a file inside it
+      const filePath = path.join(deploymentDir, fileName);
+      fs.writeFileSync(filePath, JSON.stringify(network, null, 4));
     }
   });
 }

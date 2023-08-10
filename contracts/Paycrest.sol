@@ -40,7 +40,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         string calldata messageHash
     )  external returns(bytes32 orderId) {
         // sender must be a whitelisted address
-        if(!_isWhitelisted[msg.sender]) revert NotWhitelisted();
+        // if(!_isWhitelisted[msg.sender]) revert NotWhitelisted();
         // checks that are required
         _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _institutionCode);
         // first transfer token from msg.sender
