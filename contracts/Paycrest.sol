@@ -1,13 +1,13 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {PaycrestSettingManager} from "./PaycrestSettingManager.sol";
 import {IPaycrestStake} from "./interface/IPaycrestStake.sol";
 import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
 contract Paycrest is IPaycrest, PaycrestSettingManager { 
-    using SafeERC20 for IERC20;
-    using ECDSA for bytes32;
+    using SafeERC20Upgradeable for IERC20;
+    using ECDSAUpgradeable for bytes32;
     struct fee {
         uint256 protocolFee;
         uint256 liquidityProviderAmount;
@@ -16,9 +16,22 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
-    constructor(address _usdc) {
-        _isTokenSupported[_usdc] = true;
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
+
+    function initialize(address _usdc) external initializer {    
+        _isTokenSupported[_usdc] = true;   
+        MAX_BPS = 100_000; 
+        protocolFeePercent = 5000; // 5%
+        primaryValidatorFeePercent = 500; // 0.5%
+        secondaryValidatorFeePercent = 500; // 0.5%
+        __Ownable_init();
+    }
+    // constructor(address _usdc) {
+    //     _isTokenSupported[_usdc] = true;
+    // }
 
     modifier onlyAggregator {
         if(msg.sender != _liquidityAggregator) revert OnlyAggregator();

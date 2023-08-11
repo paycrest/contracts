@@ -1,21 +1,28 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import  "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-contract PaycrestValidator is Ownable, ReentrancyGuard { 
-    using SafeERC20 for IERC20;
+contract PaycrestValidator is OwnableUpgradeable, ReentrancyGuardUpgradeable { 
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     
-    address immutable private Paycrest;    
+    address private Paycrest;    
     bool private initialization;
     mapping(address => uint256) private minimumAmount;
     mapping(address => mapping (address => uint256)) private _balance;
 
-    constructor(address _paycrest) {
-        Paycrest = _paycrest;
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _paycrest) external initializer {    
+        Paycrest = _paycrest;   
         initialization = true;
+        __Ownable_init();
+        __ReentrancyGuard_init();
     }
 
     event NewTokenSupported(address indexed token, uint256 indexed minimumStakeAmount);
@@ -54,7 +61,7 @@ contract PaycrestValidator is Ownable, ReentrancyGuard {
         if(!initialization) revert ThrowInitPaused();
         if(!_isTokenSupported(token)) revert TokenNotSupported();
         if(amount < minimumAmount[token]) revert MinimumRequired();
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        IERC20Upgradeable(token).transferFrom(msg.sender, address(this), amount);
         _balance[msg.sender][token] += amount;
         emit Staked(msg.sender, amount);
     }
@@ -63,7 +70,7 @@ contract PaycrestValidator is Ownable, ReentrancyGuard {
         uint256 previouslyStakedAmount = _balance[msg.sender][token];
         if(amount > previouslyStakedAmount) revert Insufficient();
         _balance[msg.sender][token] -= amount;
-        IERC20(token).transfer(recipient, amount);
+        IERC20Upgradeable(token).transfer(recipient, amount);
         emit Withdrawn(msg.sender, amount);
     }
 

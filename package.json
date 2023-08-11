@@ -6,6 +6,7 @@
   "repository": "https://github.com/paycrest/contracts",
   "scripts": {
     "test": "npx hardhat test",
+    "ownership": "npx hardhat test test/paycrest/paycrest.ownable.test.js",
     "compile": "npx hardhat compile",
     "lint:sol": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
     "lint:sol:fix": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --write"
@@ -21,18 +22,21 @@
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@openzeppelin/hardhat-upgrades": "^1.27.0",
     "@typechain/ethers-v5": "^10.2.0",
     "@typechain/hardhat": "^6.1.5",
     "chai": "^4.3.7",
     "dotenv": "^16.0.2",
-    "ethers": "^5.0.0",
+    "ethers": "^5.7.2",
     "hardhat": "^2.14.0",
+    "hardhat-deploy": "^0.11.34",
     "hardhat-gas-reporter": "^1.0.9",
     "solidity-coverage": "^0.8.2",
     "typechain": "^8.1.1"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.2",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
     "crypto-js": "^4.1.1",
     "tronweb": "^5.2.0"
   }

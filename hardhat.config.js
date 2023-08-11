@@ -2,9 +2,10 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@typechain/hardhat");
 require("@typechain/hardhat");
 require("@nomiclabs/hardhat-ethers");
-
+require("hardhat-deploy");
+require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
-let { DEPLOYER_PRIVATE_KEY } = process.env;
+let { DEPLOYER_PRIVATE_KEY, ALCHEMY_KEY } = process.env;
 
   module.exports = {
     namedAccounts: {
@@ -14,17 +15,23 @@ let { DEPLOYER_PRIVATE_KEY } = process.env;
     },
     networks: {
       hardhat: {
-        allowUnlimitedContractSize: true,
+        saveDeployments: true,
+        forking: {
+          url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+          enabled: true,
+          // blockNumber: 103882851, // (Mar-25-2023 04:09:31 PM +UTC)
+        },
+        // allowUnlimitedContractSize: true,
       },
       mumbai: {
         url: "https://rpc-mumbai.maticvigil.com/",
-        accounts: DEPLOYER_PRIVATE_KEY,
+        accounts: [DEPLOYER_PRIVATE_KEY],
         chainId: 80001,
         saveDeployments: true,
       },
       bscTestnet: {
         url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
-        accounts: DEPLOYER_PRIVATE_KEY,
+        accounts: [DEPLOYER_PRIVATE_KEY],
         chainId: 97,
         saveDeployments: true,
       },

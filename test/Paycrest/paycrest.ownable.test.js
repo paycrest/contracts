@@ -1,6 +1,13 @@
 const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
 const {
+  paycrestValidatorFixture,
+} = require("../fixtures/paycrestValidator.js");
+require("dotenv").config();
+let { ALCHEMY_KEY } = process.env;
+const { network } = require("hardhat");
+
+const {
   deployContract,
   ZERO_AMOUNT,
   ZERO_ADDRESS,
@@ -11,56 +18,124 @@ const {
 const { expect } = require("chai");
 
 describe("Ownable settings", function () {
-  beforeEach(async function () {
-    [
-      this.deployer,
-      this.feeRecipient,
-      this.keeper,
-      this.aggregator,
-      this.alice,
-      this.hacker,
-      this.sender,
-      ...this.accounts
-    ] = await ethers.getSigners();
+  let paycrestValidator;;
+  let paycrest;
+  let usdc;
+  let usdt;
+  let impersonator;
+  let admin;
+  let feeRecipient;
+  let aggregator;
+  let users;
+  let keeper;
+  let alice;
+  let hacker;
+  let sender;
+  let Mark;
 
-    this.mockUSDC = await deployContract("MockUSDC");
-    this.mockUSDT = await deployContract("MockUSDC");
-    this.paycrest = await deployContract("Paycrest", [this.mockUSDC.address]);
-    this.paycrestValidator = await deployContract("PaycrestValidator", [
-      this.paycrest.address,
-    ]);
-  });
+
+
+  async function setupAndResetFork() {
+    console.log("Forking");
+    await network.provider.request({
+      method: "hardhat_reset",
+      params: [
+        {
+          forking: {
+            jsonRpcUrl: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+            // current only works on this block
+            blockNumber: 46185793,
+          },
+        },
+      ],
+    });
+    console.log("Fork reset");
+
+    ({
+      paycrestValidator,
+      paycrest,
+      usdc,
+      usdt,
+      impersonator,
+      admin,
+      feeRecipient,
+      aggregator,
+      users,
+    } = await paycrestValidatorFixture());
+    console.log("Fixtures deployed");
+
+    [keeper, alice, hacker, sender, Mark] =
+      users;
+    
+    // [
+    //   this.deployer,
+    //   this.feeRecipient,
+    //   this.keeper,
+    //   this.aggregator,
+    //   this.alice,
+    //   this.hacker,
+    //   this.sender,
+    //   ...this.accounts
+    // ] = await ethers.getSigners();
+
+    // aliceAmountBN = ethers.utils.parseUnits("5000", 6);
+    // bobAmountBN = ethers.utils.parseUnits("5000", 6);
+    // markAmountBN = ethers.utils.parseUnits("5000", 6);
+    // eveAmountBN = ethers.utils.parseUnits("1000", 6);
+    // jackAmountBN = ethers.utils.parseUnits("500", 6);
+    // eveLeverage = ethers.BigNumber.from("9000");
+    // jackLeverage = ethers.BigNumber.from("2000");
+
+    // await usdc.connect(impersonator).transfer(Alice.address, aliceAmountBN);
+    // await usdc.connect(impersonator).transfer(Bob.address, bobAmountBN);
+    // await usdc.connect(impersonator).transfer(Eve.address, eveAmountBN);
+    // await usdc.connect(impersonator).transfer(Jack.address, jackAmountBN);
+    // await usdc.connect(impersonator).transfer(Mark.address, markAmountBN);
+
+    // await usdc.connect(Alice).approve(waterVault.address, aliceAmountBN);
+    // await usdc.connect(Bob).approve(waterVault.address, bobAmountBN);
+    // await usdc.connect(Mark).approve(waterVault.address, markAmountBN);
+
+    // await usdc.connect(Eve).approve(maotaiVault.address, eveAmountBN);
+    // await usdc.connect(Jack).approve(maotaiVault.address, jackAmountBN);
+    // await waterVault.connect(Alice).deposit(aliceAmountBN, Alice.address);
+    // await waterVault.connect(Bob).deposit(bobAmountBN, Bob.address);
+    // await waterVault.connect(Mark).deposit(markAmountBN, Mark.address);
+  }
 
   it("should get supported token", async function () {
-    const mockUSDC = await this.paycrest.isTokenSupported(this.mockUSDC.address);
+    await setupAndResetFork();
+    const mockUSDC = await paycrest.isTokenSupported(usdc.address);
     expect(mockUSDC).to.eq(true);
   });
 
   it("should revert for unsupported token", async function () {
-    const mockUSDT = await this.paycrest.isTokenSupported(
-      this.mockUSDT.address
+    await setupAndResetFork();
+    const mockUSDT = await paycrest.isTokenSupported(
+      usdt.address
     );
     expect(mockUSDT).to.eq(false);
   });
 
   it("should be able to whitelist sender and emit events", async function () {
+    await setupAndResetFork();
     const whitelist = ethers.utils.formatBytes32String("whitelist");
 
     await expect(
-      this.paycrest
-        .connect(this.deployer)
-        .settingManagerBool(whitelist, this.sender.address, true)
+      paycrest
+        .connect(admin)
+        .settingManagerBool(whitelist, sender.address, true)
     )
-      .to.emit(this.paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(whitelist, this.sender.address, true);
+      .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
+      .withArgs(whitelist, sender.address, true);
 
-    expect(
-      await this.paycrest.getWhitelistedStatus(this.sender.address)
-    ).to.eq(true);
+    expect(await paycrest.getWhitelistedStatus(sender.address)).to.eq(
+      true
+    );
   });
 
-
   it("should be able to set supported arrays of Institution", async function () {
+    await setupAndResetFork();
     const currency = ethers.utils.formatBytes32String("NGN");
 
     const firstBank = {
@@ -90,8 +165,8 @@ describe("Ownable settings", function () {
     };
 
     // await expect(
-      this.paycrest
-        .connect(this.deployer)
+      paycrest
+        .connect(admin)
         .setSupportedInstitutions(currency, [
           firstBank,
           opay,
@@ -100,34 +175,34 @@ describe("Ownable settings", function () {
           gtb,
           stanbic,
         ])
-    const currencies = await this.paycrest.getSupportedInstitutions(currency);
+    const currencies = await paycrest.getSupportedInstitutions(currency);
     // expect(currencies.length).to.eq(6);
     // console.log("all currencies", currencies);
 
-
     [this.firstBankName, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(firstBank.code);
+      await paycrest.getSupportedInstitutionName(firstBank.code);
     expect(this.firstBankName).to.eq(firstBank.name);
     expect(this.currency).to.eq(currency);
-    [this.opayName, this.currency] = await this.paycrest.getSupportedInstitutionName(opay.code);
+    [this.opayName, this.currency] = await paycrest.getSupportedInstitutionName(opay.code);
     expect(this.opayName).to.eq(opay.name);
     expect(this.currency).to.eq(currency);
-    [this.palmpayName, this.currency] = await this.paycrest.getSupportedInstitutionName(palmpay.code);
+    [this.palmpayName, this.currency] = await paycrest.getSupportedInstitutionName(palmpay.code);
     expect(this.palmpayName).to.eq(palmpay.name);
     expect(this.currency).to.eq(currency);
-    [this.accessBankName, this.currency] = await this.paycrest.getSupportedInstitutionName(accessBank.code);
+    [this.accessBankName, this.currency] = await paycrest.getSupportedInstitutionName(accessBank.code);
     expect(this.accessBankName).to.eq(accessBank.name);
     expect(this.currency).to.eq(currency);
-    [this.gtbName, this.currency] = await this.paycrest.getSupportedInstitutionName(gtb.code);
+    [this.gtbName, this.currency] = await paycrest.getSupportedInstitutionName(gtb.code);
     expect(this.gtbName).to.eq(gtb.name);
     expect(this.currency).to.eq(currency);
-    [this.stanbicName, this.currency] = await this.paycrest.getSupportedInstitutionName(stanbic.code);
+    [this.stanbicName, this.currency] = await paycrest.getSupportedInstitutionName(stanbic.code);
     expect(this.stanbicName).to.eq(stanbic.name);
     expect(this.currency).to.eq(currency);
-    
+
   });
 
   it("should revert when non-owner want to set Institution", async function () {
+    await setupAndResetFork();
     const currency = ethers.utils.formatBytes32String("NGN");
     const zeroIndexBytes = ethers.utils.formatBytes32String("");
 
@@ -158,8 +233,8 @@ describe("Ownable settings", function () {
     };
 
     await expect(
-      this.paycrest
-        .connect(this.hacker)
+      paycrest
+        .connect(hacker)
         .setSupportedInstitutions(currency, [
           firstBank,
           opay,
@@ -171,65 +246,67 @@ describe("Ownable settings", function () {
     ).to.be.revertedWith(Errors.Ownable.onlyOwner);
 
     [this.firstBankName, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(firstBank.code);
+      await paycrest.getSupportedInstitutionName(firstBank.code);
     expect(this.firstBankName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
     [this.opayName, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(opay.code);
+      await paycrest.getSupportedInstitutionName(opay.code);
     expect(this.opayName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
     [this.palmpayName, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(palmpay.code);
+      await paycrest.getSupportedInstitutionName(palmpay.code);
     expect(this.palmpayName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
     [this.accessBankName, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(accessBank.code);
+      await paycrest.getSupportedInstitutionName(accessBank.code);
     expect(this.accessBankName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
     [this.gtbName, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(gtb.code);
+      await paycrest.getSupportedInstitutionName(gtb.code);
     expect(this.gtbName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
     [this.stanbicName, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(stanbic.code);
+      await paycrest.getSupportedInstitutionName(stanbic.code);
     expect(this.stanbicName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
 
   });
 
   it("should be able to set protocol fees and emit events", async function () {
+    await setupAndResetFork();
     // charge 10% as protocol fee
     const protocolFeePercent = BigNumber.from(10_000);
     const primaryValidatorsFees = BigNumber.from(5_000); // 5%
     const secondaryValidatorsFees = BigNumber.from(3_000); // 3%
 
     await expect(
-      this.paycrest
-        .connect(this.deployer)
+      paycrest
+        .connect(admin)
         .updateProtocolFees(
           protocolFeePercent,
           primaryValidatorsFees,
           secondaryValidatorsFees
         )
     )
-      .to.emit(this.paycrest, Events.Paycrest.PaycrestFees)
+      .to.emit(paycrest, Events.Paycrest.PaycrestFees)
       .withArgs(protocolFeePercent, primaryValidatorsFees, secondaryValidatorsFees);
 
-    [this.protocolFeePecent, this.primaryvalidatorPercent, this.secondaryValidatorPercent, ] = await this.paycrest.getFeeDetails();
+    [this.protocolFeePecent, this.primaryvalidatorPercent, this.secondaryValidatorPercent, ] = await paycrest.getFeeDetails();
     expect(this.protocolFeePecent).to.eq(protocolFeePercent);
     expect(this.primaryvalidatorPercent).to.eq(primaryValidatorsFees);
     expect(this.secondaryValidatorPercent).to.eq(secondaryValidatorsFees);
   });
 
   it("should not be able to set protocol fees by non-owner", async function () {
+    await setupAndResetFork();
     // charge 10% as protocol fee
     const protocolFeePercent = BigNumber.from(10_000);
     const primaryValidatorsFees = BigNumber.from(5_000); // 5%
     const secondaryValidatorsFees = BigNumber.from(3_000); // 3%
 
     await expect(
-      this.paycrest
-        .connect(this.hacker)
+      paycrest
+        .connect(hacker)
         .updateProtocolFees(
           protocolFeePercent,
           primaryValidatorsFees,
@@ -240,23 +317,23 @@ describe("Ownable settings", function () {
   });
 
   it("should update fee recipients, stake contract and aggregator", async function () {
+    await setupAndResetFork();
     const fee = ethers.utils.formatBytes32String("fee");
-    const aggregator = ethers.utils.formatBytes32String("aggregator");
+    const _aggregator = ethers.utils.formatBytes32String("aggregator");
     const stakeContract = ethers.utils.formatBytes32String("stakeContract");
 
-    await this.paycrest
-      .connect(this.deployer)
-      .updateFeeRecipient(fee, this.feeRecipient.address);
-    
-    await this.paycrest
-      .connect(this.deployer)
-      .updateFeeRecipient(aggregator, this.aggregator.address);
-    
-    expect(await this.paycrest.getLiquidityAggregator()).to.eq(this.aggregator.address);
+    await paycrest
+      .connect(admin)
+      .updateFeeRecipient(fee, feeRecipient.address);
 
-    await this.paycrest
-      .connect(this.deployer)
-      .updateFeeRecipient(stakeContract, this.paycrestValidator.address);
+    await paycrest
+      .connect(admin)
+      .updateFeeRecipient(_aggregator, aggregator.address);
+
+    expect(await paycrest.getLiquidityAggregator()).to.eq(aggregator.address);
+
+    await paycrest
+      .connect(admin)
+      .updateFeeRecipient(stakeContract, paycrestValidator.address);
   });
-
 });

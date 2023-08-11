@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract PaycrestSettingManager is Ownable { 
+contract PaycrestSettingManager is OwnableUpgradeable { 
     struct Institution {
         bytes32 code; // usually not more than 8 letters
         bytes32 name; // 
@@ -11,10 +11,10 @@ contract PaycrestSettingManager is Ownable {
         bytes32 name;
         bytes32 currency;
     }
-    uint256 internal constant MAX_BPS = 100_000;
-    uint64 internal protocolFeePercent = 5000; // 5%
-    uint64 internal primaryValidatorFeePercent = 500; // 0.5%
-    uint64 internal secondaryValidatorFeePercent = 500; // 0.5%
+    uint256 internal MAX_BPS;
+    uint64 internal protocolFeePercent; // 5%
+    uint64 internal primaryValidatorFeePercent; // 0.5%
+    uint64 internal secondaryValidatorFeePercent; // 0.5%
     address internal feeRecipient;
     address internal PaycrestStakingContract;
     address internal _liquidityAggregator;
