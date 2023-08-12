@@ -60,15 +60,27 @@ $ npx hardhat run  scripts/paycrest.js --network <network>
   <tbody>
     <tr>
       <td>Mock USDC</td>
-      <td>0xe6123B5A202868cFe59d829b2E1F9A320B8E0f4A</td>
+      <td>0xcCe1093D2BB8De654827D4f50428A6AF52957Db0</td>
     </tr>
     <tr>
-      <td>Paycrest</td>
-      <td>0xd39074fe0B5A571b7F09F42C736a88b01298d70D</td>
+      <td>Admin</td>
+      <td>0x11CB3C090CD54f8d38Ae80c430444A76269c7Ef5</td>
     </tr>
     <tr>
-      <td>Paycrest Validator</td>
-      <td>0x92368Ad043cCe95b02F4F3beA9765Aa9caF3E070</td>
+      <td>Paycrest proxies</td>
+      <td>0x53B7F3FefAb5375c768A3D8b6fa16733898F6e75</td>
+    </tr>
+    <tr>
+      <td>Paycrest Validator proxies</td>
+      <td>0x868a22D2844877338FAD5e1B36a4Bd29268A1078</td>
+    </tr>
+    <tr>
+      <td>Paycrest Impl</td>
+      <td>0xB3021890F6DC09357E5ef5D322a10db4D9cF8a84</td>
+    </tr>
+    <tr>
+      <td>Paycrest Validator Impl</td>
+      <td>0x09E250ad70420BD0631e4C5eB3789c6C2Fbf47ED</td>
     </tr>
     <tr>
       <td></td>
