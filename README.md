@@ -45,7 +45,7 @@ You can find a deployment utility with hardhat to easily deploy the smart contra
 1. run the command below, list of tags will be added later, you can choos to use one of the available `--tags` if required.
 
 ```bash
-$ npx hardhat run --network <network> deploy/paycrest.js
+$ npx hardhat run  scripts/paycrest.js --network <network>
 ```
 
 ## BSC and Matic Testnet Contracts
