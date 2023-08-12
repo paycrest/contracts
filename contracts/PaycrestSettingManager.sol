@@ -12,9 +12,8 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         bytes32 currency;
     }
     uint256 internal MAX_BPS;
-    uint64 internal protocolFeePercent; // 5%
-    uint64 internal primaryValidatorFeePercent; // 0.5%
-    uint64 internal secondaryValidatorFeePercent; // 0.5%
+    uint128 internal protocolFeePercent; // 5%
+    uint128 internal validatorFeePercent; // 0.5%
     address internal feeRecipient;
     address internal PaycrestStakingContract;
     address internal _liquidityAggregator;
@@ -38,7 +37,7 @@ contract PaycrestSettingManager is OwnableUpgradeable {
 
     event SettingManagerBool(bytes32 what, address value, bool status);
     event SettingManagerForInstitution(bytes32 what, bytes8 value, bytes8 status);
-    event PaycrestFees(uint64 protocolFee, uint64 primaryValidator, uint64 secondaryValidator);
+    event PaycrestFees(uint128 protocolFee, uint128 validatorFeePercent);
     
     /* ##################################################################
                                 OWNER FUNCTIONS
@@ -64,11 +63,10 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         }
     }
 
-    function updateProtocolFees(uint64 _protocolFeePercent, uint64 _primaryValidatorPercent, uint64 _secondaryValidatorPercent) external onlyOwner {
+    function updateProtocolFees(uint128 _protocolFeePercent, uint128 _validatorFeePercent) external onlyOwner {
         protocolFeePercent = _protocolFeePercent;
-        primaryValidatorFeePercent = _primaryValidatorPercent;
-        secondaryValidatorFeePercent = _secondaryValidatorPercent;
-        emit PaycrestFees(_protocolFeePercent, _primaryValidatorPercent, _secondaryValidatorPercent);
+        validatorFeePercent = _validatorFeePercent;
+        emit PaycrestFees(_protocolFeePercent, _validatorFeePercent);
     }
 
     function updateFeeRecipient(bytes32 what, address value) external onlyOwner {

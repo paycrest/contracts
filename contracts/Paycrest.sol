@@ -11,8 +11,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     struct fee {
         uint256 protocolFee;
         uint256 liquidityProviderAmount;
-        uint256 primaryValidatorReward;
-        uint256 secondaryValidatorsReward;
+        uint256 validatorsReward;
     }
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
@@ -25,8 +24,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         _isTokenSupported[_usdc] = true;   
         MAX_BPS = 100_000; 
         protocolFeePercent = 5000; // 5%
-        primaryValidatorFeePercent = 500; // 0.5%
-        secondaryValidatorFeePercent = 500; // 0.5%
+        validatorFeePercent = 500; // 0.5%
         __Ownable_init();
     }
     // constructor(address _usdc) {
@@ -92,8 +90,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     /** @dev See {settle-IPaycrest}. */
     function settle(
         bytes32 _orderId, 
-        address _primaryValidator, 
-        address[] calldata _secondaryValidators, 
+        address[] calldata _validators, 
         address _liquidityProvider, 
         uint96 _settlePercent
         )  external onlyAggregator() returns(bool) {
@@ -120,15 +117,13 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         IERC20(token).transfer(feeRecipient, _feeParams.protocolFee);
         // // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
-        IERC20(token).transfer(address(PaycrestStakingContract), (_feeParams.primaryValidatorReward + _feeParams.secondaryValidatorsReward));
+        IERC20(token).transfer(address(PaycrestStakingContract), (_feeParams.validatorsReward));
         // // distribute rewards
         bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
             _orderId,
             token,
-            _primaryValidator, 
-            _secondaryValidators, 
-            _feeParams.primaryValidatorReward, 
-            _feeParams.secondaryValidatorsReward
+            _validators, 
+            _feeParams.validatorsReward
         );
         if(!status) revert UnableToProcessRewards();
         // emit event
@@ -171,11 +166,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // substract total fees from the new amount after getting the scheduled amount
         _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
         // get primary validators fees primaryValidatorsReward
-        _feeParams.primaryValidatorReward = (_feeParams.protocolFee * primaryValidatorFeePercent) / MAX_BPS;
+        _feeParams.validatorsReward = (_feeParams.protocolFee * validatorFeePercent) / MAX_BPS;
         // get primary validators fees secondaryValidatorsReward
-        _feeParams.secondaryValidatorsReward = (_feeParams.protocolFee * secondaryValidatorFeePercent) / MAX_BPS;
         // update new protocol fee
-        _feeParams.protocolFee = _feeParams.protocolFee - (_feeParams.primaryValidatorReward + _feeParams.secondaryValidatorsReward);
+        _feeParams.protocolFee = _feeParams.protocolFee - (_feeParams.validatorsReward);
     }
     
     /* ##################################################################
@@ -213,12 +207,11 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
 
     /** @dev See {getFeeDetails-IPaycrest}. */
     function getFeeDetails() external view returns(
-        uint64, 
-        uint64, 
-        uint64,
+        uint128, 
+        uint128, 
         uint256
     ) {
-        return(protocolFeePercent, primaryValidatorFeePercent, secondaryValidatorFeePercent, MAX_BPS);
+        return(protocolFeePercent, validatorFeePercent, MAX_BPS);
     }
 
     /** @dev See {getLiquidityAggregator-IPaycrest}. */

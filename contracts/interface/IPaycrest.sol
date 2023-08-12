@@ -94,12 +94,11 @@ interface IPaycrest {
     /// `amount` must be greater than minimum
     /// `_refundable` refundable address must not be zero address
     /// @param _orderId transaction Id.
-    /// @param _primaryValidator address primary validator.
-    /// @param _secondaryValidators arrays of secondary validators.
+    /// @param _validators arrays of secondary validators.
     /// @param _liquidityProvider address of the liquidity provider.
     /// @param _settlePercent rate at which the transaction is settled.
     /// @return return the status of transaction {bool}
-    function settle(bytes32 _orderId, address _primaryValidator, address[] calldata _secondaryValidators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
+    function settle(bytes32 _orderId, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
 
     /// @notice refund to the specified refundable address.
     /// Requirements:
@@ -122,13 +121,11 @@ interface IPaycrest {
 
     /// @notice get every rewards and address on Paycrest.
     /// @return protocolReward amount that will be taken in percentage on all trade.
-    /// @return primaryValidatorReward amount that will be given to primary validator in percentage from `protocolReward`
-    /// @return secondaryValidatorReward amount that will be shared between secondary validator in percentage from `protocolReward`
+    /// @return validatorFeePercent amount that will be given to primary validator in percentage from `protocolReward`
     /// @return max_bps maximum amount in bps "100% == 100_000".
     function getFeeDetails() external view returns(
-        uint64 protocolReward, 
-        uint64 primaryValidatorReward, 
-        uint64 secondaryValidatorReward,
+        uint128 protocolReward, 
+        uint128 validatorFeePercent, 
         uint256 max_bps
     );
 

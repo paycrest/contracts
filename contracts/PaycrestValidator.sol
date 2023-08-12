@@ -77,22 +77,18 @@ contract PaycrestValidator is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     function rewardValidators(
         bytes32 orderId, 
         address token, 
-        address primaryValidator, 
-        address[] memory secondaryValidators,
-        uint256 primaryValidatorsReward, 
-        uint256 secondaryValidatorsReward
+        address[] memory validators,
+        uint256 validatorsReward
     ) external OnlyPaycrest() returns(bool) {
-        uint256 lengthOfSecondaryValidators = secondaryValidators.length;
-        uint256 secondaryValidatorsShares = secondaryValidatorsReward / lengthOfSecondaryValidators;
-        for(uint256 i = 0; i < lengthOfSecondaryValidators; ) {
-            _balance[secondaryValidators[i]][token] += secondaryValidatorsShares;
-            emit RewardValidators(orderId, token, secondaryValidators[i], secondaryValidatorsShares);
+        uint256 lengthOfAllValidators = validators.length;
+        uint256 validatorsShares = validatorsReward / lengthOfAllValidators;
+        for(uint256 i = 0; i < lengthOfAllValidators; ) {
+            _balance[validators[i]][token] += validatorsShares;
+            emit RewardValidators(orderId, token, validators[i], validatorsShares);
             unchecked {
                 i++;
             }
         }
-        _balance[primaryValidator][token] += primaryValidatorsReward;
-        emit RewardValidators(orderId, token, primaryValidator, primaryValidatorsReward);
         return true;
     }
 
