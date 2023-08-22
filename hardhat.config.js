@@ -4,6 +4,7 @@ require("@typechain/hardhat");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-deploy");
 require("@openzeppelin/hardhat-upgrades");
+require("@nomiclabs/hardhat-etherscan");
 require("dotenv").config();
 let { DEPLOYER_PRIVATE_KEY, ALCHEMY_KEY } = process.env;
 
@@ -24,7 +25,7 @@ let { DEPLOYER_PRIVATE_KEY, ALCHEMY_KEY } = process.env;
         // allowUnlimitedContractSize: true,
       },
       mumbai: {
-        url: "https://rpc-mumbai.maticvigil.com/",
+        url: "https://polygon-mumbai.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78", //"https://rpc-mumbai.maticvigil.com/",
         accounts: [DEPLOYER_PRIVATE_KEY],
         chainId: 80001,
         saveDeployments: true,
@@ -57,6 +58,7 @@ let { DEPLOYER_PRIVATE_KEY, ALCHEMY_KEY } = process.env;
     etherscan: {
       apiKey: {
         // arbitrumGoerli: process.env.ETHERSCAN_KEY,÷      // arbitrumOne: ETHERSCAN_KEY,
+        polygonMumbai: "C9WPAJNVQZMB5VGD1VQ7I1H2H6WZPRSG7A",
       },
     },
   };
