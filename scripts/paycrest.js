@@ -1,21 +1,25 @@
 // scripts/create-box.js
 const { ethers, upgrades, deployments } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
+const CryptoJS = require("crypto-js");
 
 async function main() {
   const { deployer } = await getNamedAccounts();
 
-  const mockUSDCContractInstance = await deployments.deploy("MockUSDC", {
-    contract: "MockUSDC",
-    from: deployer,
-    log: true,
-  });
-  console.log("mockUSDCContractInstance", mockUSDCContractInstance.address);
+  const DERC20_Token = "0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1";
+  const DERC20_Contract_Instance = await ethers.getContractAt(
+    "MockUSDC",
+    DERC20_Token
+  );
+
+  console.log("DERC20_Contract_Instance", DERC20_Contract_Instance.address);
+
+  // check balance of deployer in DERC20_Contract_Instance
+  const deployerBalance = await DERC20_Contract_Instance.balanceOf(deployer);
+  console.log("deployerBalance", deployerBalance.toString());
 
   const Paycrest = await ethers.getContractFactory("Paycrest");
-  const paycrest = await upgrades.deployProxy(Paycrest, [
-    mockUSDCContractInstance.address,
-  ]);
+  const paycrest = await upgrades.deployProxy(Paycrest, [DERC20_Token]);
   console.log("paycrest deployed to:", await paycrest.address);
   console.log("✅ Deployed Paycrest.");
 
@@ -33,7 +37,7 @@ async function main() {
 
   const protocolFeePercent = BigNumber.from(10_000);
   const validatorFeePercent = BigNumber.from(5_000); // 5%
-  const usdcMinimumStakeAmount = ethers.utils.parseUnits("500", 6); // not usdc has 6 decimals
+  const usdcMinimumStakeAmount = ethers.utils.parseUnits("1", 12); // not usdc has 6 decimals
 
   const currency = ethers.utils.formatBytes32String("NGN");
 
@@ -92,11 +96,42 @@ async function main() {
   );
 
   const whitelist = ethers.utils.formatBytes32String("whitelist");
-  await paycrest.settingManagerBool(whitelist, deployer, true);
 
   await paycrestValidator.setMinimumAmountForTokens(
-    mockUSDCContractInstance.address,
+    DERC20_Contract_Instance.address,
     usdcMinimumStakeAmount
+  );
+
+  // deployer approving paycrest contract to spend DERC20_Contract_Instance
+  await DERC20_Contract_Instance.approve(paycrest.address, deployerBalance);
+
+  // create order
+  const amount = ethers.utils.parseUnits("1", 15);
+
+  const data = [
+    { bank_account: "09090990901" },
+    { bank_name: "opay" },
+    { accoun_name: "opay opay" },
+  ];
+  const password = "123";
+
+  const cipher = CryptoJS.AES.encrypt(
+    JSON.stringify(data),
+    password
+  ).toString();
+
+  const messageHash = "0x" + cipher;
+  console.log("messageHash", messageHash);
+
+  await paycrest.createOrder(
+    DERC20_Contract_Instance.address,
+    amount,
+    ethers.utils.formatBytes32String("191"),
+    970,
+    deployer,
+    0,
+    deployer,
+    messageHash.toString()
   );
 }
 
