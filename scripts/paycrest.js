@@ -18,22 +18,28 @@ async function main() {
   const deployerBalance = await DERC20_Contract_Instance.balanceOf(deployer);
   console.log("deployerBalance", deployerBalance.toString());
 
-  const Paycrest = await ethers.getContractFactory("Paycrest");
-  const paycrest = await upgrades.deployProxy(Paycrest, [DERC20_Token]);
-  console.log("paycrest deployed to:", await paycrest.address);
-  console.log("✅ Deployed Paycrest.");
+  // const Paycrest = await ethers.getContractFactory("Paycrest");
+  // const paycrest = await upgrades.deployProxy(Paycrest, [DERC20_Token]);
+  // console.log("paycrest deployed to:", await paycrest.address);
+  // console.log("✅ Deployed Paycrest.");
 
-  const PaycrestValidator = await ethers.getContractFactory(
-    "PaycrestValidator"
+  // const PaycrestValidator = await ethers.getContractFactory(
+  //   "PaycrestValidator"
+  // );
+  // const paycrestValidator = await upgrades.deployProxy(PaycrestValidator, [
+  //   paycrest.address,
+  // ]);
+
+  const paycrest = await ethers.getContractAt(
+    "Paycrest",
+    "0x643db3aa8adDFd1877453491d144aD184cf8261b"
   );
-  const paycrestValidator = await upgrades.deployProxy(PaycrestValidator, [
-    paycrest.address,
-  ]);
-  console.log(
-    "paycrestValidator deployed to:",
-    await paycrestValidator.address
-  );
-  console.log("✅ Deployed paycrestValidator.");
+
+  // console.log(
+  //   "paycrestValidator deployed to:",
+  //   paycrestValidator.address
+  // );
+  // console.log("✅ Deployed paycrestValidator.");
 
   const protocolFeePercent = BigNumber.from(10_000);
   const validatorFeePercent = BigNumber.from(5_000); // 5%
@@ -66,30 +72,30 @@ async function main() {
     name: ethers.utils.formatBytes32String("Stanbic IBTC Bank"),
   };
 
-  await paycrest.setSupportedInstitutions(currency, [
-    firstBank,
-    opay,
-    palmpay,
-    accessBank,
-    gtb,
-    stanbic,
-  ]);
+  // await paycrest.setSupportedInstitutions(currency, [
+  //   firstBank,
+  //   opay,
+  //   palmpay,
+  //   accessBank,
+  //   gtb,
+  //   stanbic,
+  // ]);
   console.log(
     "======================================================= SETTING MANAGER FOR PROTOCOL FEES RECIPIENTS ======================================================="
   );
 
-  await paycrest.updateProtocolFees(protocolFeePercent, validatorFeePercent);
+  // await paycrest.updateProtocolFees(protocolFeePercent, validatorFeePercent);
 
   console.log(
     "======================================================= SETTING MANAGER FOR PROTOCOL ADDRESSES ======================================================="
   );
-  const fee = ethers.utils.formatBytes32String("fee");
-  const aggregatorInit = ethers.utils.formatBytes32String("aggregator");
-  const stakeContract = ethers.utils.formatBytes32String("stakeContract");
+  // const fee = ethers.utils.formatBytes32String("fee");
+  // const aggregatorInit = ethers.utils.formatBytes32String("aggregator");
+  // const stakeContract = ethers.utils.formatBytes32String("stakeContract");
 
-  await paycrest.updateFeeRecipient(fee, deployer);
-  await paycrest.updateFeeRecipient(aggregatorInit, deployer);
-  await paycrest.updateFeeRecipient(stakeContract, paycrestValidator.address);
+  // await paycrest.updateFeeRecipient(fee, deployer);
+  // await paycrest.updateFeeRecipient(aggregatorInit, deployer);
+  // await paycrest.updateFeeRecipient(stakeContract, paycrestValidator.address);
 
   console.log(
     "======================================================= SETTING MANAGER FOR MINIMUM AND MAXIMUM ON PAYCREST VALIDATOR======================================================="
@@ -97,10 +103,10 @@ async function main() {
 
   const whitelist = ethers.utils.formatBytes32String("whitelist");
 
-  await paycrestValidator.setMinimumAmountForTokens(
-    DERC20_Contract_Instance.address,
-    usdcMinimumStakeAmount
-  );
+  // await paycrestValidator.setMinimumAmountForTokens(
+  //   DERC20_Contract_Instance.address,
+  //   usdcMinimumStakeAmount
+  // );
 
   // deployer approving paycrest contract to spend DERC20_Contract_Instance
   await DERC20_Contract_Instance.approve(paycrest.address, deployerBalance);

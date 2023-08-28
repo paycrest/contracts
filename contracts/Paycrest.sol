@@ -73,7 +73,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             amount: _amount
         });
         // emit deposit event
-        emit Deposit(orderId, _amount, _rate, _institutionCode, messageHash);
+        emit Deposit(_token, _amount, orderId, _rate, _institutionCode, messageHash);
     }
 
     function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, bytes32 _institutionCode) internal view {
