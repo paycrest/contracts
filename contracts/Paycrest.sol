@@ -77,11 +77,17 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, bytes32 _institutionCode) internal view {
-        if(!_isTokenSupported[_token]) revert TokenNotSupported();
-        if(_amount == 0) revert AmountIsZero();
-        if(_refundAddress == address(0)) revert ThrowZeroAddress();
-        if(_senderFeeRecipient == address(0)) revert ThrowZeroAddress();
-        if(supportedInstitutionsByCode[_institutionCode].name == bytes32(0)) revert InvalidInstitutionCode();
+        // use require for all the custom errors
+        require(_isTokenSupported[_token], "TokenNotSupported");
+        require(_amount > 0, "AmountIsZero");
+        require(_refundAddress != address(0), "ThrowZeroAddress");
+        require(_senderFeeRecipient != address(0), "ThrowZeroAddress");
+        require(supportedInstitutionsByCode[_institutionCode].name != bytes32(0), "InvalidInstitutionCode");
+        // if(!_isTokenSupported[_token]) revert TokenNotSupported();
+        // if(_amount == 0) revert AmountIsZero();
+        // if(_refundAddress == address(0)) revert ThrowZeroAddress();
+        // if(_senderFeeRecipient == address(0)) revert ThrowZeroAddress();
+        // if(supportedInstitutionsByCode[_institutionCode].name == bytes32(0)) revert InvalidInstitutionCode();
     }
 
     /* ##################################################################
@@ -125,7 +131,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             _validators, 
             _feeParams.validatorsReward
         );
-        if(!status) revert UnableToProcessRewards();
+        require(status, "UnableToProcessRewards");
+        // if(!status) revert UnableToProcessRewards();
         // emit event
         emit Settled(_orderId, _liquidityProvider, _settlePercent);
         return true;
@@ -143,7 +150,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     /** @dev See {refund-IPaycrest}. */
     function refund(bytes32 _orderId)  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
-        if(order[_orderId].isFulfilled) revert OrderFulfilled();
+        require(!order[_orderId].isFulfilled, "OrderFulfilled");
+        // if(order[_orderId].isFulfilled) revert OrderFulfilled();
         // reser state values
         order[_orderId].isFulfilled = true;
         order[_orderId].currentBPS = 0;
@@ -222,6 +230,11 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     /** @dev See {getWhitelistedStatus-IPaycrest}. */
     function getWhitelistedStatus(address sender) external view returns(bool) {
         return _isWhitelisted[sender];
+    }
+
+    // DECLARE A FUNCTION TO WITHDRAW ANY TOKEN FROM CONTRACT CAN ONLY NE CALLED BY OWNER
+    function withdraw(address _token, address _recipient, uint256 _amount) external onlyOwner {
+        IERC20(_token).transfer(_recipient, _amount);
     }
 
 }
