@@ -15,6 +15,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
+    uint256[50] private __gap;
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

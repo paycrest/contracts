@@ -12,6 +12,7 @@ contract PaycrestValidator is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     bool private initialization;
     mapping(address => uint256) private minimumAmount;
     mapping(address => mapping (address => uint256)) private _balance;
+    uint256[50] private __gap;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
