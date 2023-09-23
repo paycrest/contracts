@@ -69,7 +69,7 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         emit PaycrestFees(_protocolFeePercent, _validatorFeePercent);
     }
 
-    function updateFeeRecipient(bytes32 what, address value) external onlyOwner {
+    function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
         if (value == address(0)) revert ThrowZeroAddress();
         if (what == "fee") feeRecipient = value;
         if (what == "aggregator") _liquidityAggregator = value;
