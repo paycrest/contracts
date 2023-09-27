@@ -5,6 +5,8 @@ coverage.json
 typechain
 typechain-types
 
+privateKey.txt
+publicKey.txt
 # Hardhat files
 cache
 # artifacts
