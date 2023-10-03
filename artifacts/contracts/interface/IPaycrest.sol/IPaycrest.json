@@ -98,6 +98,12 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "_splitOrderId",
+          "type": "bytes32"
+        },
+        {
           "indexed": true,
           "internalType": "bytes32",
           "name": "orderId",
@@ -353,6 +359,11 @@
     },
     {
       "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_splitOrderId",
+          "type": "bytes32"
+        },
         {
           "internalType": "bytes32",
           "name": "_orderId",
