@@ -3,6 +3,10 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const CryptoJS = require("crypto-js");
 
 const {
+  paycrestValidatorFixture,
+} = require("../fixtures/paycrestValidator.js");
+
+const {
   deployContract,
   ZERO_AMOUNT,
   ZERO_ADDRESS,
@@ -27,8 +31,14 @@ describe("Paycrest create order", function () {
       ...this.accounts
     ] = await ethers.getSigners();
 
-    this.mockUSDC = await deployContract("MockUSDC");
+    ({ paycrestValidator, paycrest, mockUSDC } =
+      await paycrestValidatorFixture());
+
     this.mockUSDT = await deployContract("MockUSDC");
+    this.mockUSDC = mockUSDC;
+    this.paycrest = paycrest;
+    this.paycrestValidator = paycrestValidator;
+
     this.mintAmount = ethers.utils.parseEther("1000100");
     this.senderFee = ethers.utils.parseEther("100");
     await this.mockUSDC.connect(this.alice).mint(this.mintAmount);
@@ -43,10 +53,7 @@ describe("Paycrest create order", function () {
     expect(await this.mockUSDT.balanceOf(this.alice.address)).to.eq(
       this.mintAmount
     );
-    this.paycrest = await deployContract("Paycrest", [this.mockUSDC.address]);
-    this.paycrestValidator = await deployContract("PaycrestValidator", [
-      this.paycrest.address,
-    ]);
+
     const whitelist = ethers.utils.formatBytes32String("whitelist");
 
     await expect(
@@ -56,6 +63,8 @@ describe("Paycrest create order", function () {
     )
       .to.emit(this.paycrest, Events.Paycrest.SettingManagerBool)
       .withArgs(whitelist, this.sender.address, true);
+
+    console.log("this.paycrest.address", this.paycrest.address);
   });
 
   it("Should be able to create order by Sender for Alice", async function () {
@@ -111,8 +120,9 @@ describe("Paycrest create order", function () {
     )
       .to.emit(this.paycrest, Events.Paycrest.Deposit)
       .withArgs(
-        orderId,
+        this.mockUSDC.address,
         this.mintAmount,
+        orderId,
         rate,
         institutionCode,
         messageHash.toString()
@@ -213,10 +223,7 @@ describe("Paycrest create order", function () {
           this.alice.address,
           messageHash.toString()
         )
-    ).to.be.revertedWithCustomError(
-      this.paycrest,
-      Errors.Paycrest.TokenNotSupported
-    );
+    ).to.be.revertedWith(Errors.Paycrest.TokenNotSupported);
 
     [
       this.seller,
@@ -291,10 +298,7 @@ describe("Paycrest create order", function () {
           this.alice.address,
           messageHash.toString()
         )
-    ).to.be.revertedWithCustomError(
-      this.paycrest,
-      Errors.Paycrest.AmountIsZero
-    );
+    ).to.be.revertedWith(Errors.Paycrest.AmountIsZero);
 
     [
       this.seller,
@@ -369,10 +373,7 @@ describe("Paycrest create order", function () {
           ZERO_ADDRESS,
           messageHash.toString()
         )
-    ).to.be.revertedWithCustomError(
-      this.paycrest,
-      Errors.Paycrest.ThrowZeroAddress
-    );
+    ).to.be.revertedWith(Errors.Paycrest.ThrowZeroAddress);
 
     [
       this.seller,
@@ -447,10 +448,7 @@ describe("Paycrest create order", function () {
           this.alice.address,
           messageHash.toString()
         )
-    ).to.be.revertedWithCustomError(
-      this.paycrest,
-      Errors.Paycrest.InvalidInstitutionCode
-    );
+    ).to.be.revertedWith(Errors.Paycrest.InvalidInstitutionCode);
 
     [
       this.seller,

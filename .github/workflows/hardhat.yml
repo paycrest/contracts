@@ -18,4 +18,4 @@ jobs:
       - name: Unit test hardhat
         run: |
           npx hardhat node &
-          npx hardhat test --network localhost
+          npx hardhat test

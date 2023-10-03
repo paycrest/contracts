@@ -7,6 +7,8 @@
   "scripts": {
     "test": "npx hardhat test",
     "ownership": "npx hardhat test test/paycrest/paycrest.ownable.test.js",
+    "settleOrder": "npx hardhat test test/paycrest/paycrest.settleOrder.test.js",
+    "createOrder": "npx hardhat test test/paycrest/paycrest.createorder.test.js",
     "compile": "npx hardhat compile",
     "lint:sol": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
     "lint:sol:fix": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --write"
