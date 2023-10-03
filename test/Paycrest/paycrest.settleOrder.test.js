@@ -245,13 +245,14 @@ describe("Paycrest create order", function () {
         .connect(this.aggregator)
         .settle(
           orderId,
+          orderId,
           [this.bob.address],
           this.liquidityProvider.address,
           MAX_BPS
         )
     )
       .to.emit(paycrest, Events.Paycrest.Settled)
-      .withArgs(orderId, this.liquidityProvider.address, MAX_BPS);
+      .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
@@ -397,13 +398,14 @@ describe("Paycrest create order", function () {
         .connect(this.aggregator)
         .settle(
           orderId,
+          orderId,
           [this.bob.address],
           this.liquidityProvider.address,
           MAX_BPS
         )
     )
       .to.emit(paycrest, Events.Paycrest.Settled)
-      .withArgs(orderId, this.liquidityProvider.address, MAX_BPS);
+      .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
