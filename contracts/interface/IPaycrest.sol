@@ -14,7 +14,7 @@ interface IPaycrest {
     /// @dev Emitted when deposit is made.
     event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, string messageHash);
     /// @dev Emitted when aggregator settle transaction.
-    event Settled(bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
+    event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
     event Refunded(bytes32 indexed orderId);
     /// @dev Emitted when sender get therir rewards.
@@ -98,7 +98,7 @@ interface IPaycrest {
     /// @param _liquidityProvider address of the liquidity provider.
     /// @param _settlePercent rate at which the transaction is settled.
     /// @return return the status of transaction {bool}
-    function settle(bytes32 _orderId, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
+    function settle(bytes32 _splitOrderId, bytes32 _orderId, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
 
     /// @notice refund to the specified refundable address.
     /// Requirements:

@@ -96,6 +96,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     ################################################################## */
     /** @dev See {settle-IPaycrest}. */
     function settle(
+        bytes32 _splitOrderId,
         bytes32 _orderId, 
         address[] calldata _validators, 
         address _liquidityProvider, 
@@ -135,7 +136,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         require(status, "UnableToProcessRewards");
         // if(!status) revert UnableToProcessRewards();
         // emit event
-        emit Settled(_orderId, _liquidityProvider, _settlePercent);
+        emit Settled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
         return true;
     }
 
