@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {PaycrestSettingManager} from "./PaycrestSettingManager.sol";
-import {IPaycrestStake} from "./interface/IPaycrestStake.sol";
 import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
 contract Paycrest is IPaycrest, PaycrestSettingManager { 
     using SafeERC20Upgradeable for IERC20;
@@ -28,9 +27,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         validatorFeePercent = 500; // 0.5%
         __Ownable_init();
     }
-    // constructor(address _usdc) {
-    //     _isTokenSupported[_usdc] = true;
-    // }
 
     modifier onlyAggregator {
         if(msg.sender != _liquidityAggregator) revert OnlyAggregator();
@@ -125,15 +121,19 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         IERC20(token).transfer(feeRecipient, _feeParams.protocolFee);
         // // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
-        IERC20(token).transfer(address(PaycrestStakingContract), (_feeParams.validatorsReward));
-        // // distribute rewards
-        bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
-            _orderId,
-            token,
-            _validators, 
-            _feeParams.validatorsReward
-        );
-        require(status, "UnableToProcessRewards");
+        // // transfer to validators
+        uint256 length = _validators.length;
+        // divide the validators reward by the number of validators
+        uint256 _validatorReward = _feeParams.validatorsReward / length;
+        for(uint256 i = 0; i < length; ) {
+            IERC20(token).transfer(_validators[i], _validatorReward);
+            // emit event
+            emit TransferValidatorRewards(_validators[i], _validatorReward);
+            unchecked {
+                i++;
+            }
+        }
+
         // if(!status) revert UnableToProcessRewards();
         // emit event
         emit Settled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);

@@ -75,25 +75,6 @@ contract PaycrestValidator is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function rewardValidators(
-        bytes32 orderId, 
-        address token, 
-        address[] memory validators,
-        uint256 validatorsReward
-    ) external OnlyPaycrest() returns(bool) {
-        uint256 lengthOfAllValidators = validators.length;
-        uint256 validatorsShares = validatorsReward / lengthOfAllValidators;
-        for(uint256 i = 0; i < lengthOfAllValidators; ) {
-            _balance[validators[i]][token] += validatorsShares;
-            emit RewardValidators(orderId, token, validators[i], validatorsShares);
-            unchecked {
-                i++;
-            }
-        }
-        return true;
-    }
-
-
     function _isTokenSupported(address token) private view returns(bool) {
         (, bytes memory result) = Paycrest.staticcall(abi.encodeWithSignature("isTokenSupported(address)", token));
         return abi.decode(result, (bool));

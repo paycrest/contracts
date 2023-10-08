@@ -15,7 +15,6 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     uint128 internal protocolFeePercent; // 5%
     uint128 internal validatorFeePercent; // 0.5%
     address internal feeRecipient;
-    address internal PaycrestStakingContract;
     address internal _liquidityAggregator;
 
     mapping(address => bool) internal _isTokenSupported;
@@ -73,7 +72,6 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         if (value == address(0)) revert ThrowZeroAddress();
         if (what == "fee") feeRecipient = value;
         if (what == "aggregator") _liquidityAggregator = value;
-        else if (what == "stake") PaycrestStakingContract = value;
     }
 
 }

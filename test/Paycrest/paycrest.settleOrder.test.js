@@ -93,19 +93,14 @@ describe("Paycrest create order", function () {
 
     const fee = ethers.utils.formatBytes32String("fee");
     const aggregator = ethers.utils.formatBytes32String("aggregator");
-    const stake = ethers.utils.formatBytes32String("stake");
 
     await paycrest
       .connect(this.deployer)
-      .updateFeeRecipient(fee, this.feeRecipient.address);
+      .updateProtocolAddresses(fee, this.feeRecipient.address);
 
     await paycrest
       .connect(this.deployer)
-      .updateFeeRecipient(aggregator, this.aggregator.address);
-
-    await paycrest
-      .connect(this.deployer)
-      .updateFeeRecipient(stake, paycrestValidator.address);
+      .updateProtocolAddresses(aggregator, this.aggregator.address);
 
     expect(
       await mockUSDC.allowance(this.alice.address, paycrest.address)
@@ -253,6 +248,9 @@ describe("Paycrest create order", function () {
     )
       .to.emit(paycrest, Events.Paycrest.Settled)
       .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
+    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(
+      this.rewards
+    );
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
@@ -264,7 +262,7 @@ describe("Paycrest create order", function () {
       ZERO_AMOUNT
     );
     expect(await mockUSDC.balanceOf(paycrestValidator.address)).to.eq(
-      this.rewards.add(this.stakeAmount)
+      this.stakeAmount
     );
 
     expect(
@@ -272,7 +270,7 @@ describe("Paycrest create order", function () {
         this.bob.address,
         mockUSDC.address
       )
-    ).to.eq(this.secondaryValidatorReward.add(this.stakeAmount));
+    ).to.eq(this.stakeAmount);
 
     expect(
       await paycrestValidator.getValidatorInfo(
@@ -298,10 +296,7 @@ describe("Paycrest create order", function () {
       .approve(paycrestValidator.address, this.stakeAmount);
 
     expect(
-      await mockUSDC.allowance(
-        this.bob.address,
-        paycrestValidator.address
-      )
+      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
     ).to.equal(this.stakeAmount);
 
     const rate = 750;
@@ -374,9 +369,7 @@ describe("Paycrest create order", function () {
     expect(this.currentBPS).to.eq(MAX_BPS);
     expect(this.amount).to.eq(this.mintAmount);
 
-    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(
-      ZERO_AMOUNT
-    );
+    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
 
     expect(
       await mockUSDC.allowance(this.alice.address, paycrest.address)
@@ -387,10 +380,7 @@ describe("Paycrest create order", function () {
       .connect(this.bob)
       .stake(mockUSDC.address, this.stakeAmount);
     expect(
-      await mockUSDC.allowance(
-        this.bob.address,
-        paycrestValidator.address
-      )
+      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
     ).to.equal(ZERO_AMOUNT);
 
     expect(
@@ -407,17 +397,18 @@ describe("Paycrest create order", function () {
       .to.emit(paycrest, Events.Paycrest.Settled)
       .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
+    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.rewards);
+
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
     );
     expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(
       this.protocolFeeAmount
     );
-    expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(
-      ZERO_AMOUNT
-    );
+    expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
+
     expect(await mockUSDC.balanceOf(paycrestValidator.address)).to.eq(
-      this.rewards.add(this.stakeAmount)
+      this.stakeAmount
     );
 
     expect(
@@ -425,7 +416,7 @@ describe("Paycrest create order", function () {
         this.bob.address,
         mockUSDC.address
       )
-    ).to.eq(this.secondaryValidatorReward.add(this.stakeAmount));
+    ).to.eq(this.stakeAmount);
 
     expect(
       await paycrestValidator.getValidatorInfo(
