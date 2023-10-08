@@ -73,7 +73,7 @@ describe("Paycrest create order", function () {
 
     await this.paycrest
       .connect(this.deployer)
-      .updateFeeRecipient(fee, this.feeRecipient.address);
+      .updateProtocolAddresses(fee, this.feeRecipient.address);
 
     await this.mockUSDC
       .connect(this.sender)
@@ -181,7 +181,7 @@ describe("Paycrest create order", function () {
 
     await this.paycrest
       .connect(this.deployer)
-      .updateFeeRecipient(fee, this.feeRecipient.address);
+      .updateProtocolAddresses(fee, this.feeRecipient.address);
 
     await this.mockUSDT
       .connect(this.sender)
@@ -256,7 +256,7 @@ describe("Paycrest create order", function () {
 
     await this.paycrest
       .connect(this.deployer)
-      .updateFeeRecipient(fee, this.feeRecipient.address);
+      .updateProtocolAddresses(fee, this.feeRecipient.address);
 
     await this.mockUSDC
       .connect(this.sender)
@@ -331,7 +331,7 @@ describe("Paycrest create order", function () {
 
     await this.paycrest
       .connect(this.deployer)
-      .updateFeeRecipient(fee, this.feeRecipient.address);
+      .updateProtocolAddresses(fee, this.feeRecipient.address);
 
     await this.mockUSDC
       .connect(this.sender)
@@ -406,7 +406,7 @@ describe("Paycrest create order", function () {
 
     await this.paycrest
       .connect(this.deployer)
-      .updateFeeRecipient(fee, this.feeRecipient.address);
+      .updateProtocolAddresses(fee, this.feeRecipient.address);
 
     await this.mockUSDC
       .connect(this.sender)

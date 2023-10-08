@@ -239,18 +239,16 @@ describe("Ownable settings", function () {
     await setupAndResetFork();
     const fee = ethers.utils.formatBytes32String("fee");
     const _aggregator = ethers.utils.formatBytes32String("aggregator");
-    const stakeContract = ethers.utils.formatBytes32String("stakeContract");
-
-    await paycrest.connect(admin).updateFeeRecipient(fee, feeRecipient.address);
 
     await paycrest
       .connect(admin)
-      .updateFeeRecipient(_aggregator, aggregator.address);
+      .updateProtocolAddresses(fee, feeRecipient.address);
+
+    await paycrest
+      .connect(admin)
+      .updateProtocolAddresses(_aggregator, aggregator.address);
 
     expect(await paycrest.getLiquidityAggregator()).to.eq(aggregator.address);
 
-    await paycrest
-      .connect(admin)
-      .updateFeeRecipient(stakeContract, paycrestValidator.address);
   });
 });

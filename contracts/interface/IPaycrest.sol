@@ -19,6 +19,8 @@ interface IPaycrest {
     event Refunded(bytes32 indexed orderId);
     /// @dev Emitted when sender get therir rewards.
     event TransferSenderFee(address indexed sender, uint256 indexed amount);
+    /// @dev Emitted when primary validator get therir rewards.
+    event TransferValidatorRewards(address indexed validator, uint256 indexed amount);
 
     /* ##################################################################
                                 CUSTOM ERRORS
