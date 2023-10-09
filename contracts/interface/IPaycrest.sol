@@ -20,7 +20,7 @@ interface IPaycrest {
     /// @dev Emitted when sender get therir rewards.
     event TransferSenderFee(address indexed sender, uint256 indexed amount);
     /// @dev Emitted when primary validator get therir rewards.
-    event TransferValidatorRewards(address indexed validator, uint256 indexed amount);
+    event RewardValidator(address indexed validator, uint256 indexed amount);
 
     /* ##################################################################
                                 CUSTOM ERRORS
@@ -100,7 +100,7 @@ interface IPaycrest {
     /// @param _liquidityProvider address of the liquidity provider.
     /// @param _settlePercent rate at which the transaction is settled.
     /// @return return the status of transaction {bool}
-    function settle(bytes32 _splitOrderId, bytes32 _orderId, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
+    function settle(bytes32 _splitOrderId, bytes32 _orderId, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bytes32, address);
 
     /// @notice refund to the specified refundable address.
     /// Requirements:
