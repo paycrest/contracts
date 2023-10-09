@@ -97,7 +97,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         address[] calldata _validators, 
         address _liquidityProvider, 
         uint96 _settlePercent
-        )  external onlyAggregator() returns(bool) {
+        )  external onlyAggregator() returns(bytes32, address) {
         // ensure the transaction has not been fulfilled
         if(order[_orderId].isFulfilled) revert OrderFulfilled();
         // load the token into memory
@@ -128,7 +128,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         for(uint256 i = 0; i < length; ) {
             IERC20(token).transfer(_validators[i], _validatorReward);
             // emit event
-            emit TransferValidatorRewards(_validators[i], _validatorReward);
+            emit RewardValidator(_validators[i], _validatorReward);
             unchecked {
                 i++;
             }
@@ -137,7 +137,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // if(!status) revert UnableToProcessRewards();
         // emit event
         emit Settled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
-        return true;
+        return (_orderId, token);
     }
 
     function transferSenderFee(bytes32 _orderId) internal {
