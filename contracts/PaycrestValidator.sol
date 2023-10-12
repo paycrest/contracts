@@ -37,14 +37,8 @@ contract PaycrestValidator is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         uint256 indexed validatorsReward
     );
 
-    error ThrowInitPaused();
-    error TokenNotSupported();
-    error MinimumRequired();
-    error Insufficient();
-    error ThrowPaycrest();
-
     modifier OnlyPaycrest() {
-        if(msg.sender != Paycrest) revert ThrowPaycrest();
+        require(msg.sender == Paycrest, "Only Paycrest can call this function");
         _;
     }
 
@@ -59,9 +53,9 @@ contract PaycrestValidator is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function stake(address token, uint256 amount)  external {
-        if(!initialization) revert ThrowInitPaused();
-        if(!_isTokenSupported(token)) revert TokenNotSupported();
-        if(amount < minimumAmount[token]) revert MinimumRequired();
+        require(initialization, "Initialization is paused");
+        require(_isTokenSupported(token), "Token is not supported");
+        require(amount >= minimumAmount[token], "Amount is less than minimum required");
         IERC20Upgradeable(token).transferFrom(msg.sender, address(this), amount);
         _balance[msg.sender][token] += amount;
         emit Staked(msg.sender, amount);
@@ -69,7 +63,7 @@ contract PaycrestValidator is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function withdraw(uint256 amount, address token, address recipient) external nonReentrant() {
         uint256 previouslyStakedAmount = _balance[msg.sender][token];
-        if(amount > previouslyStakedAmount) revert Insufficient();
+        require(amount <= previouslyStakedAmount, "Insufficient balance");
         _balance[msg.sender][token] -= amount;
         IERC20Upgradeable(token).transfer(recipient, amount);
         emit Withdrawn(msg.sender, amount);
