@@ -47,8 +47,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         address _refundAddress, 
         string calldata messageHash
     )  external returns(bytes32 orderId) {
-        // sender must be a whitelisted address
-        // if(!_isWhitelisted[msg.sender]) revert NotWhitelisted();
         // checks that are required
         _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _institutionCode);
         // first transfer token from msg.sender
@@ -80,11 +78,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         require(_refundAddress != address(0), "ThrowZeroAddress");
         require(_senderFeeRecipient != address(0), "ThrowZeroAddress");
         require(supportedInstitutionsByCode[_institutionCode].name != bytes32(0), "InvalidInstitutionCode");
-        // if(!_isTokenSupported[_token]) revert TokenNotSupported();
-        // if(_amount == 0) revert AmountIsZero();
-        // if(_refundAddress == address(0)) revert ThrowZeroAddress();
-        // if(_senderFeeRecipient == address(0)) revert ThrowZeroAddress();
-        // if(supportedInstitutionsByCode[_institutionCode].name == bytes32(0)) revert InvalidInstitutionCode();
     }
 
     /* ##################################################################
@@ -134,7 +127,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             }
         }
 
-        // if(!status) revert UnableToProcessRewards();
         // emit event
         emit Settled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
         return (_orderId, token);
@@ -153,7 +145,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function refund(bytes32 _orderId)  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
-        // if(order[_orderId].isFulfilled) revert OrderFulfilled();
         // reser state values
         order[_orderId].isFulfilled = true;
         order[_orderId].currentBPS = 0;
