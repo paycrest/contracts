@@ -73,6 +73,12 @@
         },
         {
           "indexed": false,
+          "internalType": "bytes32",
+          "name": "referenceID",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
           "internalType": "string",
           "name": "messageHash",
           "type": "string"
@@ -178,6 +184,11 @@
         {
           "internalType": "bytes32",
           "name": "_institutionCode",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_reference",
           "type": "bytes32"
         },
         {
