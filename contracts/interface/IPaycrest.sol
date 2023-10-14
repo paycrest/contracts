@@ -12,7 +12,7 @@ interface IPaycrest {
                                 EVENTS
     ################################################################## */
     /// @dev Emitted when deposit is made.
-    event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, string messageHash);
+    event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 referenceID, string messageHash);
     /// @dev Emitted when aggregator settle transaction.
     event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
@@ -73,13 +73,19 @@ interface IPaycrest {
     /// `_refundable` refundable address must not be zero address
     /// @param _token address of the token.
     /// @param _amount amount in the decimal of `_token` above.
-    /// @param _refundAddress address that is going to recieve `_amount` in `_token` when there is a need to refund.
+    /// @param _institutionCode institution code of the sender.
+    /// @param _reference reference of the sender.
     /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
+    /// @param _senderFeeRecipient address that is going to recieve `_senderFee` in `_token` when there is a need to refund.
+    /// @param _senderFee amount in the decimal of `_token` that is going to be paid to `_senderFeeRecipient` when there is a need to refund.
+    /// @param _refundAddress address that is going to recieve `_amount` in `_token` when there is a need to refund.
     /// @param messageHash hash must be the result of a hash operation for the verification to be secure. message
     /// @return _orderId the bytes20 which is the orderId
-    function createOrder(address _token, 
+    function createOrder(
+        address _token, 
         uint256 _amount, 
         bytes32 _institutionCode,
+        bytes32 _reference,
         uint96 _rate, 
         address _senderFeeRecipient,
         uint256 _senderFee,

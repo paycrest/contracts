@@ -5,6 +5,7 @@ const CryptoJS = require("crypto-js");
 const {
   paycrestValidatorFixture,
 } = require("../fixtures/paycrestValidator.js");
+const referenceID = ethers.utils.formatBytes32String("referenceId");
 
 
 const {
@@ -177,6 +178,7 @@ describe("Paycrest create order", function () {
           mockUSDC.address,
           this.mintAmount,
           institutionCode,
+          referenceID,
           rate,
           this.sender.address,
           this.senderFee,
@@ -191,6 +193,7 @@ describe("Paycrest create order", function () {
         orderId,
         rate,
         institutionCode,
+        referenceID,
         messageHash.toString()
       );
 
@@ -330,6 +333,7 @@ describe("Paycrest create order", function () {
           mockUSDC.address,
           this.mintAmount,
           institutionCode,
+          referenceID,
           rate,
           this.sender.address,
           this.senderFee,
@@ -344,6 +348,7 @@ describe("Paycrest create order", function () {
         orderId,
         rate,
         institutionCode,
+        referenceID,
         messageHash.toString()
       );
 
