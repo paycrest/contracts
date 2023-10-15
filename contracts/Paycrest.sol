@@ -29,7 +29,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     modifier onlyAggregator {
-        if(msg.sender != _liquidityAggregator) revert OnlyAggregator();
+        require(msg.sender == _liquidityAggregator, "OnlyAggregator");
         _;
     }
     
@@ -88,12 +88,13 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function settle(
         bytes32 _splitOrderId,
         bytes32 _orderId, 
+        bytes32 _reference,
         address[] calldata _validators, 
         address _liquidityProvider, 
         uint96 _settlePercent
         )  external onlyAggregator() returns(bytes32, address) {
         // ensure the transaction has not been fulfilled
-        if(order[_orderId].isFulfilled) revert OrderFulfilled();
+        require(!order[_orderId].isFulfilled, "OrderFulfilled");
         // load the token into memory
         address token = order[_orderId].token;
         // substract sum of amount based on the input _settlePercent
@@ -116,9 +117,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
         // // transfer to validators
+        rewardValidators(_validators, token, _feeParams.validatorsReward);
+
+        // emit event
+        emit Settled(_splitOrderId, _orderId, _reference,  _liquidityProvider, _settlePercent);
+        return (_orderId, token);
+    }
+
+    function rewardValidators(address[] calldata _validators, address token, uint256 _validatorsRewards) internal {
         uint256 length = _validators.length;
-        // divide the validators reward by the number of validators
-        uint256 _validatorReward = _feeParams.validatorsReward / length;
+        uint256 _validatorReward = _validatorsRewards / length;
         for(uint256 i = 0; i < length; ) {
             IERC20(token).transfer(_validators[i], _validatorReward);
             // emit event
@@ -127,10 +135,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
                 i++;
             }
         }
-
-        // emit event
-        emit Settled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
-        return (_orderId, token);
     }
 
     function transferSenderFee(bytes32 _orderId) internal {
@@ -143,7 +147,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     /** @dev See {refund-IPaycrest}. */
-    function refund(bytes32 _orderId)  external onlyAggregator() returns(bool) {
+    function refund(bytes32 _orderId, bytes32 _reference)  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
         // reser state values
@@ -152,7 +156,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // transfer to seller 
         IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, order[_orderId].amount);
         // emit
-        emit Refunded(_orderId);
+        emit Refunded(_orderId, _reference);
         return true;
     }
 

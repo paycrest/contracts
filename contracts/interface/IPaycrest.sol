@@ -12,31 +12,15 @@ interface IPaycrest {
                                 EVENTS
     ################################################################## */
     /// @dev Emitted when deposit is made.
-    event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 referenceID, string messageHash);
+    event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 referenceHash, string messageHash);
     /// @dev Emitted when aggregator settle transaction.
-    event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
+    event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, bytes32 referenceHash,  address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
-    event Refunded(bytes32 indexed orderId);
+    event Refunded(bytes32 indexed orderId, bytes32 referenceHash);
     /// @dev Emitted when sender get therir rewards.
     event TransferSenderFee(address indexed sender, uint256 indexed amount);
     /// @dev Emitted when primary validator get therir rewards.
     event RewardValidator(address indexed validator, uint256 indexed amount);
-
-    /* ##################################################################
-                                CUSTOM ERRORS
-    ################################################################## */
-    /// @notice Revert when caller is not an aggregator
-    error OnlyAggregator();
-    /// @notice Revert with invalid signer
-    error InvalidSigner();
-    /// @notice Revert when input amount is zero
-    error Unsuported();
-    /// @notice Revert when trx has been fulfilled
-    error OrderFulfilled();
-    /// @notice Revert when rewards are not been distributed.
-    error UnableToProcessRewards();
-    error InvalidInstitutionCode();
-    error NotWhitelisted();
 
     /* ##################################################################
                                 STRUCTS
@@ -102,11 +86,12 @@ interface IPaycrest {
     /// `amount` must be greater than minimum
     /// `_refundable` refundable address must not be zero address
     /// @param _orderId transaction Id.
+    /// @param _reference reference of the sender.
     /// @param _validators arrays of secondary validators.
     /// @param _liquidityProvider address of the liquidity provider.
     /// @param _settlePercent rate at which the transaction is settled.
     /// @return return the status of transaction {bool}
-    function settle(bytes32 _splitOrderId, bytes32 _orderId, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bytes32, address);
+    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _reference, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bytes32, address);
 
     /// @notice refund to the specified refundable address.
     /// Requirements:
@@ -115,8 +100,9 @@ interface IPaycrest {
     /// `_orderId` it must be an open Id.
     /// `isFulfilled` must be false.
     /// @param _orderId transaction Id.
+    /// @param _reference reference of the sender.
     /// @return return the status of transaction {bool}
-    function refund(bytes32 _orderId)  external returns(bool);
+    function refund(bytes32 _orderId, bytes32 _reference)  external returns(bool);
 
     /// @notice get supported token from Paycrest.
     /// @param _token address of the token to check.

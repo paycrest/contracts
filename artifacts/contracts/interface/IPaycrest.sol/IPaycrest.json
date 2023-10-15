@@ -4,41 +4,6 @@
   "sourceName": "contracts/interface/IPaycrest.sol",
   "abi": [
     {
-      "inputs": [],
-      "name": "InvalidInstitutionCode",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "InvalidSigner",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "NotWhitelisted",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "OnlyAggregator",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "OrderFulfilled",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "UnableToProcessRewards",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "Unsuported",
-      "type": "error"
-    },
-    {
       "anonymous": false,
       "inputs": [
         {
@@ -74,7 +39,7 @@
         {
           "indexed": false,
           "internalType": "bytes32",
-          "name": "referenceID",
+          "name": "referenceHash",
           "type": "bytes32"
         },
         {
@@ -94,6 +59,12 @@
           "indexed": true,
           "internalType": "bytes32",
           "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "referenceHash",
           "type": "bytes32"
         }
       ],
@@ -132,6 +103,12 @@
           "indexed": true,
           "internalType": "bytes32",
           "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "referenceHash",
           "type": "bytes32"
         },
         {
@@ -374,6 +351,11 @@
           "internalType": "bytes32",
           "name": "_orderId",
           "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_reference",
+          "type": "bytes32"
         }
       ],
       "name": "refund",
@@ -397,6 +379,11 @@
         {
           "internalType": "bytes32",
           "name": "_orderId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_reference",
           "type": "bytes32"
         },
         {
