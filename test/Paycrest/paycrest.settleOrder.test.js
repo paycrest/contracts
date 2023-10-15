@@ -5,7 +5,7 @@ const CryptoJS = require("crypto-js");
 const {
   paycrestValidatorFixture,
 } = require("../fixtures/paycrestValidator.js");
-const referenceID = ethers.utils.formatBytes32String("referenceId");
+const reference = ethers.utils.formatBytes32String("reference");
 
 
 const {
@@ -178,7 +178,7 @@ describe("Paycrest create order", function () {
           mockUSDC.address,
           this.mintAmount,
           institutionCode,
-          referenceID,
+          reference,
           rate,
           this.sender.address,
           this.senderFee,
@@ -193,7 +193,7 @@ describe("Paycrest create order", function () {
         orderId,
         rate,
         institutionCode,
-        referenceID,
+        reference,
         messageHash.toString()
       );
 
@@ -244,13 +244,14 @@ describe("Paycrest create order", function () {
         .settle(
           orderId,
           orderId,
+          reference,
           [this.bob.address],
           this.liquidityProvider.address,
           MAX_BPS
         )
     )
       .to.emit(paycrest, Events.Paycrest.Settled)
-      .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
+      .withArgs(orderId, orderId, reference, this.liquidityProvider.address, MAX_BPS);
     expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(
       this.rewards
     );
@@ -333,7 +334,7 @@ describe("Paycrest create order", function () {
           mockUSDC.address,
           this.mintAmount,
           institutionCode,
-          referenceID,
+          reference,
           rate,
           this.sender.address,
           this.senderFee,
@@ -348,7 +349,7 @@ describe("Paycrest create order", function () {
         orderId,
         rate,
         institutionCode,
-        referenceID,
+        reference,
         messageHash.toString()
       );
 
@@ -394,13 +395,14 @@ describe("Paycrest create order", function () {
         .settle(
           orderId,
           orderId,
+          reference,
           [this.bob.address],
           this.liquidityProvider.address,
           MAX_BPS
         )
     )
       .to.emit(paycrest, Events.Paycrest.Settled)
-      .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
+      .withArgs(orderId, orderId, reference, this.liquidityProvider.address, MAX_BPS);
 
     expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.rewards);
 
