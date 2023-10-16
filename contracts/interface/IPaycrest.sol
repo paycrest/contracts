@@ -14,7 +14,7 @@ interface IPaycrest {
     /// @dev Emitted when deposit is made.
     event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 label, string messageHash);
     /// @dev Emitted when aggregator settle transaction.
-    event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, bytes32 label,  address indexed liquidityProvider, uint96 settlePercent);
+    event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, bytes32 label, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
     event Refunded(bytes32 indexed orderId, bytes32 label);
     /// @dev Emitted when sender get therir rewards.

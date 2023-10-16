@@ -39,7 +39,7 @@
         {
           "indexed": false,
           "internalType": "bytes32",
-          "name": "referenceHash",
+          "name": "label",
           "type": "bytes32"
         },
         {
@@ -64,7 +64,7 @@
         {
           "indexed": false,
           "internalType": "bytes32",
-          "name": "referenceHash",
+          "name": "label",
           "type": "bytes32"
         }
       ],
@@ -108,7 +108,7 @@
         {
           "indexed": false,
           "internalType": "bytes32",
-          "name": "referenceHash",
+          "name": "label",
           "type": "bytes32"
         },
         {
@@ -165,7 +165,7 @@
         },
         {
           "internalType": "bytes32",
-          "name": "_reference",
+          "name": "_label",
           "type": "bytes32"
         },
         {
@@ -354,7 +354,7 @@
         },
         {
           "internalType": "bytes32",
-          "name": "_reference",
+          "name": "_label",
           "type": "bytes32"
         }
       ],
@@ -383,7 +383,7 @@
         },
         {
           "internalType": "bytes32",
-          "name": "_reference",
+          "name": "_label",
           "type": "bytes32"
         },
         {
