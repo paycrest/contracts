@@ -17,7 +17,7 @@ const {
   setSupportedInstitution,
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
-const reference = ethers.utils.formatBytes32String("reference");
+const label = ethers.utils.formatBytes32String("label");
 
 describe("Paycrest create order", function () {
   beforeEach(async function () {
@@ -112,7 +112,7 @@ describe("Paycrest create order", function () {
           this.mockUSDC.address,
           this.mintAmount,
           institutionCode,
-          reference,
+          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -127,7 +127,7 @@ describe("Paycrest create order", function () {
         orderId,
         rate,
         institutionCode,
-        reference,
+        label,
         messageHash.toString()
       );
 
@@ -220,7 +220,7 @@ describe("Paycrest create order", function () {
           this.mockUSDT.address,
           this.mintAmount,
           institutionCode,
-          reference,
+          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -296,7 +296,7 @@ describe("Paycrest create order", function () {
           this.mockUSDC.address,
           ZERO_AMOUNT,
           institutionCode,
-          reference,
+          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -372,7 +372,7 @@ describe("Paycrest create order", function () {
           this.mockUSDC.address,
           this.mintAmount,
           institutionCode,
-          reference,
+          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -448,7 +448,7 @@ describe("Paycrest create order", function () {
           this.mockUSDC.address,
           this.mintAmount,
           invalidInstitutionCode,
-          reference,
+          label,
           rate,
           this.sender.address,
           this.senderFee,

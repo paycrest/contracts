@@ -41,7 +41,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         address _token, 
         uint256 _amount, 
         bytes32 _institutionCode,
-        bytes32 _reference,
+        bytes32 _label,
         uint96 _rate, 
         address _senderFeeRecipient,
         uint256 _senderFee,
@@ -69,7 +69,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             amount: _amount
         });
         // emit deposit event
-        emit Deposit(_token, _amount, orderId, _rate, _institutionCode, _reference, messageHash);
+        emit Deposit(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
     }
 
     function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, bytes32 _institutionCode) internal view {
@@ -88,7 +88,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     function settle(
         bytes32 _splitOrderId,
         bytes32 _orderId, 
-        bytes32 _reference,
+        bytes32 _label,
         address[] calldata _validators, 
         address _liquidityProvider, 
         uint96 _settlePercent
@@ -120,7 +120,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         rewardValidators(_validators, token, _feeParams.validatorsReward);
 
         // emit event
-        emit Settled(_splitOrderId, _orderId, _reference,  _liquidityProvider, _settlePercent);
+        emit Settled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
         return (_orderId, token);
     }
 
@@ -147,7 +147,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     /** @dev See {refund-IPaycrest}. */
-    function refund(bytes32 _orderId, bytes32 _reference)  external onlyAggregator() returns(bool) {
+    function refund(bytes32 _orderId, bytes32 _label)  external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
         // reser state values
@@ -156,7 +156,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // transfer to seller 
         IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, order[_orderId].amount);
         // emit
-        emit Refunded(_orderId, _reference);
+        emit Refunded(_orderId, _label);
         return true;
     }
 
