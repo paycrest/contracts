@@ -207,6 +207,19 @@
     },
     {
       "inputs": [],
+      "name": "getAggregator",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getFeeDetails",
       "outputs": [
         {

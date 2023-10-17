@@ -16,6 +16,10 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     uint128 internal validatorFeePercent; // 0.5%
     address internal feeRecipient;
     address internal _liquidityAggregator;
+    bytes internal _aggregator;
+    
+    // this should decrease if more slots are needed on this contract to avoid collisions with base contract
+    uint256[50] private __gap;
 
     mapping(address => bool) internal _isTokenSupported;
     mapping(address => bool) internal _isWhitelisted;
@@ -23,29 +27,20 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     mapping(bytes32 => Institution[]) internal supportedInstitutions;
     mapping(bytes32 => InstitutionByCode) internal supportedInstitutionsByCode;
 
-    /// @notice Revert when zero address is passed in
-    error ThrowZeroAddress();
-    /// @notice Revert when zero address is passed in
-    error ThrowZeroValue();
-    /// @notice Revert when zero address is passed in
-    error InvalidParameter(bytes32 what);
-    /// @notice Revert when invalid token is provided
-    error TokenNotSupported();
-    /// @notice Revert when input amount is zero
-    error AmountIsZero();
-
     event SettingManagerBool(bytes32 what, address value, bool status);
-    event SettingManagerForInstitution(bytes32 what, bytes8 value, bytes8 status);
     event PaycrestFees(uint128 protocolFee, uint128 validatorFeePercent);
+    event SetAggregator(bytes aggregator);
+    event SetFeeRecipient(address feeRecipient);
+
     
     /* ##################################################################
                                 OWNER FUNCTIONS
     ################################################################## */
     function settingManagerBool(bytes32 what, address value, bool status) external onlyOwner {
-        if (value == address(0)) revert ThrowZeroAddress();
+        require(value != address(0), "Paycrest: zero address");
         if (what == "token") _isTokenSupported[value] = status;
         if (what == "whitelist") _isWhitelisted[value] = status;
-        else revert InvalidParameter(what);
+
         emit SettingManagerBool(what, value, status);
     }
 
@@ -69,9 +64,14 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     }
 
     function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
-        if (value == address(0)) revert ThrowZeroAddress();
+        require(value != address(0), "Paycrest: zero address");
         if (what == "fee") feeRecipient = value;
         if (what == "aggregator") _liquidityAggregator = value;
+    }
+
+    function updateProtocolAggregator(bytes calldata aggregator) external onlyOwner {
+        _aggregator = aggregator;
+        emit SetAggregator(aggregator);
     }
 
 }

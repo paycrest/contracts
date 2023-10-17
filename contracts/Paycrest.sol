@@ -230,6 +230,12 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return _isWhitelisted[sender];
     }
 
+    /** @dev See {getAggregator-IPaycrest}. */
+    function getAggregator() external view returns(bytes memory) {
+        return _aggregator;
+    }
+
+
     // DECLARE A FUNCTION TO WITHDRAW ANY TOKEN FROM CONTRACT CAN ONLY NE CALLED BY OWNER
     function withdraw(address _token, address _recipient, uint256 _amount) external onlyOwner {
         IERC20(_token).transfer(_recipient, _amount);
