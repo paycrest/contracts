@@ -15,7 +15,7 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     uint128 internal protocolFeePercent; // 5%
     uint128 internal validatorFeePercent; // 0.5%
     address internal feeRecipient;
-    address internal _liquidityAggregator;
+    address internal _aggregatorAddress;
     bytes internal _aggregator;
     
     // this should decrease if more slots are needed on this contract to avoid collisions with base contract
@@ -66,7 +66,7 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
         if (what == "fee") feeRecipient = value;
-        if (what == "aggregator") _liquidityAggregator = value;
+        if (what == "aggregator") _aggregatorAddress = value;
     }
 
     function updateProtocolAggregator(bytes calldata aggregator) external onlyOwner {
