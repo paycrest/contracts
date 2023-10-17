@@ -29,7 +29,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     }
 
     modifier onlyAggregator {
-        require(msg.sender == _liquidityAggregator, "OnlyAggregator");
+        require(msg.sender == _aggregatorAddress, "OnlyAggregator");
         _;
     }
     
