@@ -127,6 +127,9 @@ interface IPaycrest {
     /// @return address of `liquidityAggregator`.
     function getLiquidityAggregator() external view returns(address);
 
+    /// @notice get aggregator public key.
+    /// @return aggregator public key.
+    function getAggregator() external view returns(bytes memory);
     
     /// @notice get address of sender whitelisting status.
     /// @param sender address of the sender.
