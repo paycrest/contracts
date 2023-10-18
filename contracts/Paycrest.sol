@@ -220,9 +220,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return(protocolFeePercent, validatorFeePercent, MAX_BPS);
     }
 
-    /** @dev See {getLiquidityAggregator-IPaycrest}. */
-    function getLiquidityAggregator() external view returns(address) {
-        return _liquidityAggregator;
+    /** @dev See {getAggregatorAddress-IPaycrest}. */
+    function getAggregatorAddress() external view returns(address) {
+        return _aggregatorAddress;
     }
 
     /** @dev See {getWhitelistedStatus-IPaycrest}. */
