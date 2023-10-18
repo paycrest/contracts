@@ -124,8 +124,8 @@ interface IPaycrest {
     );
 
     /// @notice get address of liquidity aggregator.
-    /// @return address of `liquidityAggregator`.
-    function getLiquidityAggregator() external view returns(address);
+    /// @return address of `Aggregator`.
+    function getAggregatorAddress() external view returns(address);
 
     /// @notice get aggregator public key.
     /// @return aggregator public key.
