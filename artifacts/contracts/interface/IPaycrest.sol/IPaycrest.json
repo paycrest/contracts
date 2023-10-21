@@ -220,6 +220,19 @@
     },
     {
       "inputs": [],
+      "name": "getAggregatorAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getFeeDetails",
       "outputs": [
         {
@@ -236,19 +249,6 @@
           "internalType": "uint256",
           "name": "max_bps",
           "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getLiquidityAggregator",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -410,9 +410,14 @@
           "type": "address"
         },
         {
-          "internalType": "uint96",
+          "internalType": "uint64",
           "name": "_settlePercent",
-          "type": "uint96"
+          "type": "uint64"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isPartner",
+          "type": "bool"
         }
       ],
       "name": "settle",

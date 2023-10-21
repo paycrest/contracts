@@ -247,7 +247,8 @@ describe("Paycrest create order", function () {
           label,
           [this.bob.address],
           this.liquidityProvider.address,
-          MAX_BPS
+          MAX_BPS,
+          false
         )
     )
       .to.emit(paycrest, Events.Paycrest.Settled)
@@ -398,7 +399,8 @@ describe("Paycrest create order", function () {
           label,
           [this.bob.address],
           this.liquidityProvider.address,
-          MAX_BPS
+          MAX_BPS,
+          false
         )
     )
       .to.emit(paycrest, Events.Paycrest.Settled)

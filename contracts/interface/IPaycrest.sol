@@ -90,8 +90,9 @@ interface IPaycrest {
     /// @param _validators arrays of secondary validators.
     /// @param _liquidityProvider address of the liquidity provider.
     /// @param _settlePercent rate at which the transaction is settled.
+    /// @param _isPartner is the liquidity provider a partner.
     /// @return return the status of transaction {bool}
-    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _label, address[] calldata _validators, address _liquidityProvider, uint96 _settlePercent)  external returns(bytes32, address);
+    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _label, address[] calldata _validators, address _liquidityProvider, uint64 _settlePercent, bool _isPartner)  external returns(bytes32, address);
 
     /// @notice refund to the specified refundable address.
     /// Requirements:
