@@ -248,7 +248,7 @@ describe("Ownable settings", function () {
       .connect(admin)
       .updateProtocolAddresses(_aggregator, aggregator.address);
 
-    expect(await paycrest.getLiquidityAggregator()).to.eq(aggregator.address);
+    expect(await paycrest.getAggregatorAddress()).to.eq(aggregator.address);
 
   });
 });
