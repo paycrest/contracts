@@ -178,10 +178,12 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         // get primary validators fees primaryValidatorsReward
         _feeParams.validatorsReward = (_feeParams.protocolFee * validatorFeePercent) / MAX_BPS;
         // if (_isPartner) protocol fee should be 0, and the whole protocol fee should be added to liquidity provider
+        uint256 protocolFeeAmount = (_feeParams.protocolFee - _feeParams.validatorsReward);
         if (_isPartner) {
+            _feeParams.liquidityProviderAmount += protocolFeeAmount;
             _feeParams.protocolFee = 0;
         } else {
-            _feeParams.protocolFee = (_feeParams.protocolFee - _feeParams.validatorsReward);
+            _feeParams.protocolFee = protocolFeeAmount;
         }
     }
     

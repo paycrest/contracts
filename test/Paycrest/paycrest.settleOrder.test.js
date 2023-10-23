@@ -285,6 +285,159 @@ describe("Paycrest create order", function () {
     ).to.eq(0);
   });
 
+  it("Should be able to create order by the sender and settled by liquidity aggregator when isPartner is true", async function () {
+    const ret = await setSupportedInstitution(paycrest, this.deployer);
+
+    await mockUSDC
+      .connect(this.sender)
+      .approve(paycrest.address, this.mintAmount);
+
+    expect(
+      await mockUSDC.allowance(this.sender.address, paycrest.address)
+    ).to.equal(this.mintAmount);
+
+    await mockUSDC
+      .connect(this.bob)
+      .approve(paycrestValidator.address, this.stakeAmount);
+
+    expect(
+      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
+    ).to.equal(this.stakeAmount);
+
+    const rate = 750;
+    const institutionCode = ret.firstBank.code;
+    const data = [
+      { bank_account: "09090990901" },
+      { bank_name: "opay" },
+      { accoun_name: "opay opay" },
+    ];
+    const password = "123";
+
+    const cipher = CryptoJS.AES.encrypt(
+      JSON.stringify(data),
+      password
+    ).toString();
+
+    const messageHash = "0x" + cipher;
+
+    const argOrderID = [this.sender.address, 1];
+
+    const encoded = ethers.utils.defaultAbiCoder.encode(
+      ["address", "uint256"],
+      argOrderID
+    );
+    const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
+
+    await expect(
+      paycrest
+        .connect(this.sender)
+        .createOrder(
+          mockUSDC.address,
+          this.mintAmount,
+          institutionCode,
+          label,
+          rate,
+          this.sender.address,
+          this.senderFee,
+          this.alice.address,
+          messageHash.toString()
+        )
+    )
+      .to.emit(paycrest, Events.Paycrest.Deposit)
+      .withArgs(
+        mockUSDC.address,
+        this.mintAmount,
+        orderId,
+        rate,
+        institutionCode,
+        label,
+        messageHash.toString()
+      );
+
+    [
+      this.seller,
+      this.token,
+      this.senderRecipient,
+      this.senderFee,
+      this.rate,
+      this.isFulfilled,
+      this.refundAddress,
+      this.currentBPS,
+      this.amount,
+    ] = await paycrest.getOrderInfo(orderId);
+
+    expect(this.seller).to.eq(this.sender.address);
+    expect(this.token).to.eq(mockUSDC.address);
+    expect(this.senderRecipient).to.eq(this.sender.address);
+    expect(this.senderFee).to.eq(this.senderFee);
+    expect(this.rate).to.eq(rate);
+    expect(this.isFulfilled).to.eq(false);
+    expect(this.refundAddress).to.eq(this.alice.address);
+    expect(this.currentBPS).to.eq(MAX_BPS);
+    expect(this.amount).to.eq(this.mintAmount);
+
+    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
+
+    expect(
+      await mockUSDC.allowance(this.alice.address, paycrest.address)
+    ).to.equal(ZERO_AMOUNT);
+
+    // =================== Create Order ===================
+    await paycrestValidator
+      .connect(this.bob)
+      .stake(mockUSDC.address, this.stakeAmount);
+    expect(
+      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
+    ).to.equal(ZERO_AMOUNT);
+
+    expect(
+      await paycrest
+        .connect(this.aggregator)
+        .settle(
+          orderId,
+          orderId,
+          label,
+          [this.bob.address],
+          this.liquidityProvider.address,
+          MAX_BPS,
+          true
+        )
+    )
+      .to.emit(paycrest, Events.Paycrest.Settled)
+      .withArgs(
+        orderId,
+        orderId,
+        label,
+        this.liquidityProvider.address,
+        MAX_BPS
+      );
+    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.rewards);
+    // 999,750 000000000000000000
+
+    expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
+      this.liquidityProviderAmount.add(this.protocolFeeAmount)
+    );
+    expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(0);
+    expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
+    expect(await mockUSDC.balanceOf(paycrestValidator.address)).to.eq(
+      this.stakeAmount
+    );
+
+    expect(
+      await paycrestValidator.getValidatorInfo(
+        this.bob.address,
+        mockUSDC.address
+      )
+    ).to.eq(this.stakeAmount);
+
+    expect(
+      await paycrestValidator.getValidatorInfo(
+        this.primaryValidator.address,
+        mockUSDC.address
+      )
+    ).to.eq(0);
+  });
+
   it("Should revert when trying to settle an already fulfilled order", async function () {
     const ret = await setSupportedInstitution(paycrest, this.deployer);
 
