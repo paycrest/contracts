@@ -50,6 +50,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     )  external returns(bytes32 orderId) {
         // checks that are required
         _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _institutionCode);
+        // require that sender fee is less than protocol fee
+        require(_senderFee <= (_amount * protocolFeePercent) / MAX_BPS, "SenderFeeTooHigh");
         // first transfer token from msg.sender
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
         // increase users nonce to avoid replay attacks
