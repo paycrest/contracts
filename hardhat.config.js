@@ -25,7 +25,7 @@ module.exports = {
       // allowUnlimitedContractSize: true,
     },
     mumbai: {
-      url: process.env.POLYGON_MUMBAI_RPC_URL, //"https://rpc-mumbai.maticvigil.com/",
+      url: "https://polygon-mumbai.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78", //process.env.POLYGON_MUMBAI_RPC_URL, //"https://rpc-mumbai.maticvigil.com/",
       accounts: DEPLOYER_PRIVATE_KEY,
       chainId: 80001,
       saveDeployments: true,
