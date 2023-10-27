@@ -37,7 +37,7 @@ module.exports = {
       saveDeployments: true,
     },
     baseGoerli: {
-      url: process.env.BASE_GOERLI_RPC_URL,
+      url: "https://goerli.base.org",
       accounts: DEPLOYER_PRIVATE_KEY,
       chainId: 84531,
       gasPrice: 1000000000,
