@@ -1,0 +1,485 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x92368Ad043cCe95b02F4F3beA9765Aa9caF3E070",
+    "txHash": "0xe6bee607fefad61671ca4c77d3d903d9092a132f0c493822dbac7db3f0e3171b"
+  },
+  "proxies": [
+    {
+      "address": "0x566dEA5BB1888C33bD3F1274168E0Fa91b9d51C8",
+      "txHash": "0xcf79399bdc6d70247a32f9dd1dc2c489fe4d8b6403d3cf3a907f1db2aed7bee3",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x5151739085Ad69b21b374A03A7c4AE6450A43B52",
+      "txHash": "0x1773683aa82cc21acd71b4f4e2ae261ec961b819383f78d8d64d04f09444b32a",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "8a47b1c9a4810df657ffeaa2dfddc691801b84230ce7251030e694afd0b68a3a": {
+      "address": "0xd39074fe0B5A571b7F09F42C736a88b01298d70D",
+      "txHash": "0xf3ff85c83044f1718348182548419fd5ad6335b736c04adb69b7a30785959a07",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "MAX_BPS",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:14"
+          },
+          {
+            "label": "protocolFeePercent",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_uint128",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:15"
+          },
+          {
+            "label": "validatorFeePercent",
+            "offset": 16,
+            "slot": "102",
+            "type": "t_uint128",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:16"
+          },
+          {
+            "label": "feeRecipient",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:17"
+          },
+          {
+            "label": "_aggregatorAddress",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:18"
+          },
+          {
+            "label": "_aggregator",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_bytes_storage",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:19"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:22"
+          },
+          {
+            "label": "_isTokenSupported",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:24"
+          },
+          {
+            "label": "_isWhitelisted",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:25"
+          },
+          {
+            "label": "supportedInstitutions",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_mapping(t_bytes32,t_array(t_struct(Institution)3612_storage)dyn_storage)",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:27"
+          },
+          {
+            "label": "supportedInstitutionsByCode",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_mapping(t_bytes32,t_struct(InstitutionByCode)3617_storage)",
+            "contract": "PaycrestSettingManager",
+            "src": "contracts/PaycrestSettingManager.sol:28"
+          },
+          {
+            "label": "order",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_mapping(t_bytes32,t_struct(Order)3938_storage)",
+            "contract": "Paycrest",
+            "src": "contracts/Paycrest.sol:15"
+          },
+          {
+            "label": "_nonce",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "Paycrest",
+            "src": "contracts/Paycrest.sol:16"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "Paycrest",
+            "src": "contracts/Paycrest.sol:17"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(Institution)3612_storage)dyn_storage": {
+            "label": "struct PaycrestSettingManager.Institution[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_bytes_storage": {
+            "label": "bytes",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_array(t_struct(Institution)3612_storage)dyn_storage)": {
+            "label": "mapping(bytes32 => struct PaycrestSettingManager.Institution[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(InstitutionByCode)3617_storage)": {
+            "label": "mapping(bytes32 => struct PaycrestSettingManager.InstitutionByCode)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(Order)3938_storage)": {
+            "label": "mapping(bytes32 => struct IPaycrest.Order)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Institution)3612_storage": {
+            "label": "struct PaycrestSettingManager.Institution",
+            "members": [
+              {
+                "label": "code",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "name",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(InstitutionByCode)3617_storage": {
+            "label": "struct PaycrestSettingManager.InstitutionByCode",
+            "members": [
+              {
+                "label": "name",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "currency",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Order)3938_storage": {
+            "label": "struct IPaycrest.Order",
+            "members": [
+              {
+                "label": "seller",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "token",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "senderFeeRecipient",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "senderFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "rate",
+                "type": "t_uint96",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "isFulfilled",
+                "type": "t_bool",
+                "offset": 12,
+                "slot": "4"
+              },
+              {
+                "label": "refundAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "currentBPS",
+                "type": "t_uint96",
+                "offset": 20,
+                "slot": "5"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              }
+            ],
+            "numberOfBytes": "224"
+          },
+          "t_uint128": {
+            "label": "uint128",
+            "numberOfBytes": "16"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          },
+          "t_uint96": {
+            "label": "uint96",
+            "numberOfBytes": "12"
+          }
+        }
+      }
+    },
+    "24a5650cd12a3752212397740793a1612121247a69399118c59ab53164f2f942": {
+      "address": "0x58a6F98E3E2a048c07B7a250a14133D51545F53F",
+      "txHash": "0x16137a5c8a6c9aa881c03258fe90d15b07e4a7b7c06bb8f56e2c0c34ed4b2dfc",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "Paycrest",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "PaycrestValidator",
+            "src": "contracts/PaycrestValidator.sol:11"
+          },
+          {
+            "label": "initialization",
+            "offset": 20,
+            "slot": "151",
+            "type": "t_bool",
+            "contract": "PaycrestValidator",
+            "src": "contracts/PaycrestValidator.sol:12"
+          },
+          {
+            "label": "minimumAmount",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "PaycrestValidator",
+            "src": "contracts/PaycrestValidator.sol:13"
+          },
+          {
+            "label": "_balance",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "PaycrestValidator",
+            "src": "contracts/PaycrestValidator.sol:14"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "PaycrestValidator",
+            "src": "contracts/PaycrestValidator.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

@@ -25,7 +25,7 @@ module.exports = {
       // allowUnlimitedContractSize: true,
     },
     mumbai: {
-      url: "https://polygon-mumbai.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78", //"https://rpc-mumbai.maticvigil.com/",
+      url: process.env.POLYGON_MUMBAI_RPC_URL, //"https://rpc-mumbai.maticvigil.com/",
       accounts: DEPLOYER_PRIVATE_KEY,
       chainId: 80001,
       saveDeployments: true,
@@ -34,6 +34,13 @@ module.exports = {
       url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
       accounts: DEPLOYER_PRIVATE_KEY,
       chainId: 97,
+      saveDeployments: true,
+    },
+    baseGoerli: {
+      url: process.env.BASE_GOERLI_RPC_URL,
+      accounts: DEPLOYER_PRIVATE_KEY,
+      chainId: 84531,
+      gasPrice: 1000000000,
       saveDeployments: true,
     },
   },
@@ -57,8 +64,26 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
+      "base-goerli": process.env.BASE_API_KEY,
       // arbitrumGoerli: process.env.ETHERSCAN_KEY,÷      // arbitrumOne: ETHERSCAN_KEY,
       polygonMumbai: "C9WPAJNVQZMB5VGD1VQ7I1H2H6WZPRSG7A",
     },
+    customChains: [
+      {
+        network: "base-goerli",
+        chainId: 84531,
+        urls: {
+          apiURL: "https://api-goerli.basescan.org/api",
+          browserURL: "https://goerli.basescan.org",
+        },
+      },
+    ],
   },
+  // etherscan: {
+  //   apiKey: {
+  //     // arbitrumGoerli: process.env.ETHERSCAN_KEY,÷      // arbitrumOne: ETHERSCAN_KEY,
+  //     polygonMumbai: "C9WPAJNVQZMB5VGD1VQ7I1H2H6WZPRSG7A",
+  //     baseGoerli: process.env.BASE_API_KEY,
+  //   },
+  // },
 };

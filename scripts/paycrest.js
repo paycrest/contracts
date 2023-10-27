@@ -4,33 +4,44 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const CryptoJS = require("crypto-js");
 const crypto1 = require("crypto");
 
-const crypto  = globalThis.crypto;
-
+const crypto = globalThis.crypto;
 
 async function main() {
   const { deployer } = await getNamedAccounts();
+  const _mockUSDC = "0xe6123B5A202868cFe59d829b2E1F9A320B8E0f4A";
+  // const _paycrest = "0x566dEA5BB1888C33bD3F1274168E0Fa91b9d51C8";
+  // const _paycrestValidator = "0x5151739085Ad69b21b374A03A7c4AE6450A43B52";
 
-  const DERC20_Token = "0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1";
-  // const payCrestValidator = "0x69Afc555868Db29C6514Aea195210DeEeB72B8b2";
-  const DERC20_Contract_Instance = await ethers.getContractAt(
-    "MockUSDC",
-    DERC20_Token
-  );
+  // const DERC20_Token = "0xfe4F5145f6e09952a5ba9e956ED0C25e3Fa4c7F1";
+  // // const payCrestValidator = "0x69Afc555868Db29C6514Aea195210DeEeB72B8b2";
+  const mockUSDC = await ethers.getContractAt("MockUSDC", _mockUSDC);
 
-  console.log("DERC20_Contract_Instance", DERC20_Contract_Instance.address);
+  // deploy MockUSDC contract
+  // const MockUSDC = await ethers.getContractFactory("MockUSDC");
+  // const mockUSDC = await MockUSDC.deploy();
+  console.log("mockUSDC deployed to:", mockUSDC.address);
+  console.log("✅ Deployed MockUSDC.");
+
+  // console.log("DERC20_Contract_Instance", DERC20_Contract_Instance.address);
 
   // check balance of deployer in DERC20_Contract_Instance
-  const deployerBalance = await DERC20_Contract_Instance.balanceOf(deployer);
+  const deployerBalance = await mockUSDC.balanceOf(deployer);
   console.log("deployerBalance", deployerBalance.toString());
 
   const Paycrest = await ethers.getContractFactory("Paycrest");
-  const paycrest = await upgrades.deployProxy(Paycrest, [DERC20_Token]);
+  const paycrest = await upgrades.deployProxy(Paycrest, [mockUSDC.address]);
+  // const paycrest = await ethers.getContractAt("Paycrest", _paycrest);
   console.log("paycrest deployed to:", await paycrest.address);
   console.log("✅ Deployed Paycrest.");
 
   const PaycrestValidator = await ethers.getContractFactory(
     "PaycrestValidator"
   );
+
+  // const paycrestValidator = await ethers.getContractAt(
+  //   "PaycrestValidator",
+  //   _paycrestValidator
+  // );
   const paycrestValidator = await upgrades.deployProxy(PaycrestValidator, [
     paycrest.address,
   ]);
@@ -40,10 +51,7 @@ async function main() {
   //   "0x8759Aa5d49CcBC659F7c62C6458EbEAD2E188cC9"
   // );
 
-  console.log(
-    "paycrestValidator deployed to:",
-    paycrestValidator.address
-  );
+  console.log("paycrestValidator deployed to:", paycrestValidator.address);
   console.log("✅ Deployed paycrestValidator.");
 
   const protocolFeePercent = BigNumber.from(10_000);
@@ -98,9 +106,8 @@ async function main() {
   const aggregatorInit = ethers.utils.formatBytes32String("aggregator");
   const stakeContract = ethers.utils.formatBytes32String("stake");
 
-  await paycrest.updateFeeRecipient(fee, deployer);
-  await paycrest.updateFeeRecipient(aggregatorInit, deployer);
-  await paycrest.updateFeeRecipient(stakeContract, paycrestValidator.address);
+  await paycrest.updateProtocolAddresses(fee, deployer);
+  await paycrest.updateProtocolAddresses(aggregatorInit, deployer);
 
   console.log(
     "======================================================= SETTING MANAGER FOR MINIMUM AND MAXIMUM ON PAYCREST VALIDATOR======================================================="
@@ -108,13 +115,13 @@ async function main() {
 
   const whitelist = ethers.utils.formatBytes32String("whitelist");
 
-  // await paycrestValidator.setMinimumAmountForTokens(
-  //   DERC20_Contract_Instance.address,
-  //   usdcMinimumStakeAmount
-  // );
+  await paycrestValidator.setMinimumAmountForTokens(
+    DERC20_Contract_Instance.address,
+    usdcMinimumStakeAmount
+  );
 
   // deployer approving paycrest contract to spend DERC20_Contract_Instance
-  await DERC20_Contract_Instance.approve(paycrest.address, deployerBalance);
+  await mockUSDC.approve(paycrest.address, deployerBalance);
 
   // create order
   const amount = ethers.utils.parseUnits("1", 15);
@@ -139,12 +146,17 @@ async function main() {
     padding: CryptoJS.pad.NoPadding,
   });
 
+  await paycrest.updateProtocolAggregator(
+    "04a968c0e48766755767c887d84bed248f3b671e2400fb08402a03b231d11960d60a3078cbe0c21d5c7c6d0ba8d9cabfe12f1d3230af048b58fea6831719fe1b17"
+  );
+
   const messageHash =
     "0xa3c6bfc43a5f2297001a72039b835698bae96310babf9ff34acc52ad530316f37b961cdf6b119f9422a424b9ad4ac949e282c276131fa7820535a01eb7703cd76350a190e1b6ee4ecc84f6a0f7d090b52e1f565319af139a557fab64b027427e1812576dbfd6c5a2e95166c9a0bc02e967a45be472259572e166758c7865cdc24255f200de23f84f1ac1cc8035b1";
-  
+
   await paycrest.createOrder(
-    DERC20_Contract_Instance.address,
+    mockUSDC.address,
     amount,
+    ethers.utils.formatBytes32String("191"),
     ethers.utils.formatBytes32String("191"),
     970,
     deployer,
