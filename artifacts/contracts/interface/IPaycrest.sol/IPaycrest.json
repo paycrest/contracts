@@ -236,14 +236,9 @@
       "name": "getFeeDetails",
       "outputs": [
         {
-          "internalType": "uint128",
+          "internalType": "uint64",
           "name": "protocolReward",
-          "type": "uint128"
-        },
-        {
-          "internalType": "uint128",
-          "name": "validatorFeePercent",
-          "type": "uint128"
+          "type": "uint64"
         },
         {
           "internalType": "uint256",
@@ -398,11 +393,6 @@
           "internalType": "bytes32",
           "name": "_label",
           "type": "bytes32"
-        },
-        {
-          "internalType": "address[]",
-          "name": "_validators",
-          "type": "address[]"
         },
         {
           "internalType": "address",

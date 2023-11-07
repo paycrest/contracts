@@ -10,7 +10,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     struct fee {
         uint256 protocolFee;
         uint256 liquidityProviderAmount;
-        uint256 validatorsReward;
     }
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
@@ -24,7 +23,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         _isTokenSupported[_usdc] = true;   
         MAX_BPS = 100_000; 
         protocolFeePercent = 5000; // 5%
-        validatorFeePercent = 500; // 0.5%
         __Ownable_init();
     }
 
@@ -93,7 +91,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         bytes32 _splitOrderId,
         bytes32 _orderId, 
         bytes32 _label,
-        address[] calldata _validators, 
         address _liquidityProvider, 
         uint64 _settlePercent,
         bool _isPartner
@@ -122,25 +119,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         }
         // // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
-        // // transfer to validators
-        rewardValidators(_validators, token, _feeParams.validatorsReward);
 
         // emit event
         emit Settled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
         return (_orderId, token);
-    }
-
-    function rewardValidators(address[] calldata _validators, address token, uint256 _validatorsRewards) internal {
-        uint256 length = _validators.length;
-        uint256 _validatorReward = _validatorsRewards / length;
-        for(uint256 i = 0; i < length; ) {
-            IERC20(token).transfer(_validators[i], _validatorReward);
-            // emit event
-            emit RewardValidator(_validators[i], _validatorReward);
-            unchecked {
-                i++;
-            }
-        }
     }
 
     function transferSenderFee(bytes32 _orderId) internal {
@@ -177,15 +159,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS; 
         // substract total fees from the new amount after getting the scheduled amount
         _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
-        // get primary validators fees primaryValidatorsReward
-        _feeParams.validatorsReward = (_feeParams.protocolFee * validatorFeePercent) / MAX_BPS;
         // if (_isPartner) protocol fee should be 0, and the whole protocol fee should be added to liquidity provider
-        uint256 protocolFeeAmount = (_feeParams.protocolFee - _feeParams.validatorsReward);
         if (_isPartner) {
-            _feeParams.liquidityProviderAmount += protocolFeeAmount;
+            _feeParams.liquidityProviderAmount += _feeParams.protocolFee;
             _feeParams.protocolFee = 0;
-        } else {
-            _feeParams.protocolFee = protocolFeeAmount;
         }
     }
     
@@ -224,11 +201,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
 
     /** @dev See {getFeeDetails-IPaycrest}. */
     function getFeeDetails() external view returns(
-        uint128, 
-        uint128, 
+        uint64, 
         uint256
     ) {
-        return(protocolFeePercent, validatorFeePercent, MAX_BPS);
+        return(protocolFeePercent, MAX_BPS);
     }
 
     /** @dev See {getAggregatorAddress-IPaycrest}. */

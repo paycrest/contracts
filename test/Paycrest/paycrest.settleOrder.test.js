@@ -2,9 +2,7 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
 const CryptoJS = require("crypto-js");
 
-const {
-  paycrestValidatorFixture,
-} = require("../fixtures/paycrestValidator.js");
+const { paycrestFixture } = require("../fixtures/paycrest.js");
 const label = ethers.utils.formatBytes32String("label");
 
 
@@ -35,11 +33,7 @@ describe("Paycrest create order", function () {
       ...this.accounts
     ] = await ethers.getSigners();
 
-    ({
-      paycrestValidator,
-      paycrest,
-      mockUSDC
-    } = await paycrestValidatorFixture());
+    ({ paycrest, mockUSDC } = await paycrestFixture());
 
     // this.mockUSDC = usdc;
     // this.mockUSDT = usdt;
@@ -49,9 +43,8 @@ describe("Paycrest create order", function () {
     this.stakeAmount = ethers.utils.parseEther("1000000");
 
     this.liquidityProviderAmount = ethers.utils.parseEther("950000");
-    this.protocolFeeAmount = ethers.utils.parseEther("49750");
+    this.protocolFeeAmount = ethers.utils.parseEther("50000");
     this.rewards = ethers.utils.parseEther("250");
-    this.primaryValidatorReward = ethers.utils.parseEther("250");
     this.secondaryValidatorReward = ethers.utils.parseEther("250");
 
     await mockUSDC.connect(this.alice).mint(this.mintAmount);
@@ -81,16 +74,6 @@ describe("Paycrest create order", function () {
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       ZERO_AMOUNT
     );
-    // this.paycrest = paycrest;
-    // console.log("before init");
-    // this.paycrestValidator = paycrestValidator;
-
-    expect(
-      await paycrestValidator.getValidatorInfo(
-        this.bob.address,
-        mockUSDC.address
-      )
-    ).to.eq(ZERO_AMOUNT);
 
     const fee = ethers.utils.formatBytes32String("fee");
     const aggregator = ethers.utils.formatBytes32String("aggregator");
@@ -107,12 +90,6 @@ describe("Paycrest create order", function () {
       await mockUSDC.allowance(this.alice.address, paycrest.address)
     ).to.equal(ZERO_AMOUNT);
 
-    expect(
-      await mockUSDC.allowance(
-        this.bob.address,
-        paycrestValidator.address
-      )
-    ).to.equal(ZERO_AMOUNT);
 
     const whitelist = ethers.utils.formatBytes32String("whitelist");
 
@@ -135,17 +112,6 @@ describe("Paycrest create order", function () {
     expect(
       await mockUSDC.allowance(this.sender.address, paycrest.address)
     ).to.equal(this.mintAmount);
-
-    await mockUSDC
-      .connect(this.bob)
-      .approve(paycrestValidator.address, this.stakeAmount);
-
-    expect(
-      await mockUSDC.allowance(
-        this.bob.address,
-        paycrestValidator.address
-      )
-    ).to.equal(this.stakeAmount);
 
     const rate = 750;
     const institutionCode = ret.firstBank.code;
@@ -228,15 +194,6 @@ describe("Paycrest create order", function () {
     ).to.equal(ZERO_AMOUNT);
 
     // =================== Create Order ===================
-    await paycrestValidator
-      .connect(this.bob)
-      .stake(mockUSDC.address, this.stakeAmount);
-    expect(
-      await mockUSDC.allowance(
-        this.bob.address,
-        paycrestValidator.address
-      )
-    ).to.equal(ZERO_AMOUNT);
 
     expect(
       await paycrest
@@ -245,7 +202,6 @@ describe("Paycrest create order", function () {
           orderId,
           orderId,
           label,
-          [this.bob.address],
           this.liquidityProvider.address,
           MAX_BPS,
           false
@@ -253,9 +209,8 @@ describe("Paycrest create order", function () {
     )
       .to.emit(paycrest, Events.Paycrest.Settled)
       .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
-    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(
-      this.rewards
-    );
+
+    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.stakeAmount);
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
@@ -266,23 +221,6 @@ describe("Paycrest create order", function () {
     expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(
       ZERO_AMOUNT
     );
-    expect(await mockUSDC.balanceOf(paycrestValidator.address)).to.eq(
-      this.stakeAmount
-    );
-
-    expect(
-      await paycrestValidator.getValidatorInfo(
-        this.bob.address,
-        mockUSDC.address
-      )
-    ).to.eq(this.stakeAmount);
-
-    expect(
-      await paycrestValidator.getValidatorInfo(
-        this.primaryValidator.address,
-        mockUSDC.address
-      )
-    ).to.eq(0);
   });
 
   it("Should be able to create order by the sender and settled by liquidity aggregator when isPartner is true", async function () {
@@ -296,14 +234,6 @@ describe("Paycrest create order", function () {
       await mockUSDC.allowance(this.sender.address, paycrest.address)
     ).to.equal(this.mintAmount);
 
-    await mockUSDC
-      .connect(this.bob)
-      .approve(paycrestValidator.address, this.stakeAmount);
-
-    expect(
-      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
-    ).to.equal(this.stakeAmount);
-
     const rate = 750;
     const institutionCode = ret.firstBank.code;
     const data = [
@@ -383,12 +313,6 @@ describe("Paycrest create order", function () {
     ).to.equal(ZERO_AMOUNT);
 
     // =================== Create Order ===================
-    await paycrestValidator
-      .connect(this.bob)
-      .stake(mockUSDC.address, this.stakeAmount);
-    expect(
-      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
-    ).to.equal(ZERO_AMOUNT);
 
     expect(
       await paycrest
@@ -397,7 +321,6 @@ describe("Paycrest create order", function () {
           orderId,
           orderId,
           label,
-          [this.bob.address],
           this.liquidityProvider.address,
           MAX_BPS,
           true
@@ -411,7 +334,7 @@ describe("Paycrest create order", function () {
         this.liquidityProvider.address,
         MAX_BPS
       );
-    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.rewards);
+    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.stakeAmount);
     // 999,750 000000000000000000
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
@@ -419,23 +342,7 @@ describe("Paycrest create order", function () {
     );
     expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(0);
     expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
-    expect(await mockUSDC.balanceOf(paycrestValidator.address)).to.eq(
-      this.stakeAmount
-    );
 
-    expect(
-      await paycrestValidator.getValidatorInfo(
-        this.bob.address,
-        mockUSDC.address
-      )
-    ).to.eq(this.stakeAmount);
-
-    expect(
-      await paycrestValidator.getValidatorInfo(
-        this.primaryValidator.address,
-        mockUSDC.address
-      )
-    ).to.eq(0);
   });
 
   it("Should revert when trying to settle an already fulfilled order", async function () {
@@ -448,14 +355,6 @@ describe("Paycrest create order", function () {
     expect(
       await mockUSDC.allowance(this.sender.address, paycrest.address)
     ).to.equal(this.mintAmount);
-
-    await mockUSDC
-      .connect(this.bob)
-      .approve(paycrestValidator.address, this.stakeAmount);
-
-    expect(
-      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
-    ).to.equal(this.stakeAmount);
 
     const rate = 750;
     const institutionCode = ret.firstBank.code;
@@ -536,13 +435,6 @@ describe("Paycrest create order", function () {
     ).to.equal(ZERO_AMOUNT);
 
     // =================== Create Order ===================
-    await paycrestValidator
-      .connect(this.bob)
-      .stake(mockUSDC.address, this.stakeAmount);
-    expect(
-      await mockUSDC.allowance(this.bob.address, paycrestValidator.address)
-    ).to.equal(ZERO_AMOUNT);
-
     expect(
       await paycrest
         .connect(this.aggregator)
@@ -550,7 +442,6 @@ describe("Paycrest create order", function () {
           orderId,
           orderId,
           label,
-          [this.bob.address],
           this.liquidityProvider.address,
           MAX_BPS,
           false
@@ -559,7 +450,7 @@ describe("Paycrest create order", function () {
       .to.emit(paycrest, Events.Paycrest.Settled)
       .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
 
-    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.rewards);
+    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.stakeAmount);
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
@@ -567,24 +458,8 @@ describe("Paycrest create order", function () {
     expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(
       this.protocolFeeAmount
     );
+
     expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
 
-    expect(await mockUSDC.balanceOf(paycrestValidator.address)).to.eq(
-      this.stakeAmount
-    );
-
-    expect(
-      await paycrestValidator.getValidatorInfo(
-        this.bob.address,
-        mockUSDC.address
-      )
-    ).to.eq(this.stakeAmount);
-
-    expect(
-      await paycrestValidator.getValidatorInfo(
-        this.primaryValidator.address,
-        mockUSDC.address
-      )
-    ).to.eq(0);
   });
 });

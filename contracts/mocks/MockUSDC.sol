@@ -9,10 +9,6 @@ contract MockUSDC is ERC20 {
         _mint(msg.sender, 1_000_000E18);
     }
 
-    function decimals() public view virtual override returns (uint8) {
-        return 6;
-    }
-
     function mint(uint256 _amount) external {
         _mint(msg.sender, _amount);
     }
