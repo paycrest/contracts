@@ -1,15 +1,12 @@
 const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
-const {
-  paycrestValidatorFixture,
-} = require("../fixtures/paycrestValidator.js");
+const { paycrestFixture } = require("../fixtures/paycrest.js");
 require("dotenv").config();
 
 const { Errors, Events } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
 describe("Ownable settings", function () {
-  let paycrestValidator;
   let paycrest;
   let mockUSDC;
   let admin;
@@ -22,8 +19,7 @@ describe("Ownable settings", function () {
   let Mark;
 
   async function setupAndResetFork() {
-    ({ paycrestValidator, paycrest, mockUSDC } =
-      await paycrestValidatorFixture());
+    ({ paycrest, mockUSDC } = await paycrestFixture());
 
     [admin, keeper, alice, hacker, sender, Mark, feeRecipient, aggregator] =
       await ethers.getSigners();
@@ -205,33 +201,29 @@ describe("Ownable settings", function () {
     await setupAndResetFork();
     // charge 10% as protocol fee
     const protocolFeePercent = BigNumber.from(10_000);
-    const primaryValidatorsFees = BigNumber.from(5_000); // 5%
-    const secondaryValidatorsFees = BigNumber.from(3_000); // 3%
 
     await expect(
       paycrest
         .connect(admin)
-        .updateProtocolFees(protocolFeePercent, primaryValidatorsFees)
+        .updateProtocolFees(protocolFeePercent)
     )
       .to.emit(paycrest, Events.Paycrest.PaycrestFees)
-      .withArgs(protocolFeePercent, primaryValidatorsFees);
+      .withArgs(protocolFeePercent);
 
-    [this.protocolFeePecent, this.primaryvalidatorPercent, this.MAXBPS] =
+    [this.protocolFeePecent, this.MAXBPS] =
       await paycrest.getFeeDetails();
     expect(this.protocolFeePecent).to.eq(protocolFeePercent);
-    expect(this.primaryvalidatorPercent).to.eq(primaryValidatorsFees);
   });
 
   it("should not be able to set protocol fees by non-owner", async function () {
     await setupAndResetFork();
     // charge 10% as protocol fee
     const protocolFeePercent = BigNumber.from(10_000);
-    const primaryValidatorsFees = BigNumber.from(5_000); // 5%
 
     await expect(
       paycrest
         .connect(hacker)
-        .updateProtocolFees(protocolFeePercent, primaryValidatorsFees)
+        .updateProtocolFees(protocolFeePercent)
     ).to.be.revertedWith(Errors.Ownable.onlyOwner);
   });
 

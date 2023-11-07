@@ -2,9 +2,7 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
 const CryptoJS = require("crypto-js");
 
-const {
-  paycrestValidatorFixture,
-} = require("../fixtures/paycrestValidator.js");
+const { paycrestFixture } = require("../fixtures/paycrest.js");
 
 const {
   deployContract,
@@ -32,13 +30,11 @@ describe("Paycrest create order", function () {
       ...this.accounts
     ] = await ethers.getSigners();
 
-    ({ paycrestValidator, paycrest, mockUSDC } =
-      await paycrestValidatorFixture());
+    ({ paycrest, mockUSDC } = await paycrestFixture());
 
     this.mockUSDT = await deployContract("MockUSDC");
     this.mockUSDC = mockUSDC;
     this.paycrest = paycrest;
-    this.paycrestValidator = paycrestValidator;
 
     this.mintAmount = ethers.utils.parseEther("1000100");
     this.senderFee = ethers.utils.parseEther("100");

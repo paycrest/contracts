@@ -12,8 +12,7 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         bytes32 currency;
     }
     uint256 internal MAX_BPS;
-    uint128 internal protocolFeePercent; // 5%
-    uint128 internal validatorFeePercent; // 0.5%
+    uint64 internal protocolFeePercent; // 5%
     address internal feeRecipient;
     address internal _aggregatorAddress;
     bytes internal _aggregator;
@@ -28,10 +27,9 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     mapping(bytes32 => InstitutionByCode) internal supportedInstitutionsByCode;
 
     event SettingManagerBool(bytes32 what, address value, bool status);
-    event PaycrestFees(uint128 protocolFee, uint128 validatorFeePercent);
+    event PaycrestFees(uint64 protocolFee);
     event SetAggregator(bytes aggregator);
     event SetFeeRecipient(address feeRecipient);
-
     
     /* ##################################################################
                                 OWNER FUNCTIONS
@@ -57,10 +55,9 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         }
     }
 
-    function updateProtocolFees(uint128 _protocolFeePercent, uint128 _validatorFeePercent) external onlyOwner {
+    function updateProtocolFees(uint64 _protocolFeePercent) external onlyOwner {
         protocolFeePercent = _protocolFeePercent;
-        validatorFeePercent = _validatorFeePercent;
-        emit PaycrestFees(_protocolFeePercent, _validatorFeePercent);
+        emit PaycrestFees(_protocolFeePercent);
     }
 
     function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
