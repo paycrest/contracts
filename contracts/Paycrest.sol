@@ -1,10 +1,12 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+// import pauseable contract
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {PaycrestSettingManager} from "./PaycrestSettingManager.sol";
 import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
-contract Paycrest is IPaycrest, PaycrestSettingManager { 
+contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable { 
     using SafeERC20Upgradeable for IERC20;
     using ECDSAUpgradeable for bytes32;
     struct fee {
@@ -24,11 +26,25 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         MAX_BPS = 100_000; 
         protocolFeePercent = 5000; // 5%
         __Ownable_init();
+        __Pausable_init();
     }
 
     modifier onlyAggregator {
         require(msg.sender == _aggregatorAddress, "OnlyAggregator");
         _;
+    }
+
+    /* ##################################################################
+                                OWNER FUNCTIONS
+    ################################################################## */
+    /** @dev pause */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /** @dev unpause */
+    function unpause() external onlyOwner {
+        _unpause();
     }
     
     /* ##################################################################
@@ -45,7 +61,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         uint256 _senderFee,
         address _refundAddress, 
         string calldata messageHash
-    )  external returns(bytes32 orderId) {
+    )  external whenNotPaused() returns(bytes32 orderId) {
         // checks that are required
         _handler(_token, _amount, _refundAddress, _institutionCode);
         // require that sender fee is less than protocol fee
