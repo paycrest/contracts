@@ -16,7 +16,7 @@ interface IPaycrest {
     /// @dev Emitted when aggregator settle transaction.
     event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, bytes32 label, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
-    event Refunded(bytes32 indexed orderId, bytes32 label);
+    event Refunded(uint256 _fee, bytes32 indexed orderId, bytes32 label);
     /// @dev Emitted when sender get therir rewards.
     event TransferSenderFee(address indexed sender, uint256 indexed amount);
     /// @dev Emitted when primary validator get therir rewards.
@@ -99,10 +99,11 @@ interface IPaycrest {
     /// `_orderId` it must be less than total ids.
     /// `_orderId` it must be an open Id.
     /// `isFulfilled` must be false.
+    /// @param _fee amount to be deducted from the amount to be refunded
     /// @param _orderId transaction Id.
     /// @param _label reference of the sender.
     /// @return return the status of transaction {bool}
-    function refund(bytes32 _orderId, bytes32 _label)  external returns(bool);
+    function refund(uint256 _fee, bytes32 _orderId, bytes32 _label)  external returns(bool);
 
     /// @notice get supported token from Paycrest.
     /// @param _token address of the token to check.

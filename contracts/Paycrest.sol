@@ -1,21 +1,27 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
+
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-// import pauseable contract
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+
 import {PaycrestSettingManager} from "./PaycrestSettingManager.sol";
 import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
+
+
 contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable { 
     using SafeERC20Upgradeable for IERC20;
     using ECDSAUpgradeable for bytes32;
+
     struct fee {
         uint256 protocolFee;
         uint256 liquidityProviderAmount;
     }
+
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
     uint256[50] private __gap;
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -150,16 +156,21 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     }
 
     /** @dev See {refund-IPaycrest}. */
-    function refund(bytes32 _orderId, bytes32 _label)  external onlyAggregator() returns(bool) {
+    function refund(uint256 _fee, bytes32 _orderId, bytes32 _label) external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
-        // reser state values
+
+        // deduct fee from order amount
+        uint256 refundAmount = order[_orderId].amount - _fee;
+
+        // reset state values
         order[_orderId].isFulfilled = true;
         order[_orderId].currentBPS = 0;
-        // transfer to seller 
-        IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, order[_orderId].amount);
-        // emit
-        emit Refunded(_orderId, _label);
+    
+        // transfer to sender and emit event
+        IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, refundAmount);
+        emit Refunded(_fee, _orderId, _label);
+
         return true;
     }
 
