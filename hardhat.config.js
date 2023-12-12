@@ -26,19 +26,19 @@ module.exports = {
     },
     mumbai: {
       url: "https://polygon-mumbai.infura.io/v3/4458cf4d1689497b9a38b1d6bbf05e78", //process.env.POLYGON_MUMBAI_RPC_URL, //"https://rpc-mumbai.maticvigil.com/",
-      accounts: DEPLOYER_PRIVATE_KEY,
+      accounts: [DEPLOYER_PRIVATE_KEY],
       chainId: 80001,
       saveDeployments: true,
     },
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
-      accounts: DEPLOYER_PRIVATE_KEY,
+      accounts: [DEPLOYER_PRIVATE_KEY],
       chainId: 97,
       saveDeployments: true,
     },
     baseGoerli: {
       url: "https://goerli.base.org",
-      accounts: DEPLOYER_PRIVATE_KEY,
+      accounts: [DEPLOYER_PRIVATE_KEY],
       chainId: 84531,
       gasPrice: 1000000000,
       saveDeployments: true,
