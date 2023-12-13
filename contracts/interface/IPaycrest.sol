@@ -1,9 +1,10 @@
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 /**
- * @author Chef Photons, Paycrest Team serving high quality drinks; drink responsibly.
+ * @author Paycrest Team
  * Factory and global config params
  */
 interface IPaycrest {
@@ -17,10 +18,11 @@ interface IPaycrest {
     event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, bytes32 label, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
     event Refunded(uint256 _fee, bytes32 indexed orderId, bytes32 label);
-    /// @dev Emitted when sender get therir rewards.
+    /// @dev Emitted when sender get their rewards.
     event TransferSenderFee(address indexed sender, uint256 indexed amount);
-    /// @dev Emitted when primary validator get therir rewards.
+    /// @dev Emitted when primary validator get their rewards.
     event RewardValidator(address indexed validator, uint256 indexed amount);
+
 
     /* ##################################################################
                                 STRUCTS
@@ -44,7 +46,6 @@ interface IPaycrest {
         uint96 currentBPS;                  //                                                                   slot 2 {}
         uint256 amount;                     //                                                                   slot 3
     }
-
 
     /* ##################################################################
                                 EXTERNAL CALLS
@@ -126,7 +127,7 @@ interface IPaycrest {
     /// @return address of `Aggregator`.
     function getAggregatorAddress() external view returns(address);
 
-    /// @notice get aggregator public key.
+    /// @notice get public key of liquidity aggregator.
     /// @return aggregator public key.
     function getAggregator() external view returns(bytes memory);
     

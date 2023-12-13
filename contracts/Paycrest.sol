@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -118,12 +118,15 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         )  external onlyAggregator() returns(bytes32, address) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
+
         // load the token into memory
         address token = order[_orderId].token;
-        // substract sum of amount based on the input _settlePercent
+
+        // subtract sum of amount based on the input _settlePercent
         order[_orderId].currentBPS -= _settlePercent;
+
         // if transaction amount is zero
-        // load the fees and transfer associated protocol fees to protocol fee recipient
+        // load the fees and transfer associated protocol fees to the protocol fee recipient
         ( fee memory _feeParams  ) = _calculateFees(_orderId, _settlePercent, _isPartner);
         if(order[_orderId].currentBPS == 0) {
             // update the transaction to be fulfilled
@@ -138,6 +141,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             // transfer protocol fee
             IERC20(token).transfer(feeRecipient, _feeParams.protocolFee);
         }
+
         // // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
 
@@ -162,6 +166,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 
         // deduct fee from order amount
         uint256 refundAmount = order[_orderId].amount - _fee;
+        IERC20(order[_orderId].token).transfer(feeRecipient, _fee);
 
         // reset state values
         order[_orderId].isFulfilled = true;
@@ -247,11 +252,4 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     function getAggregator() external view returns(bytes memory) {
         return _aggregator;
     }
-
-
-    // DECLARE A FUNCTION TO WITHDRAW ANY TOKEN FROM CONTRACT CAN ONLY NE CALLED BY OWNER
-    function withdraw(address _token, address _recipient, uint256 _amount) external onlyOwner {
-        IERC20(_token).transfer(_recipient, _amount);
-    }
-
 }
