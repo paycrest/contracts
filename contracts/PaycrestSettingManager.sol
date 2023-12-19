@@ -4,15 +4,15 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract PaycrestSettingManager is OwnableUpgradeable { 
     struct Institution {
-        bytes32 code; // usually not more than 8 letters
-        bytes32 name; // 
+        bytes32 code;
+        bytes32 name;
     }
     struct InstitutionByCode {
         bytes32 name;
         bytes32 currency;
     }
     uint256 internal MAX_BPS;
-    uint64 internal protocolFeePercent; // 5%
+    uint64 internal protocolFeePercent;
     address internal feeRecipient;
     address internal _aggregatorAddress;
     bytes internal _aggregator;

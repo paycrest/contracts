@@ -69,17 +69,17 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         string calldata messageHash
     )  external whenNotPaused() returns(bytes32 orderId) {
         // checks that are required
-        _handler(_token, _amount, _refundAddress, _institutionCode);
-        // require that sender fee is less than protocol fee
-        require(_senderFee <= (_amount * protocolFeePercent) / MAX_BPS, "SenderFeeTooHigh");
-        // first transfer token from msg.sender
+        _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee, _institutionCode);
+
+        // transfer token from msg.sender to contract
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+
         // increase users nonce to avoid replay attacks
         _nonce[msg.sender] ++;
-        // @chibie @5ran6
-        // @todo sender fee should have limit, let say the maximum amount of sender fee should be 1% of the amount
+
         // generate transaction id for the transaction
         orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
+
         // update transaction
         order[orderId] = Order({
             seller: msg.sender,
@@ -92,16 +92,21 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             currentBPS: uint64(MAX_BPS),
             amount: _amount
         });
+
         // emit deposit event
         emit Deposit(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
     }
 
-    function _handler(address _token, uint256 _amount, address _refundAddress, bytes32 _institutionCode) internal view {
-        // use require for all the custom errors
+    function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, bytes32 _institutionCode) internal view {
         require(_isTokenSupported[_token], "TokenNotSupported");
         require(_amount > 0, "AmountIsZero");
         require(_refundAddress != address(0), "ThrowZeroAddress");
         require(supportedInstitutionsByCode[_institutionCode].name != bytes32(0), "InvalidInstitutionCode");
+
+        if (_senderFee > 0) {
+            require(_senderFeeRecipient != address(0), "InvalidSenderFeeRecipient");
+        }
+        require(_senderFee <= (_amount * 500) / MAX_BPS, "SenderFeeTooHigh");
     }
 
     /* ##################################################################
