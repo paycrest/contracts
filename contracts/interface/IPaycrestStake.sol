@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
+pragma solidity ^0.8.18;
 
 /**
- * @author Chef Photons, Vaultka Team serving high quality drinks; drink responsibly.
+ * @author Paycrest Team
  * Factory and global config params
  */
 interface IPaycrestStake {
