@@ -4,7 +4,7 @@ import Paycrest from "../artifacts/contracts/Paycrest.sol/Paycrest.json";
 import PaycrestValidator from "../artifacts/contracts/PaycrestValidator.sol/PaycrestValidator.json";
 import MockUSDC from "../artifacts/contracts/mocks/MockUSDC.sol/MockUSDC.json";
 import dotenv from "dotenv";
-import { NETWORKS } from "./config";
+import { NETWORKS } from "../config";
 
 dotenv.config();
 

@@ -1,7 +1,7 @@
 // Import ethers and contracts
 import { ethers } from "ethers";
 import { getContracts } from "./getContracts";
-import { NETWORKS } from "./config";
+import { NETWORKS } from "../config";
 
 const chainID = 42161;
 
@@ -18,8 +18,6 @@ async function addSupportedTokens() {
   // call contract methods
   await paycrestInstance.settingManagerBool(token, DERC20_TOKEN, true);
   await paycrestInstance.settingManagerBool(whitelist, DERC20_TOKEN, true);
-
-  
 }
 
 // Call the function

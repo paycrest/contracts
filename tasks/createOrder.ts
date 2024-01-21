@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 import { getContracts } from "./getContracts";
-import { NETWORKS } from "./config";
+import { NETWORKS } from "../config";
 const chainId = 42161;
 const network = NETWORKS[chainId];
 let privateKey: any;

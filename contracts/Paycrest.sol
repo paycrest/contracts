@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
@@ -27,10 +27,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(address _usdc) external initializer {    
-        _isTokenSupported[_usdc] = true;   
-        MAX_BPS = 100_000; 
-        protocolFeePercent = 5000; // 5%
+    function initialize() external initializer {
+        MAX_BPS = 100_000;
         __Ownable_init();
         __Pausable_init();
     }
@@ -67,7 +65,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         uint256 _senderFee,
         address _refundAddress, 
         string calldata messageHash
-    )  external whenNotPaused() returns(bytes32 orderId) {
+    ) external whenNotPaused() returns(bytes32 orderId) {
         // checks that are required
         _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee, _institutionCode);
 
@@ -147,7 +145,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             IERC20(token).transfer(feeRecipient, _feeParams.protocolFee);
         }
 
-        // // transfer to liquidity provider 
+        // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
 
         // emit event
@@ -187,14 +185,19 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     function _calculateFees(bytes32 _orderId, uint96 _settlePercent, bool _isPartner) private view returns(fee memory _feeParams ) {
         // get the total amount associated with the orderId
         uint256 amount = order[_orderId].amount;
+
         // get sender fee from amount
         amount = amount - order[_orderId].senderFee;
+
         // get the settled percent that is scheduled for this amount
         _feeParams.liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
+
         // deduct protocol fees from the new total amount
-        _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS; 
+        _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
+        
         // substract total fees from the new amount after getting the scheduled amount
         _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
+
         // if (_isPartner) protocol fee should be 0, and the whole protocol fee should be added to liquidity provider
         if (_isPartner) {
             _feeParams.liquidityProviderAmount += _feeParams.protocolFee;

@@ -1,6 +1,6 @@
 // Import ethers and contracts
 import { getContracts } from "./getContracts";
-import { NETWORKS } from "./config";
+import { NETWORKS } from "../config";
 
 const chainID = 42161;
 

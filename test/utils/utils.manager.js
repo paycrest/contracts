@@ -61,24 +61,30 @@ async function deployContract(name, args = [], value = 0) {
 async function setSupportedInstitution(instance, signer) {
   const currency = ethers.utils.formatBytes32String("NGN");
 
-  const firstBank = {
-    code: ethers.utils.formatBytes32String("191"),
-    name: ethers.utils.formatBytes32String("First Bank"),
+  const accessBank = {
+    code: ethers.utils.formatBytes32String("ABNGNGLA"),
+    name: ethers.utils.formatBytes32String("ACCESS BANK"),
   };
-  const opay = {
-    code: ethers.utils.formatBytes32String("192"),
-    name: ethers.utils.formatBytes32String("Opay"),
-  };
-  const palmpay = {
-    code: ethers.utils.formatBytes32String("193"),
-    name: ethers.utils.formatBytes32String("Palmpay Bank"),
+
+  const diamondBank = {
+    code: ethers.utils.formatBytes32String("DBLNNGLA"),
+    name: ethers.utils.formatBytes32String("DIAMOND BANK"),
   };
 
   instance
     .connect(signer)
-    .setSupportedInstitutions(currency, [firstBank, opay, palmpay]);
-  return { currency, firstBank, opay, palmpay };
+    .setSupportedInstitutions(currency, [
+      accessBank,
+      diamondBank,
+    ]);
+
+  return {
+    currency,
+    accessBank,
+    diamondBank,
+  };
 }
+
 
 async function calculateFee(instance, amount) {
   const feeBps = await instance.getFeeBPS();
