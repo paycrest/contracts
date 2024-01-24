@@ -10,7 +10,7 @@ describe("Ownable settings", function () {
   let paycrest;
   let mockUSDC;
   let admin;
-  let feeRecipient;
+  let treasuryAddress;
   let aggregator;
   let keeper;
   let alice;
@@ -21,7 +21,7 @@ describe("Ownable settings", function () {
   async function setupAndResetFork() {
     ({ paycrest, mockUSDC } = await paycrestFixture());
 
-    [admin, keeper, alice, hacker, sender, Mark, feeRecipient, aggregator] =
+    [admin, keeper, alice, hacker, sender, Mark, treasuryAddress, aggregator] =
       await ethers.getSigners();
   }
 
@@ -234,7 +234,7 @@ describe("Ownable settings", function () {
 
     await paycrest
       .connect(admin)
-      .updateProtocolAddresses(fee, feeRecipient.address);
+      .updateProtocolAddresses(fee, treasuryAddress.address);
 
     await paycrest
       .connect(admin)

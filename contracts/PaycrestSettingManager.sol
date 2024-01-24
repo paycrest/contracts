@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -13,7 +13,7 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     }
     uint256 internal MAX_BPS;
     uint64 internal protocolFeePercent;
-    address internal feeRecipient;
+    address internal treasuryAddress;
     address internal _aggregatorAddress;
     bytes internal _aggregator;
     
@@ -21,15 +21,15 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     uint256[50] private __gap;
 
     mapping(address => bool) internal _isTokenSupported;
-    mapping(address => bool) internal _isWhitelisted;
 
     mapping(bytes32 => Institution[]) internal supportedInstitutions;
     mapping(bytes32 => InstitutionByCode) internal supportedInstitutionsByCode;
 
     event SettingManagerBool(bytes32 what, address value, bool status);
-    event PaycrestFees(uint64 protocolFee);
+    event ProtocolFeesUpdated(uint64 protocolFee);
+    event ProtocolAddressesUpdated(address treasuryAddress);
     event SetAggregator(bytes aggregator);
-    event SetFeeRecipient(address feeRecipient);
+    event SetFeeRecipient(address treasuryAddress);
     
     /* ##################################################################
                                 OWNER FUNCTIONS
@@ -37,7 +37,6 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     function settingManagerBool(bytes32 what, address value, bool status) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
         if (what == "token") _isTokenSupported[value] = status;
-        if (what == "whitelist") _isWhitelisted[value] = status;
 
         emit SettingManagerBool(what, value, status);
     }
@@ -57,18 +56,17 @@ contract PaycrestSettingManager is OwnableUpgradeable {
 
     function updateProtocolFees(uint64 _protocolFeePercent) external onlyOwner {
         protocolFeePercent = _protocolFeePercent;
-        emit PaycrestFees(_protocolFeePercent);
+        emit ProtocolFeesUpdated(_protocolFeePercent);
     }
 
     function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
-        if (what == "fee") feeRecipient = value;
-        if (what == "aggregator") _aggregatorAddress = value;
+        if (what == "treasury") treasuryAddress = value;
+        emit ProtocolAddressesUpdated(treasuryAddress);
     }
 
     function updateProtocolAggregator(bytes calldata aggregator) external onlyOwner {
         _aggregator = aggregator;
         emit SetAggregator(aggregator);
     }
-
 }

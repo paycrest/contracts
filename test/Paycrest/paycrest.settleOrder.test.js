@@ -22,7 +22,7 @@ describe("Paycrest create order", function () {
   beforeEach(async function () {
     [
       this.deployer,
-      this.feeRecipient,
+      this.treasuryAddress,
       this.primaryValidator,
       this.aggregator,
       this.alice,
@@ -64,7 +64,7 @@ describe("Paycrest create order", function () {
       ZERO_AMOUNT
     );
 
-    expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(
+    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(
       ZERO_AMOUNT
     );
 
@@ -80,7 +80,7 @@ describe("Paycrest create order", function () {
 
     await paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(fee, this.feeRecipient.address);
+      .updateProtocolAddresses(fee, this.treasuryAddress.address);
 
     await paycrest
       .connect(this.deployer)
@@ -215,7 +215,7 @@ describe("Paycrest create order", function () {
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
     );
-    expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(
+    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(
       this.protocolFeeAmount
     );
     expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(
@@ -340,7 +340,7 @@ describe("Paycrest create order", function () {
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount.add(this.protocolFeeAmount)
     );
-    expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(0);
+    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(0);
     expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
 
   });
@@ -455,7 +455,7 @@ describe("Paycrest create order", function () {
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
     );
-    expect(await mockUSDC.balanceOf(this.feeRecipient.address)).to.eq(
+    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(
       this.protocolFeeAmount
     );
 

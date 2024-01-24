@@ -10,13 +10,10 @@ const network = NETWORKS[chainID];
 async function updateProtocolFees() {
   // Get contract instances
   const { paycrestInstance } = await getContracts();
-  const { PROTOCOL_FEE_PERCENT, VALIDATOR_FEE_PERCENT } = network;
+  const { TREASURY_FEE_PERCENT } = network;
 
   // call contract methods
-  await paycrestInstance.updateProtocolFees(
-    PROTOCOL_FEE_PERCENT,
-    VALIDATOR_FEE_PERCENT
-  );
+  await paycrestInstance.updateProtocolFees(TREASURY_FEE_PERCENT);
 }
 
 // Call the function

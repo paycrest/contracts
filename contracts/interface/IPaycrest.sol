@@ -123,17 +123,7 @@ interface IPaycrest {
         uint256 max_bps
     );
 
-    /// @notice get address of liquidity aggregator.
-    /// @return address of `Aggregator`.
-    function getAggregatorAddress() external view returns(address);
-
     /// @notice get public key of liquidity aggregator.
     /// @return aggregator public key.
     function getAggregator() external view returns(bytes memory);
-    
-    /// @notice get address of sender whitelisting status.
-    /// @param sender address of the sender.
-    /// @return address of `status`.
-    function getWhitelistedStatus(address sender) external view returns(bool);
-
 }

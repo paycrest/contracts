@@ -142,7 +142,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         
         if (_feeParams.protocolFee > 0) {
             // transfer protocol fee
-            IERC20(token).transfer(feeRecipient, _feeParams.protocolFee);
+            IERC20(token).transfer(treasuryAddress, _feeParams.protocolFee);
         }
 
         // transfer to liquidity provider 
@@ -169,7 +169,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 
         // deduct fee from order amount
         uint256 refundAmount = order[_orderId].amount - _fee;
-        IERC20(order[_orderId].token).transfer(feeRecipient, _fee);
+        IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
 
         // reset state values
         order[_orderId].isFulfilled = true;
@@ -246,18 +246,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         return(protocolFeePercent, MAX_BPS);
     }
 
-    /** @dev See {getAggregatorAddress-IPaycrest}. */
-    function getAggregatorAddress() external view returns(address) {
-        return _aggregatorAddress;
-    }
-
-    /** @dev See {getWhitelistedStatus-IPaycrest}. */
-    function getWhitelistedStatus(address sender) external view returns(bool) {
-        return _isWhitelisted[sender];
-    }
-
     /** @dev See {getAggregator-IPaycrest}. */
     function getAggregator() external view returns(bytes memory) {
         return _aggregator;
-    }
+    } 
 }
