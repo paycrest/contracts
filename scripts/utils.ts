@@ -1,12 +1,14 @@
-const readline = require("readline");
-const dotenv = require("dotenv");
+import readline from "readline";
+import dotenv from "dotenv";
+import { ethers, network } from "hardhat";
+import { NETWORKS } from "./config";
 
 dotenv.config();
 
 /**
  * Asserts that environment variables are set as expected
  */
-const assertEnvironment = () => {
+export const assertEnvironment = () => {
   if (!process.env.DEPLOYER_PRIVATE_KEY) {
     console.error("Please set your DEPLOYER_PRIVATE_KEY in a .env file");
   }
@@ -19,7 +21,7 @@ const assertEnvironment = () => {
  * Helper method for waiting on user input. Source: https://stackoverflow.com/a/50890409
  * @param query
  */
-async function waitForInput(query) {
+export async function waitForInput(query: string) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -37,7 +39,7 @@ async function waitForInput(query) {
  *
  * @param params
  */
-async function confirmContinue(params) {
+export async function confirmContinue(params: any) {
   console.log("\nPARAMETERS");
   console.table(params);
 
@@ -47,8 +49,30 @@ async function confirmContinue(params) {
   console.log("\n");
 }
 
-module.exports = {
-  assertEnvironment,
-  confirmContinue,
-  waitForInput,
+
+/**
+ * Retrieves the wallet and contract instances.
+ * 
+ * @returns An object containing the wallet and contract instances.
+ */
+export async function getContracts(): Promise<any> {
+  assertEnvironment();
+
+  const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
+  
+  // Get signer
+  const provider = new ethers.providers.JsonRpcProvider(networkConfig.RPC_URL);
+  const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+
+  // Get contract instances
+  const paycrestInstance = new ethers.Contract(
+    networkConfig.PAYCREST_CONTRACT,
+    Paycrest.abi,
+    provider
+  );
+
+  return {
+    wallet,
+    paycrestInstance,
+  };
 }

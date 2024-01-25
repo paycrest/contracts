@@ -1,189 +1,24 @@
-//SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.18;
 
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20 {
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
 
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+// SPDX-License-Identifier: MIXED
 
-    /**
-     * @dev Returns the amount of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
+// Sources flattened with hardhat v2.14.0 https://hardhat.org
 
-    /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
+// File @openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol@v4.9.5
 
-    /**
-     * @dev Moves `amount` tokens from the caller's account to `to`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address to, uint256 amount) external returns (bool);
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (utils/Address.sol)
 
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * ////IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    /**
-     * @dev Moves `amount` tokens from `from` to `to` using the
-     * allowance mechanism. `amount` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool);
-}
-
-/**
- * @dev Provides information about the current execution context, including the
- * sender of the transaction and its data. While these are generally available
- * via msg.sender and msg.data, they should not be accessed in such a direct
- * manner, since when dealing with meta-transactions the account sending and
- * paying for execution may not be the actual sender (as far as an application
- * is concerned).
- *
- * This contract is only required for intermediate, library-like contracts.
- */
-abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-}
-
-/**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * By default, the owner account will be the one that deploys the contract. This
- * can later be changed with {transferOwnership}.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be applied to your functions to restrict their use to
- * the owner.
- */
-abstract contract Ownable is Context {
-    address private _owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    constructor() {
-        _transferOwnership(_msgSender());
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        _checkOwner();
-        _;
-    }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view virtual returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if the sender is not the owner.
-     */
-    function _checkOwner() internal view virtual {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        _transferOwnership(address(0));
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Internal function without access restriction.
-     */
-    function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
-    }
-}
+pragma solidity ^0.8.1;
 
 /**
  * @dev Collection of functions related to the address type
  */
-library Address {
+library AddressUpgradeable {
     /**
      * @dev Returns true if `account` is a contract.
      *
-     * [////IMPORTANT]
+     * [IMPORTANT]
      * ====
      * It is unsafe to assume that an address for which this function returns
      * false is an externally-owned account (EOA) and not a contract.
@@ -195,6 +30,10 @@ library Address {
      *  - a contract in construction
      *  - an address where a contract will be created
      *  - an address where a contract lived, but was destroyed
+     *
+     * Furthermore, `isContract` will also return true if the target contract within
+     * the same transaction is already scheduled for destruction by `SELFDESTRUCT`,
+     * which only has an effect at the end of a transaction.
      * ====
      *
      * [IMPORTANT]
@@ -223,12 +62,12 @@ library Address {
      * imposed by `transfer`, making them unable to receive funds via
      * `transfer`. {sendValue} removes this limitation.
      *
-     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     * https://consensys.net/diligence/blog/2019/09/stop-using-soliditys-transfer-now/[Learn more].
      *
-     * ////IMPORTANT: because control is transferred to `recipient`, care must be
+     * IMPORTANT: because control is transferred to `recipient`, care must be
      * taken to not create reentrancy vulnerabilities. Consider using
      * {ReentrancyGuard} or the
-     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     * https://solidity.readthedocs.io/en/v0.8.0/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
      */
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
@@ -284,11 +123,7 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(
-        address target,
-        bytes memory data,
-        uint256 value
-    ) internal returns (bytes memory) {
+    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
         return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
@@ -416,6 +251,442 @@ library Address {
     }
 }
 
+
+// File @openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (proxy/utils/Initializable.sol)
+
+pragma solidity ^0.8.2;
+
+/**
+ * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
+ * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an
+ * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
+ * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
+ *
+ * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be
+ * reused. This mechanism prevents re-execution of each "step" but allows the creation of new initialization steps in
+ * case an upgrade adds a module that needs to be initialized.
+ *
+ * For example:
+ *
+ * [.hljs-theme-light.nopadding]
+ * ```solidity
+ * contract MyToken is ERC20Upgradeable {
+ *     function initialize() initializer public {
+ *         __ERC20_init("MyToken", "MTK");
+ *     }
+ * }
+ *
+ * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {
+ *     function initializeV2() reinitializer(2) public {
+ *         __ERC20Permit_init("MyToken");
+ *     }
+ * }
+ * ```
+ *
+ * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
+ * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.
+ *
+ * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
+ * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
+ *
+ * [CAUTION]
+ * ====
+ * Avoid leaving a contract uninitialized.
+ *
+ * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation
+ * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke
+ * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:
+ *
+ * [.hljs-theme-light.nopadding]
+ * ```
+ * /// @custom:oz-upgrades-unsafe-allow constructor
+ * constructor() {
+ *     _disableInitializers();
+ * }
+ * ```
+ * ====
+ */
+abstract contract Initializable {
+    /**
+     * @dev Indicates that the contract has been initialized.
+     * @custom:oz-retyped-from bool
+     */
+    uint8 private _initialized;
+
+    /**
+     * @dev Indicates that the contract is in the process of being initialized.
+     */
+    bool private _initializing;
+
+    /**
+     * @dev Triggered when the contract has been initialized or reinitialized.
+     */
+    event Initialized(uint8 version);
+
+    /**
+     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,
+     * `onlyInitializing` functions can be used to initialize parent contracts.
+     *
+     * Similar to `reinitializer(1)`, except that functions marked with `initializer` can be nested in the context of a
+     * constructor.
+     *
+     * Emits an {Initialized} event.
+     */
+    modifier initializer() {
+        bool isTopLevelCall = !_initializing;
+        require(
+            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            "Initializable: contract is already initialized"
+        );
+        _initialized = 1;
+        if (isTopLevelCall) {
+            _initializing = true;
+        }
+        _;
+        if (isTopLevelCall) {
+            _initializing = false;
+            emit Initialized(1);
+        }
+    }
+
+    /**
+     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the
+     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be
+     * used to initialize parent contracts.
+     *
+     * A reinitializer may be used after the original initialization step. This is essential to configure modules that
+     * are added through upgrades and that require initialization.
+     *
+     * When `version` is 1, this modifier is similar to `initializer`, except that functions marked with `reinitializer`
+     * cannot be nested. If one is invoked in the context of another, execution will revert.
+     *
+     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in
+     * a contract, executing them in the right order is up to the developer or operator.
+     *
+     * WARNING: setting the version to 255 will prevent any future reinitialization.
+     *
+     * Emits an {Initialized} event.
+     */
+    modifier reinitializer(uint8 version) {
+        require(!_initializing && _initialized < version, "Initializable: contract is already initialized");
+        _initialized = version;
+        _initializing = true;
+        _;
+        _initializing = false;
+        emit Initialized(version);
+    }
+
+    /**
+     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the
+     * {initializer} and {reinitializer} modifiers, directly or indirectly.
+     */
+    modifier onlyInitializing() {
+        require(_initializing, "Initializable: contract is not initializing");
+        _;
+    }
+
+    /**
+     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.
+     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized
+     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called
+     * through proxies.
+     *
+     * Emits an {Initialized} event the first time it is successfully executed.
+     */
+    function _disableInitializers() internal virtual {
+        require(!_initializing, "Initializable: contract is initializing");
+        if (_initialized != type(uint8).max) {
+            _initialized = type(uint8).max;
+            emit Initialized(type(uint8).max);
+        }
+    }
+
+    /**
+     * @dev Returns the highest version that has been initialized. See {reinitializer}.
+     */
+    function _getInitializedVersion() internal view returns (uint8) {
+        return _initialized;
+    }
+
+    /**
+     * @dev Returns `true` if the contract is currently initializing. See {onlyInitializing}.
+     */
+    function _isInitializing() internal view returns (bool) {
+        return _initializing;
+    }
+}
+
+
+// File @openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.4) (utils/Context.sol)
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract ContextUpgradeable is Initializable {
+    function __Context_init() internal onlyInitializing {
+    }
+
+    function __Context_init_unchained() internal onlyInitializing {
+    }
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+
+    function _contextSuffixLength() internal view virtual returns (uint256) {
+        return 0;
+    }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
+}
+
+
+// File @openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (access/Ownable.sol)
+
+pragma solidity ^0.8.0;
+
+
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    function __Ownable_init() internal onlyInitializing {
+        __Ownable_init_unchained();
+    }
+
+    function __Ownable_init_unchained() internal onlyInitializing {
+        _transferOwnership(_msgSender());
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        _checkOwner();
+        _;
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if the sender is not the owner.
+     */
+    function _checkOwner() internal view virtual {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby disabling any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        _transferOwnership(address(0));
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Internal function without access restriction.
+     */
+    function _transferOwnership(address newOwner) internal virtual {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[49] private __gap;
+}
+
+
+// File @openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.7.0) (security/Pausable.sol)
+
+pragma solidity ^0.8.0;
+
+
+/**
+ * @dev Contract module which allows children to implement an emergency stop
+ * mechanism that can be triggered by an authorized account.
+ *
+ * This module is used through inheritance. It will make available the
+ * modifiers `whenNotPaused` and `whenPaused`, which can be applied to
+ * the functions of your contract. Note that they will not be pausable by
+ * simply including this module, only once the modifiers are put in place.
+ */
+abstract contract PausableUpgradeable is Initializable, ContextUpgradeable {
+    /**
+     * @dev Emitted when the pause is triggered by `account`.
+     */
+    event Paused(address account);
+
+    /**
+     * @dev Emitted when the pause is lifted by `account`.
+     */
+    event Unpaused(address account);
+
+    bool private _paused;
+
+    /**
+     * @dev Initializes the contract in unpaused state.
+     */
+    function __Pausable_init() internal onlyInitializing {
+        __Pausable_init_unchained();
+    }
+
+    function __Pausable_init_unchained() internal onlyInitializing {
+        _paused = false;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    modifier whenNotPaused() {
+        _requireNotPaused();
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    modifier whenPaused() {
+        _requirePaused();
+        _;
+    }
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() public view virtual returns (bool) {
+        return _paused;
+    }
+
+    /**
+     * @dev Throws if the contract is paused.
+     */
+    function _requireNotPaused() internal view virtual {
+        require(!paused(), "Pausable: paused");
+    }
+
+    /**
+     * @dev Throws if the contract is not paused.
+     */
+    function _requirePaused() internal view virtual {
+        require(paused(), "Pausable: not paused");
+    }
+
+    /**
+     * @dev Triggers stopped state.
+     *
+     * Requirements:
+     *
+     * - The contract must not be paused.
+     */
+    function _pause() internal virtual whenNotPaused {
+        _paused = true;
+        emit Paused(_msgSender());
+    }
+
+    /**
+     * @dev Returns to normal state.
+     *
+     * Requirements:
+     *
+     * - The contract must be paused.
+     */
+    function _unpause() internal virtual whenPaused {
+        _paused = false;
+        emit Unpaused(_msgSender());
+    }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[49] private __gap;
+}
+
+
+// File @openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.4) (token/ERC20/extensions/IERC20Permit.sol)
+
+pragma solidity ^0.8.0;
+
 /**
  * @dev Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in
  * https://eips.ethereum.org/EIPS/eip-2612[EIP-2612].
@@ -423,13 +694,41 @@ library Address {
  * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by
  * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't
  * need to send a transaction, and thus is not required to hold Ether at all.
+ *
+ * ==== Security Considerations
+ *
+ * There are two important considerations concerning the use of `permit`. The first is that a valid permit signature
+ * expresses an allowance, and it should not be assumed to convey additional meaning. In particular, it should not be
+ * considered as an intention to spend the allowance in any specific way. The second is that because permits have
+ * built-in replay protection and can be submitted by anyone, they can be frontrun. A protocol that uses permits should
+ * take this into consideration and allow a `permit` call to fail. Combining these two aspects, a pattern that may be
+ * generally recommended is:
+ *
+ * ```solidity
+ * function doThingWithPermit(..., uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
+ *     try token.permit(msg.sender, address(this), value, deadline, v, r, s) {} catch {}
+ *     doThing(..., value);
+ * }
+ *
+ * function doThing(..., uint256 value) public {
+ *     token.safeTransferFrom(msg.sender, address(this), value);
+ *     ...
+ * }
+ * ```
+ *
+ * Observe that: 1) `msg.sender` is used as the owner, leaving no ambiguity as to the signer intent, and 2) the use of
+ * `try/catch` allows the permit to fail and makes the code tolerant to frontrunning. (See also
+ * {SafeERC20-safeTransferFrom}).
+ *
+ * Additionally, note that smart contract wallets (such as Argent or Safe) are not able to produce permit signatures, so
+ * contracts should have entry points that don't rely on permit.
  */
-interface IERC20Permit {
+interface IERC20PermitUpgradeable {
     /**
      * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,
      * given ``owner``'s signed approval.
      *
-     * ////IMPORTANT: The same issues {IERC20-approve} has related to transaction
+     * IMPORTANT: The same issues {IERC20-approve} has related to transaction
      * ordering also apply here.
      *
      * Emits an {Approval} event.
@@ -445,6 +744,8 @@ interface IERC20Permit {
      * For more information on the signature format, see the
      * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP
      * section].
+     *
+     * CAUTION: See Security Considerations above.
      */
     function permit(
         address owner,
@@ -472,10 +773,245 @@ interface IERC20Permit {
     function DOMAIN_SEPARATOR() external view returns (bytes32);
 }
 
+
+// File @openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20Upgradeable {
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `to`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `from` to `to` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
+
+
+// File @openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.3) (token/ERC20/utils/SafeERC20.sol)
+
+pragma solidity ^0.8.0;
+
+
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure (when the token
+ * contract returns false). Tokens that return no value (and instead revert or
+ * throw on failure) are also supported, non-reverting calls are assumed to be
+ * successful.
+ * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20Upgradeable {
+    using AddressUpgradeable for address;
+
+    /**
+     * @dev Transfer `value` amount of `token` from the calling contract to `to`. If `token` returns no value,
+     * non-reverting calls are assumed to be successful.
+     */
+    function safeTransfer(IERC20Upgradeable token, address to, uint256 value) internal {
+        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
+    }
+
+    /**
+     * @dev Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
+     * calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.
+     */
+    function safeTransferFrom(IERC20Upgradeable token, address from, address to, uint256 value) internal {
+        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
+    }
+
+    /**
+     * @dev Deprecated. This function has issues similar to the ones found in
+     * {IERC20-approve}, and its usage is discouraged.
+     *
+     * Whenever possible, use {safeIncreaseAllowance} and
+     * {safeDecreaseAllowance} instead.
+     */
+    function safeApprove(IERC20Upgradeable token, address spender, uint256 value) internal {
+        // safeApprove should only be called when setting an initial allowance,
+        // or when resetting it to zero. To increase and decrease it, use
+        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
+        require(
+            (value == 0) || (token.allowance(address(this), spender) == 0),
+            "SafeERC20: approve from non-zero to non-zero allowance"
+        );
+        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
+    }
+
+    /**
+     * @dev Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
+     * non-reverting calls are assumed to be successful.
+     */
+    function safeIncreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
+        uint256 oldAllowance = token.allowance(address(this), spender);
+        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, oldAllowance + value));
+    }
+
+    /**
+     * @dev Decrease the calling contract's allowance toward `spender` by `value`. If `token` returns no value,
+     * non-reverting calls are assumed to be successful.
+     */
+    function safeDecreaseAllowance(IERC20Upgradeable token, address spender, uint256 value) internal {
+        unchecked {
+            uint256 oldAllowance = token.allowance(address(this), spender);
+            require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
+            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, oldAllowance - value));
+        }
+    }
+
+    /**
+     * @dev Set the calling contract's allowance toward `spender` to `value`. If `token` returns no value,
+     * non-reverting calls are assumed to be successful. Meant to be used with tokens that require the approval
+     * to be set to zero before setting it to a non-zero value, such as USDT.
+     */
+    function forceApprove(IERC20Upgradeable token, address spender, uint256 value) internal {
+        bytes memory approvalCall = abi.encodeWithSelector(token.approve.selector, spender, value);
+
+        if (!_callOptionalReturnBool(token, approvalCall)) {
+            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, 0));
+            _callOptionalReturn(token, approvalCall);
+        }
+    }
+
+    /**
+     * @dev Use a ERC-2612 signature to set the `owner` approval toward `spender` on `token`.
+     * Revert on invalid signature.
+     */
+    function safePermit(
+        IERC20PermitUpgradeable token,
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal {
+        uint256 nonceBefore = token.nonces(owner);
+        token.permit(owner, spender, value, deadline, v, r, s);
+        uint256 nonceAfter = token.nonces(owner);
+        require(nonceAfter == nonceBefore + 1, "SafeERC20: permit did not succeed");
+    }
+
+    /**
+     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
+     * on the return value: the return value is optional (but if data is returned, it must not be false).
+     * @param token The token targeted by the call.
+     * @param data The call data (encoded using abi.encode or one of its variants).
+     */
+    function _callOptionalReturn(IERC20Upgradeable token, bytes memory data) private {
+        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
+        // we're implementing it ourselves. We use {Address-functionCall} to perform this call, which verifies that
+        // the target address contains contract code and also asserts for success in the low-level call.
+
+        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
+        require(returndata.length == 0 || abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+    }
+
+    /**
+     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
+     * on the return value: the return value is optional (but if data is returned, it must not be false).
+     * @param token The token targeted by the call.
+     * @param data The call data (encoded using abi.encode or one of its variants).
+     *
+     * This is a variant of {_callOptionalReturn} that silents catches all reverts and returns a bool instead.
+     */
+    function _callOptionalReturnBool(IERC20Upgradeable token, bytes memory data) private returns (bool) {
+        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
+        // we're implementing it ourselves. We cannot use {Address-functionCall} here since this should return false
+        // and not revert is the subcall reverts.
+
+        (bool success, bytes memory returndata) = address(token).call(data);
+        return
+            success && (returndata.length == 0 || abi.decode(returndata, (bool))) && AddressUpgradeable.isContract(address(token));
+    }
+}
+
+
+// File @openzeppelin/contracts-upgradeable/utils/math/MathUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (utils/math/Math.sol)
+
+pragma solidity ^0.8.0;
+
 /**
  * @dev Standard math utilities missing in the Solidity language.
  */
-library Math {
+library MathUpgradeable {
     enum Rounding {
         Down, // Toward negative infinity
         Up, // Toward infinity
@@ -521,11 +1057,7 @@ library Math {
      * @dev Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv)
      * with further edits by Uniswap Labs also under MIT license.
      */
-    function mulDiv(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) internal pure returns (uint256 result) {
+    function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 result) {
         unchecked {
             // 512-bit multiply [prod1 prod0] = x * y. Compute the product mod 2^256 and mod 2^256 - 1, then use
             // use the Chinese Remainder Theorem to reconstruct the 512 bit result. The result is stored in two 256
@@ -540,11 +1072,14 @@ library Math {
 
             // Handle non-overflow cases, 256 by 256 division.
             if (prod1 == 0) {
+                // Solidity will revert if denominator == 0, unlike the div opcode on its own.
+                // The surrounding unchecked block does not change this fact.
+                // See https://docs.soliditylang.org/en/latest/control-structures.html#checked-or-unchecked-arithmetic.
                 return prod0 / denominator;
             }
 
             // Make sure the result is less than 2^256. Also prevents denominator == 0.
-            require(denominator > prod1);
+            require(denominator > prod1, "Math: mulDiv overflow");
 
             ///////////////////////////////////////////////
             // 512 by 256 division.
@@ -606,12 +1141,7 @@ library Math {
     /**
      * @notice Calculates x * y / denominator with full precision, following the selected rounding direction.
      */
-    function mulDiv(
-        uint256 x,
-        uint256 y,
-        uint256 denominator,
-        Rounding rounding
-    ) internal pure returns (uint256) {
+    function mulDiv(uint256 x, uint256 y, uint256 denominator, Rounding rounding) internal pure returns (uint256) {
         uint256 result = mulDiv(x, y, denominator);
         if (rounding == Rounding.Up && mulmod(x, y, denominator) > 0) {
             result += 1;
@@ -727,31 +1257,31 @@ library Math {
     function log10(uint256 value) internal pure returns (uint256) {
         uint256 result = 0;
         unchecked {
-            if (value >= 10**64) {
-                value /= 10**64;
+            if (value >= 10 ** 64) {
+                value /= 10 ** 64;
                 result += 64;
             }
-            if (value >= 10**32) {
-                value /= 10**32;
+            if (value >= 10 ** 32) {
+                value /= 10 ** 32;
                 result += 32;
             }
-            if (value >= 10**16) {
-                value /= 10**16;
+            if (value >= 10 ** 16) {
+                value /= 10 ** 16;
                 result += 16;
             }
-            if (value >= 10**8) {
-                value /= 10**8;
+            if (value >= 10 ** 8) {
+                value /= 10 ** 8;
                 result += 8;
             }
-            if (value >= 10**4) {
-                value /= 10**4;
+            if (value >= 10 ** 4) {
+                value /= 10 ** 4;
                 result += 4;
             }
-            if (value >= 10**2) {
-                value /= 10**2;
+            if (value >= 10 ** 2) {
+                value /= 10 ** 2;
                 result += 2;
             }
-            if (value >= 10**1) {
+            if (value >= 10 ** 1) {
                 result += 1;
             }
         }
@@ -765,7 +1295,7 @@ library Math {
     function log10(uint256 value, Rounding rounding) internal pure returns (uint256) {
         unchecked {
             uint256 result = log10(value);
-            return result + (rounding == Rounding.Up && 10**result < value ? 1 : 0);
+            return result + (rounding == Rounding.Up && 10 ** result < value ? 1 : 0);
         }
     }
 
@@ -802,22 +1332,77 @@ library Math {
     }
 
     /**
-     * @dev Return the log in base 10, following the selected rounding direction, of a positive value.
+     * @dev Return the log in base 256, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
     function log256(uint256 value, Rounding rounding) internal pure returns (uint256) {
         unchecked {
             uint256 result = log256(value);
-            return result + (rounding == Rounding.Up && 1 << (result * 8) < value ? 1 : 0);
+            return result + (rounding == Rounding.Up && 1 << (result << 3) < value ? 1 : 0);
         }
     }
 }
 
 
+// File @openzeppelin/contracts-upgradeable/utils/math/SignedMathUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.8.0) (utils/math/SignedMath.sol)
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Standard signed math utilities missing in the Solidity language.
+ */
+library SignedMathUpgradeable {
+    /**
+     * @dev Returns the largest of two signed numbers.
+     */
+    function max(int256 a, int256 b) internal pure returns (int256) {
+        return a > b ? a : b;
+    }
+
+    /**
+     * @dev Returns the smallest of two signed numbers.
+     */
+    function min(int256 a, int256 b) internal pure returns (int256) {
+        return a < b ? a : b;
+    }
+
+    /**
+     * @dev Returns the average of two signed numbers without overflow.
+     * The result is rounded towards zero.
+     */
+    function average(int256 a, int256 b) internal pure returns (int256) {
+        // Formula from the book "Hacker's Delight"
+        int256 x = (a & b) + ((a ^ b) >> 1);
+        return x + (int256(uint256(x) >> 255) & (a ^ b));
+    }
+
+    /**
+     * @dev Returns the absolute unsigned value of a signed value.
+     */
+    function abs(int256 n) internal pure returns (uint256) {
+        unchecked {
+            // must be unchecked in order to support `n = type(int256).min`
+            return uint256(n >= 0 ? n : -n);
+        }
+    }
+}
+
+
+// File @openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (utils/Strings.sol)
+
+pragma solidity ^0.8.0;
+
+
 /**
  * @dev String operations.
  */
-library Strings {
+library StringsUpgradeable {
     bytes16 private constant _SYMBOLS = "0123456789abcdef";
     uint8 private constant _ADDRESS_LENGTH = 20;
 
@@ -826,7 +1411,7 @@ library Strings {
      */
     function toString(uint256 value) internal pure returns (string memory) {
         unchecked {
-            uint256 length = Math.log10(value) + 1;
+            uint256 length = MathUpgradeable.log10(value) + 1;
             string memory buffer = new string(length);
             uint256 ptr;
             /// @solidity memory-safe-assembly
@@ -847,11 +1432,18 @@ library Strings {
     }
 
     /**
+     * @dev Converts a `int256` to its ASCII `string` decimal representation.
+     */
+    function toString(int256 value) internal pure returns (string memory) {
+        return string(abi.encodePacked(value < 0 ? "-" : "", toString(SignedMathUpgradeable.abs(value))));
+    }
+
+    /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation.
      */
     function toHexString(uint256 value) internal pure returns (string memory) {
         unchecked {
-            return toHexString(value, Math.log256(value) + 1);
+            return toHexString(value, MathUpgradeable.log256(value) + 1);
         }
     }
 
@@ -876,11 +1468,324 @@ library Strings {
     function toHexString(address addr) internal pure returns (string memory) {
         return toHexString(uint256(uint160(addr)), _ADDRESS_LENGTH);
     }
+
+    /**
+     * @dev Returns true if the two strings are equal.
+     */
+    function equal(string memory a, string memory b) internal pure returns (bool) {
+        return keccak256(bytes(a)) == keccak256(bytes(b));
+    }
 }
 
 
+// File @openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (utils/cryptography/ECDSA.sol)
+
+pragma solidity ^0.8.0;
+
 /**
- * @author Chef Photons, Paycrest Team serving high quality drinks; drink responsibly.
+ * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
+ *
+ * These functions can be used to verify that a message was signed by the holder
+ * of the private keys of a given address.
+ */
+library ECDSAUpgradeable {
+    enum RecoverError {
+        NoError,
+        InvalidSignature,
+        InvalidSignatureLength,
+        InvalidSignatureS,
+        InvalidSignatureV // Deprecated in v4.8
+    }
+
+    function _throwError(RecoverError error) private pure {
+        if (error == RecoverError.NoError) {
+            return; // no error: do nothing
+        } else if (error == RecoverError.InvalidSignature) {
+            revert("ECDSA: invalid signature");
+        } else if (error == RecoverError.InvalidSignatureLength) {
+            revert("ECDSA: invalid signature length");
+        } else if (error == RecoverError.InvalidSignatureS) {
+            revert("ECDSA: invalid signature 's' value");
+        }
+    }
+
+    /**
+     * @dev Returns the address that signed a hashed message (`hash`) with
+     * `signature` or error string. This address can then be used for verification purposes.
+     *
+     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
+     * this function rejects them by requiring the `s` value to be in the lower
+     * half order, and the `v` value to be either 27 or 28.
+     *
+     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
+     * verification to be secure: it is possible to craft signatures that
+     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
+     * this is by receiving a hash of the original message (which may otherwise
+     * be too long), and then calling {toEthSignedMessageHash} on it.
+     *
+     * Documentation for signature generation:
+     * - with https://web3js.readthedocs.io/en/v1.3.4/web3-eth-accounts.html#sign[Web3.js]
+     * - with https://docs.ethers.io/v5/api/signer/#Signer-signMessage[ethers]
+     *
+     * _Available since v4.3._
+     */
+    function tryRecover(bytes32 hash, bytes memory signature) internal pure returns (address, RecoverError) {
+        if (signature.length == 65) {
+            bytes32 r;
+            bytes32 s;
+            uint8 v;
+            // ecrecover takes the signature parameters, and the only way to get them
+            // currently is to use assembly.
+            /// @solidity memory-safe-assembly
+            assembly {
+                r := mload(add(signature, 0x20))
+                s := mload(add(signature, 0x40))
+                v := byte(0, mload(add(signature, 0x60)))
+            }
+            return tryRecover(hash, v, r, s);
+        } else {
+            return (address(0), RecoverError.InvalidSignatureLength);
+        }
+    }
+
+    /**
+     * @dev Returns the address that signed a hashed message (`hash`) with
+     * `signature`. This address can then be used for verification purposes.
+     *
+     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:
+     * this function rejects them by requiring the `s` value to be in the lower
+     * half order, and the `v` value to be either 27 or 28.
+     *
+     * IMPORTANT: `hash` _must_ be the result of a hash operation for the
+     * verification to be secure: it is possible to craft signatures that
+     * recover to arbitrary addresses for non-hashed data. A safe way to ensure
+     * this is by receiving a hash of the original message (which may otherwise
+     * be too long), and then calling {toEthSignedMessageHash} on it.
+     */
+    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
+        (address recovered, RecoverError error) = tryRecover(hash, signature);
+        _throwError(error);
+        return recovered;
+    }
+
+    /**
+     * @dev Overload of {ECDSA-tryRecover} that receives the `r` and `vs` short-signature fields separately.
+     *
+     * See https://eips.ethereum.org/EIPS/eip-2098[EIP-2098 short signatures]
+     *
+     * _Available since v4.3._
+     */
+    function tryRecover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address, RecoverError) {
+        bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+        uint8 v = uint8((uint256(vs) >> 255) + 27);
+        return tryRecover(hash, v, r, s);
+    }
+
+    /**
+     * @dev Overload of {ECDSA-recover} that receives the `r and `vs` short-signature fields separately.
+     *
+     * _Available since v4.2._
+     */
+    function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {
+        (address recovered, RecoverError error) = tryRecover(hash, r, vs);
+        _throwError(error);
+        return recovered;
+    }
+
+    /**
+     * @dev Overload of {ECDSA-tryRecover} that receives the `v`,
+     * `r` and `s` signature fields separately.
+     *
+     * _Available since v4.3._
+     */
+    function tryRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address, RecoverError) {
+        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
+        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
+        // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}. Most
+        // signatures from current libraries generate a unique signature with an s-value in the lower half order.
+        //
+        // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value
+        // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
+        // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
+        // these malleable signatures as well.
+        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {
+            return (address(0), RecoverError.InvalidSignatureS);
+        }
+
+        // If the signature is valid (and not malleable), return the signer address
+        address signer = ecrecover(hash, v, r, s);
+        if (signer == address(0)) {
+            return (address(0), RecoverError.InvalidSignature);
+        }
+
+        return (signer, RecoverError.NoError);
+    }
+
+    /**
+     * @dev Overload of {ECDSA-recover} that receives the `v`,
+     * `r` and `s` signature fields separately.
+     */
+    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
+        (address recovered, RecoverError error) = tryRecover(hash, v, r, s);
+        _throwError(error);
+        return recovered;
+    }
+
+    /**
+     * @dev Returns an Ethereum Signed Message, created from a `hash`. This
+     * produces hash corresponding to the one signed with the
+     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]
+     * JSON-RPC method as part of EIP-191.
+     *
+     * See {recover}.
+     */
+    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 message) {
+        // 32 is the length in bytes of hash,
+        // enforced by the type signature above
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, "\x19Ethereum Signed Message:\n32")
+            mstore(0x1c, hash)
+            message := keccak256(0x00, 0x3c)
+        }
+    }
+
+    /**
+     * @dev Returns an Ethereum Signed Message, created from `s`. This
+     * produces hash corresponding to the one signed with the
+     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]
+     * JSON-RPC method as part of EIP-191.
+     *
+     * See {recover}.
+     */
+    function toEthSignedMessageHash(bytes memory s) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", StringsUpgradeable.toString(s.length), s));
+    }
+
+    /**
+     * @dev Returns an Ethereum Signed Typed Data, created from a
+     * `domainSeparator` and a `structHash`. This produces hash corresponding
+     * to the one signed with the
+     * https://eips.ethereum.org/EIPS/eip-712[`eth_signTypedData`]
+     * JSON-RPC method as part of EIP-712.
+     *
+     * See {recover}.
+     */
+    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash) internal pure returns (bytes32 data) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, "\x19\x01")
+            mstore(add(ptr, 0x02), domainSeparator)
+            mstore(add(ptr, 0x22), structHash)
+            data := keccak256(ptr, 0x42)
+        }
+    }
+
+    /**
+     * @dev Returns an Ethereum Signed Data with intended validator, created from a
+     * `validator` and `data` according to the version 0 of EIP-191.
+     *
+     * See {recover}.
+     */
+    function toDataWithIntendedValidatorHash(address validator, bytes memory data) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x00", validator, data));
+    }
+}
+
+
+// File @openzeppelin/contracts/token/ERC20/IERC20.sol@v4.9.5
+
+// License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `to`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `from` to `to` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
+
+
+// File contracts/interface/IPaycrest.sol
+
+// License-Identifier: UNLICENSED
+pragma solidity ^0.8.18;
+
+/**
+ * @author Paycrest Team
  * Factory and global config params
  */
 interface IPaycrest {
@@ -889,29 +1794,16 @@ interface IPaycrest {
                                 EVENTS
     ################################################################## */
     /// @dev Emitted when deposit is made.
-    event Deposit(bytes32 indexed orderId, uint256 indexed amount, uint256 indexed rate, bytes32 institutionCode, string messageHash);
+    event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 label, string messageHash);
     /// @dev Emitted when aggregator settle transaction.
-    event Settled(bytes32 indexed orderId, address indexed liquidityProvider, uint96 settlePercent);
+    event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, bytes32 label, address indexed liquidityProvider, uint96 settlePercent);
     /// @dev Emitted when aggregator refund transaction.
-    event Refunded(bytes32 indexed orderId);
-    /// @dev Emitted when sender get therir rewards.
+    event Refunded(uint256 _fee, bytes32 indexed orderId, bytes32 label);
+    /// @dev Emitted when sender get their rewards.
     event TransferSenderFee(address indexed sender, uint256 indexed amount);
+    /// @dev Emitted when primary validator get their rewards.
+    event RewardValidator(address indexed validator, uint256 indexed amount);
 
-    /* ##################################################################
-                                CUSTOM ERRORS
-    ################################################################## */
-    /// @notice Revert when caller is not an aggregator
-    error OnlyAggregator();
-    /// @notice Revert with invalid signer
-    error InvalidSigner();
-    /// @notice Revert when input amount is zero
-    error Unsuported();
-    /// @notice Revert when trx has been fulfilled
-    error OrderFulfilled();
-    /// @notice Revert when rewards are not been distributed.
-    error UnableToProcessRewards();
-    error InvalidInstitutionCode();
-    error NotWhitelisted();
 
     /* ##################################################################
                                 STRUCTS
@@ -936,7 +1828,6 @@ interface IPaycrest {
         uint256 amount;                     //                                                                   slot 3
     }
 
-
     /* ##################################################################
                                 EXTERNAL CALLS
     ################################################################## */
@@ -948,11 +1839,24 @@ interface IPaycrest {
     /// `_refundable` refundable address must not be zero address
     /// @param _token address of the token.
     /// @param _amount amount in the decimal of `_token` above.
-    /// @param _refundAddress address that is going to recieve `_amount` in `_token` when there is a need to refund.
+    /// @param _institutionCode institution code of the sender.
+    /// @param _label reference of the sender.
     /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
+    /// @param _senderFeeRecipient address that is going to recieve `_senderFee` in `_token` when there is a need to refund.
+    /// @param _senderFee amount in the decimal of `_token` that is going to be paid to `_senderFeeRecipient` when there is a need to refund.
+    /// @param _refundAddress address that is going to recieve `_amount` in `_token` when there is a need to refund.
     /// @param messageHash hash must be the result of a hash operation for the verification to be secure. message
     /// @return _orderId the bytes20 which is the orderId
-    function createOrder(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, uint96 _rate, bytes32 _code, string memory messageHash)  external returns(bytes32 _orderId);
+    function createOrder(
+        address _token, 
+        uint256 _amount, 
+        bytes32 _institutionCode,
+        bytes32 _label,
+        uint96 _rate, 
+        address _senderFeeRecipient,
+        uint256 _senderFee,
+        address _refundAddress, 
+        string calldata messageHash)  external returns(bytes32 _orderId);
 
     /// @notice settle transaction and distribute rewards accordingly.
     /// Requirements:
@@ -964,12 +1868,12 @@ interface IPaycrest {
     /// `amount` must be greater than minimum
     /// `_refundable` refundable address must not be zero address
     /// @param _orderId transaction Id.
-    /// @param _primaryValidator address primary validator.
-    /// @param _secondaryValidators arrays of secondary validators.
+    /// @param _label reference of the sender.
     /// @param _liquidityProvider address of the liquidity provider.
     /// @param _settlePercent rate at which the transaction is settled.
+    /// @param _isPartner is the liquidity provider a partner.
     /// @return return the status of transaction {bool}
-    function settle(bytes32 _orderId, address _primaryValidator, address[] calldata _secondaryValidators, address _liquidityProvider, uint96 _settlePercent)  external returns(bool);
+    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _label, address _liquidityProvider, uint64 _settlePercent, bool _isPartner)  external returns(bytes32, address);
 
     /// @notice refund to the specified refundable address.
     /// Requirements:
@@ -977,9 +1881,11 @@ interface IPaycrest {
     /// `_orderId` it must be less than total ids.
     /// `_orderId` it must be an open Id.
     /// `isFulfilled` must be false.
+    /// @param _fee amount to be deducted from the amount to be refunded
     /// @param _orderId transaction Id.
+    /// @param _label reference of the sender.
     /// @return return the status of transaction {bool}
-    function refund(bytes32 _orderId)  external returns(bool);
+    function refund(uint256 _fee, bytes32 _orderId, bytes32 _label)  external returns(bool);
 
     /// @notice get supported token from Paycrest.
     /// @param _token address of the token to check.
@@ -992,86 +1898,59 @@ interface IPaycrest {
 
     /// @notice get every rewards and address on Paycrest.
     /// @return protocolReward amount that will be taken in percentage on all trade.
-    /// @return primaryValidatorReward amount that will be given to primary validator in percentage from `protocolReward`
-    /// @return secondaryValidatorReward amount that will be shared between secondary validator in percentage from `protocolReward`
     /// @return max_bps maximum amount in bps "100% == 100_000".
     function getFeeDetails() external view returns(
         uint64 protocolReward, 
-        uint64 primaryValidatorReward, 
-        uint64 secondaryValidatorReward,
         uint256 max_bps
     );
 
-    /// @notice get address of liquidity aggregator.
-    /// @return address of `liquidityAggregator`.
-    function getLiquidityAggregator() external view returns(address);
-
-    
-    /// @notice get address of sender whitelisting status.
-    /// @param sender address of the sender.
-    /// @return address of `status`.
-    function getWhitelistedStatus(address sender) external view returns(bool);
-
+    /// @notice get public key of liquidity aggregator.
+    /// @return aggregator public key.
+    function getAggregator() external view returns(bytes memory);
 }
 
 
-/**
- * @author Chef Photons, Vaultka Team serving high quality drinks; drink responsibly.
- * Factory and global config params
- */
-interface IPaycrestStake {
-    
-    function rewardValidators(bytes32 orderId, address token, address primaryValidator, address[] memory secondaryValidators, uint256 primaryValidatorsReward, uint256 secondaryValidatorsReward) external returns(bool);
-    
-}
+// File contracts/PaycrestSettingManager.sol
 
+// License-Identifier: UNLICENSED
+pragma solidity ^0.8.18;
 
-contract PaycrestSettingManager is Ownable { 
+contract PaycrestSettingManager is OwnableUpgradeable { 
     struct Institution {
-        bytes32 code; // usually not more than 8 letters
-        bytes32 name; // 
+        bytes32 code;
+        bytes32 name;
     }
     struct InstitutionByCode {
         bytes32 name;
         bytes32 currency;
     }
-    uint256 internal constant MAX_BPS = 100_000;
-    uint64 internal protocolFeePercent = 5000; // 5%
-    uint64 internal primaryValidatorFeePercent = 500; // 0.5%
-    uint64 internal secondaryValidatorFeePercent = 500; // 0.5%
-    address internal feeRecipient;
-    address internal PaycrestStakingContract;
-    address internal _liquidityAggregator;
+    uint256 internal MAX_BPS;
+    uint64 internal protocolFeePercent;
+    address internal treasuryAddress;
+    address internal _aggregatorAddress;
+    bytes internal _aggregator;
+    
+    // this should decrease if more slots are needed on this contract to avoid collisions with base contract
+    uint256[50] private __gap;
 
     mapping(address => bool) internal _isTokenSupported;
-    mapping(address => bool) internal _isWhitelisted;
 
     mapping(bytes32 => Institution[]) internal supportedInstitutions;
     mapping(bytes32 => InstitutionByCode) internal supportedInstitutionsByCode;
 
-    /// @notice Revert when zero address is passed in
-    error ThrowZeroAddress();
-    /// @notice Revert when zero address is passed in
-    error ThrowZeroValue();
-    /// @notice Revert when zero address is passed in
-    error InvalidParameter(bytes32 what);
-    /// @notice Revert when invalid token is provided
-    error TokenNotSupported();
-    /// @notice Revert when input amount is zero
-    error AmountIsZero();
-
     event SettingManagerBool(bytes32 what, address value, bool status);
-    event SettingManagerForInstitution(bytes32 what, bytes8 value, bytes8 status);
-    event PaycrestFees(uint64 protocolFee, uint64 primaryValidator, uint64 secondaryValidator);
+    event ProtocolFeesUpdated(uint64 protocolFee);
+    event ProtocolAddressesUpdated(address treasuryAddress);
+    event SetAggregator(bytes aggregator);
+    event SetFeeRecipient(address treasuryAddress);
     
     /* ##################################################################
                                 OWNER FUNCTIONS
     ################################################################## */
     function settingManagerBool(bytes32 what, address value, bool status) external onlyOwner {
-        if (value == address(0)) revert ThrowZeroAddress();
+        require(value != address(0), "Paycrest: zero address");
         if (what == "token") _isTokenSupported[value] = status;
-        if (what == "whitelist") _isWhitelisted[value] = status;
-        else revert InvalidParameter(what);
+
         emit SettingManagerBool(what, value, status);
     }
 
@@ -1088,170 +1967,101 @@ contract PaycrestSettingManager is Ownable {
         }
     }
 
-    function updateProtocolFees(uint64 _protocolFeePercent, uint64 _primaryValidatorPercent, uint64 _secondaryValidatorPercent) external onlyOwner {
+    function updateProtocolFees(uint64 _protocolFeePercent) external onlyOwner {
         protocolFeePercent = _protocolFeePercent;
-        primaryValidatorFeePercent = _primaryValidatorPercent;
-        secondaryValidatorFeePercent = _secondaryValidatorPercent;
-        emit PaycrestFees(_protocolFeePercent, _primaryValidatorPercent, _secondaryValidatorPercent);
+        emit ProtocolFeesUpdated(_protocolFeePercent);
     }
 
-    function updateFeeRecipient(bytes32 what, address value) external onlyOwner {
-        if (value == address(0)) revert ThrowZeroAddress();
-        if (what == "fee") feeRecipient = value;
-        if (what == "aggregator") _liquidityAggregator = value;
-        else if (what == "stake") PaycrestStakingContract = value;
+    function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
+        require(value != address(0), "Paycrest: zero address");
+        if (what == "treasury") treasuryAddress = value;
+        emit ProtocolAddressesUpdated(treasuryAddress);
     }
 
-}
-
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure (when the token
- * contract returns false). Tokens that return no value (and instead revert or
- * throw on failure) are also supported, non-reverting calls are assumed to be
- * successful.
- * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-    using Address for address;
-
-    function safeTransfer(
-        IERC20 token,
-        address to,
-        uint256 value
-    ) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
-    }
-
-    function safeTransferFrom(
-        IERC20 token,
-        address from,
-        address to,
-        uint256 value
-    ) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
-    }
-
-    /**
-     * @dev Deprecated. This function has issues similar to the ones found in
-     * {IERC20-approve}, and its usage is discouraged.
-     *
-     * Whenever possible, use {safeIncreaseAllowance} and
-     * {safeDecreaseAllowance} instead.
-     */
-    function safeApprove(
-        IERC20 token,
-        address spender,
-        uint256 value
-    ) internal {
-        // safeApprove should only be called when setting an initial allowance,
-        // or when resetting it to zero. To increase and decrease it, use
-        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
-        require(
-            (value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
-    }
-
-    function safeIncreaseAllowance(
-        IERC20 token,
-        address spender,
-        uint256 value
-    ) internal {
-        uint256 newAllowance = token.allowance(address(this), spender) + value;
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
-    }
-
-    function safeDecreaseAllowance(
-        IERC20 token,
-        address spender,
-        uint256 value
-    ) internal {
-        unchecked {
-            uint256 oldAllowance = token.allowance(address(this), spender);
-            require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
-            uint256 newAllowance = oldAllowance - value;
-            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
-        }
-    }
-
-    function safePermit(
-        IERC20Permit token,
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) internal {
-        uint256 nonceBefore = token.nonces(owner);
-        token.permit(owner, spender, value, deadline, v, r, s);
-        uint256 nonceAfter = token.nonces(owner);
-        require(nonceAfter == nonceBefore + 1, "SafeERC20: permit did not succeed");
-    }
-
-    /**
-     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
-     * on the return value: the return value is optional (but if data is returned, it must not be false).
-     * @param token The token targeted by the call.
-     * @param data The call data (encoded using abi.encode or one of its variants).
-     */
-    function _callOptionalReturn(IERC20 token, bytes memory data) private {
-        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
-        // we're implementing it ourselves. We use {Address-functionCall} to perform this call, which verifies that
-        // the target address contains contract code and also asserts for success in the low-level call.
-
-        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        if (returndata.length > 0) {
-            // Return data is optional
-            require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
-        }
+    function updateProtocolAggregator(bytes calldata aggregator) external onlyOwner {
+        _aggregator = aggregator;
+        emit SetAggregator(aggregator);
     }
 }
 
 
-pragma solidity 0.8.18;
-contract Paycrest is IPaycrest, PaycrestSettingManager { 
-    using SafeERC20 for IERC20;
+// File contracts/Paycrest.sol
+
+// License-Identifier: UNLICENSED
+pragma solidity ^0.8.18;
+
+
+
+
+contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable { 
+    using SafeERC20Upgradeable for IERC20;
+    using ECDSAUpgradeable for bytes32;
+
+    struct fee {
+        uint256 protocolFee;
+        uint256 liquidityProviderAmount;
+    }
+
     mapping(bytes32 => Order) private order;
     mapping(address => uint256) private _nonce;
-    constructor(address _usdc) {
-        _isTokenSupported[_usdc] = true;
+    uint256[50] private __gap;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize() external initializer {
+        MAX_BPS = 100_000;
+        __Ownable_init();
+        __Pausable_init();
     }
 
     modifier onlyAggregator {
-        if(msg.sender != _liquidityAggregator) revert OnlyAggregator();
+        require(msg.sender == _aggregatorAddress, "OnlyAggregator");
         _;
+    }
+
+    /* ##################################################################
+                                OWNER FUNCTIONS
+    ################################################################## */
+    /** @dev pause */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /** @dev unpause */
+    function unpause() external onlyOwner {
+        _unpause();
     }
     
     /* ##################################################################
                                 USER CALLS
     ################################################################## */
-    /** @dev See {newPositionOrder-IPaycrest}. */
+    /** @dev See {createOrder-IPaycrest}. */
     function createOrder(
         address _token, 
         uint256 _amount, 
-        address _refundAddress, 
+        bytes32 _institutionCode,
+        bytes32 _label,
+        uint96 _rate, 
         address _senderFeeRecipient,
         uint256 _senderFee,
-        uint96 _rate, 
-        bytes32 _institutionCode,
+        address _refundAddress, 
         string calldata messageHash
-    )  external returns(bytes32 orderId) {
-        // sender must be a whitelisted address
-        if(!_isWhitelisted[msg.sender]) revert NotWhitelisted();
+    ) external whenNotPaused() returns(bytes32 orderId) {
         // checks that are required
-        _handler(_token, _amount, _refundAddress, _institutionCode);
-        // first transfer token from msg.sender
+        _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee, _institutionCode);
+
+        // transfer token from msg.sender to contract
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+
         // increase users nonce to avoid replay attacks
         _nonce[msg.sender] ++;
+
         // generate transaction id for the transaction
         orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
+
         // update transaction
         order[orderId] = Order({
             seller: msg.sender,
@@ -1261,18 +2071,24 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
             rate: _rate,
             isFulfilled: false,
             refundAddress: _refundAddress,
-            currentBPS: uint96(MAX_BPS),
+            currentBPS: uint64(MAX_BPS),
             amount: _amount
         });
+
         // emit deposit event
-        emit Deposit(orderId, _amount, _rate, _institutionCode, messageHash);
+        emit Deposit(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
     }
 
-    function _handler(address _token, uint256 _amount, address _refundAddress, bytes32 _institutionCode) internal view {
-        if(!_isTokenSupported[_token]) revert TokenNotSupported();
-        if(_amount == 0) revert AmountIsZero();
-        if(_refundAddress == address(0)) revert ThrowZeroAddress();
-        if(supportedInstitutionsByCode[_institutionCode].name == bytes32(0)) revert InvalidInstitutionCode();
+    function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, bytes32 _institutionCode) internal view {
+        require(_isTokenSupported[_token], "TokenNotSupported");
+        require(_amount > 0, "AmountIsZero");
+        require(_refundAddress != address(0), "ThrowZeroAddress");
+        require(supportedInstitutionsByCode[_institutionCode].name != bytes32(0), "InvalidInstitutionCode");
+
+        if (_senderFee > 0) {
+            require(_senderFeeRecipient != address(0), "InvalidSenderFeeRecipient");
+        }
+        require(_senderFee <= (_amount * 500) / MAX_BPS, "SenderFeeTooHigh");
     }
 
     /* ##################################################################
@@ -1280,92 +2096,97 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
     ################################################################## */
     /** @dev See {settle-IPaycrest}. */
     function settle(
+        bytes32 _splitOrderId,
         bytes32 _orderId, 
-        address _primaryValidator, 
-        address[] calldata _secondaryValidators, 
+        bytes32 _label,
         address _liquidityProvider, 
-        uint96 _settlePercent
-        )  external onlyAggregator() returns(bool) {
+        uint64 _settlePercent,
+        bool _isPartner
+        )  external onlyAggregator() returns(bytes32, address) {
         // ensure the transaction has not been fulfilled
-        if(order[_orderId].isFulfilled) revert OrderFulfilled();
+        require(!order[_orderId].isFulfilled, "OrderFulfilled");
+
         // load the token into memory
         address token = order[_orderId].token;
-        // substract sum of amount based on the input _settlePercent
+
+        // subtract sum of amount based on the input _settlePercent
         order[_orderId].currentBPS -= _settlePercent;
+
         // if transaction amount is zero
+        // load the fees and transfer associated protocol fees to the protocol fee recipient
+        ( fee memory _feeParams  ) = _calculateFees(_orderId, _settlePercent, _isPartner);
         if(order[_orderId].currentBPS == 0) {
             // update the transaction to be fulfilled
             order[_orderId].isFulfilled = true;
+            if (order[_orderId].senderFee > 0) {
+                // transfer sender fee
+                transferSenderFee(_orderId);
+            }
+        }
+        
+        if (_feeParams.protocolFee > 0) {
+            // transfer protocol fee
+            IERC20(token).transfer(treasuryAddress, _feeParams.protocolFee);
         }
 
-        // load the fees and transfer associated protocol fees to protocol fee recipient
-        (
-            uint256 protocolFee,
-            uint256 liquidityProviderAmount, 
-            uint256 primaryValidatorReward, 
-            uint256 secondaryValidatorsReward
-        ) = _calculateFees(_orderId, _settlePercent);
-        transferSenderFee(_orderId);
-        // transfer protocol fee
-        IERC20(token).transfer(feeRecipient, protocolFee);
-        // // transfer to liquidity provider 
-        IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
-        IERC20(token).transfer(address(PaycrestStakingContract), (primaryValidatorReward + secondaryValidatorsReward));
-        // // distribute rewards
-        bool status = IPaycrestStake(PaycrestStakingContract).rewardValidators(
-            _orderId,
-            token,
-            _primaryValidator, 
-            _secondaryValidators, 
-            primaryValidatorReward, 
-            secondaryValidatorsReward
-        );
-        if(!status) revert UnableToProcessRewards();
+        // transfer to liquidity provider 
+        IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
+
         // emit event
-        emit Settled(_orderId, _liquidityProvider, _settlePercent);
-        return true;
+        emit Settled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
+        return (_orderId, token);
     }
 
     function transferSenderFee(bytes32 _orderId) internal {
         address recipient = order[_orderId].senderFeeRecipient;
-        uint256 fee = order[_orderId].senderFee;
+        uint256 _fee = order[_orderId].senderFee;
         // transfer sender fee
-        IERC20(order[_orderId].token).transfer(recipient, fee);
+        IERC20(order[_orderId].token).transfer(recipient, _fee);
         // emmit event
-        emit TransferSenderFee(recipient, fee);
+        emit TransferSenderFee(recipient, _fee);
     }
 
     /** @dev See {refund-IPaycrest}. */
-    function refund(bytes32 _orderId)  external onlyAggregator() returns(bool) {
+    function refund(uint256 _fee, bytes32 _orderId, bytes32 _label) external onlyAggregator() returns(bool) {
         // ensure the transaction has not been fulfilled
-        if(order[_orderId].isFulfilled) revert OrderFulfilled();
-        // reser state values
+        require(!order[_orderId].isFulfilled, "OrderFulfilled");
+
+        // deduct fee from order amount
+        uint256 refundAmount = order[_orderId].amount - _fee;
+        IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
+
+        // reset state values
         order[_orderId].isFulfilled = true;
         order[_orderId].currentBPS = 0;
-        // transfer to seller 
-        IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, order[_orderId].amount);
-        // emit
-        emit Refunded(_orderId);
+    
+        // transfer to sender and emit event
+        IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, refundAmount);
+        emit Refunded(_fee, _orderId, _label);
+
         return true;
     }
 
-    function _calculateFees(bytes32 _orderId, uint96 _settlePercent) private view returns(uint256 protocolFee, uint256 liquidityProviderAmount, uint256 primaryValidatorReward, uint256 secondaryValidatorsReward) {
+    function _calculateFees(bytes32 _orderId, uint96 _settlePercent, bool _isPartner) private view returns(fee memory _feeParams ) {
         // get the total amount associated with the orderId
         uint256 amount = order[_orderId].amount;
+
         // get sender fee from amount
         amount = amount - order[_orderId].senderFee;
+
         // get the settled percent that is scheduled for this amount
-        liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
+        _feeParams.liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
+
         // deduct protocol fees from the new total amount
-        protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS; 
+        _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
+        
         // substract total fees from the new amount after getting the scheduled amount
-        liquidityProviderAmount = (liquidityProviderAmount - protocolFee);
-        // get primary validators fees primaryValidatorsReward
-        primaryValidatorReward = (protocolFee * primaryValidatorFeePercent) / MAX_BPS;
-        // get primary validators fees secondaryValidatorsReward
-        secondaryValidatorsReward = (protocolFee * secondaryValidatorFeePercent) / MAX_BPS;
-        // update new protocol fee
-        protocolFee = protocolFee - (primaryValidatorReward + secondaryValidatorsReward);
+        _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
+
+        // if (_isPartner) protocol fee should be 0, and the whole protocol fee should be added to liquidity provider
+        if (_isPartner) {
+            _feeParams.liquidityProviderAmount += _feeParams.protocolFee;
+            _feeParams.protocolFee = 0;
+        }
     }
     
     /* ##################################################################
@@ -1401,25 +2222,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager {
         return result;
     }
 
-    /** @dev See {getProtocolFees-IPaycrest}. */
+    /** @dev See {getFeeDetails-IPaycrest}. */
     function getFeeDetails() external view returns(
         uint64, 
-        uint64, 
-        uint64,
         uint256
     ) {
-        return(protocolFeePercent, primaryValidatorFeePercent, secondaryValidatorFeePercent, MAX_BPS);
+        return(protocolFeePercent, MAX_BPS);
     }
 
-    /** @dev See {getLiquidityAggregator-IPaycrest}. */
-    function getLiquidityAggregator() external view returns(address) {
-        return _liquidityAggregator;
-    }
-
-    /** @dev See {getWhitelistedStatus-IPaycrest}. */
-    function getWhitelistedStatus(address sender) external view returns(bool) {
-        return _isWhitelisted[sender];
-    }
-
+    /** @dev See {getAggregator-IPaycrest}. */
+    function getAggregator() external view returns(bytes memory) {
+        return _aggregator;
+    } 
 }
-
