@@ -1779,74 +1779,149 @@ interface IERC20 {
 }
 
 
-// File contracts/interface/IPaycrest.sol
+// File contracts/libraries/SharedStructs.sol
+
+// License-Identifier: UNLICENSED
+pragma solidity ^0.8.18;
+
+library SharedStructs {
+    /**
+     * @dev Struct representing an institution.
+     * @param code The code of the institution.
+     * @param name The name of the institution.
+     */
+    struct Institution {
+        bytes32 code;
+        bytes32 name;
+    }
+
+    /**
+     * @dev Struct representing an institution by code.
+     * @param name The name of the institution.
+     * @param currency The currency of the institution.
+     */
+    struct InstitutionByCode {
+        bytes32 name;
+        bytes32 currency;
+    }
+}
+
+
+// File contracts/interfaces/IPaycrest.sol
 
 // License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
 /**
- * @author Paycrest Team
- * Factory and global config params
+ * @title IPaycrest
+ * @dev Interface for the Paycrest contract.
  */
 interface IPaycrest {
     
     /* ##################################################################
                                 EVENTS
     ################################################################## */
-    /// @dev Emitted when deposit is made.
-    event Deposit(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 label, string messageHash);
-    /// @dev Emitted when aggregator settle transaction.
-    event Settled(bytes32 _splitOrderId, bytes32 indexed orderId, bytes32 label, address indexed liquidityProvider, uint96 settlePercent);
-    /// @dev Emitted when aggregator refund transaction.
-    event Refunded(uint256 _fee, bytes32 indexed orderId, bytes32 label);
-    /// @dev Emitted when sender get their rewards.
-    event TransferSenderFee(address indexed sender, uint256 indexed amount);
-    /// @dev Emitted when primary validator get their rewards.
-    event RewardValidator(address indexed validator, uint256 indexed amount);
+    /**
+     * @dev Emitted when a deposit is made.
+     * @param token The address of the deposited token.
+     * @param amount The amount of the deposit.
+     * @param orderId The ID of the order.
+     * @param rate The rate at which the deposit is made.
+     * @param institutionCode The code of the institution.
+     * @param label The label of the deposit.
+     * @param messageHash The hash of the message.
+     */
+    event OrderCreated(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 label, string messageHash);
 
+    /**
+     * @dev Emitted when an aggregator settles a transaction.
+     * @param splitOrderId The ID of the split order.
+     * @param orderId The ID of the order.
+     * @param label The label of the transaction.
+     * @param liquidityProvider The address of the liquidity provider.
+     * @param settlePercent The percentage at which the transaction is settled.
+     */
+    event OrderSettled(bytes32 splitOrderId, bytes32 indexed orderId, bytes32 label, address indexed liquidityProvider, uint96 settlePercent);
+
+    /**
+     * @dev Emitted when an aggregator refunds a transaction.
+     * @param fee The fee deducted from the refund amount.
+     * @param orderId The ID of the order.
+     * @param label The label of the transaction.
+     */
+    event OrderRefunded(uint256 fee, bytes32 indexed orderId, bytes32 label);
+
+    /**
+     * @dev Emitted when the sender's fee is transferred.
+     * @param sender The address of the sender.
+     * @param amount The amount of the fee transferred.
+     */
+    event SenderFeeTransferred(address indexed sender, uint256 indexed amount);
 
     /* ##################################################################
                                 STRUCTS
     ################################################################## */
+    /**
+     * @dev Struct representing transaction metadata.
+     * @param identifier The identifier of the transaction.
+     * @param institution The institution of the transaction.
+     * @param name The name of the transaction.
+     * @param currency The currency of the transaction.
+     * @param liquidityProviderID The ID of the liquidity provider.
+     */
     struct TransactionMetadata {
-        bytes8 identifier;                 //                                                                   slot 0
-        bytes8 institution;                //                                                                   slot 0
-        bytes8 name;                       //                                                                   slot 0
-        bytes8 currency;                   //                                                                   slot 0
-        uint256 liquidityProviderID;       //                                                                   slot 1
+        bytes8 identifier;
+        bytes8 institution;
+        bytes8 name;
+        bytes8 currency;
+        uint256 liquidityProviderID;
     }
 
+    /**
+     * @dev Struct representing an order.
+     * @param seller The address of the seller.
+     * @param token The address of the token.
+     * @param senderFeeRecipient The address of the sender fee recipient.
+     * @param senderFee The fee to be paid to the sender fee recipient.
+     * @param rate The rate at which the order is made.
+     * @param isFulfilled Whether the order is fulfilled.
+     * @param refundAddress The address to which the refund is made.
+     * @param currentBPS The current basis points.
+     * @param amount The amount of the order.
+     */
     struct Order {
-        address seller;                     //                                                                   slot 0
-        address token;                      //                                                                   slot 1
+        address seller;
+        address token;
         address senderFeeRecipient;
         uint256 senderFee;
-        uint96 rate;                        //                                                                   slot 1
-        bool isFulfilled;                   //                                                                   slot 2 {11 bytes available}
-        address refundAddress;              //                                                                   slot 2 {12 bytes available}
-        uint96 currentBPS;                  //                                                                   slot 2 {}
-        uint256 amount;                     //                                                                   slot 3
+        uint96 rate;
+        bool isFulfilled;
+        address refundAddress;
+        uint96 currentBPS;
+        uint256 amount;
     }
 
     /* ##################################################################
                                 EXTERNAL CALLS
     ################################################################## */
-    /// @notice lock sender `_amount` of `token` into Paycrest.
-    /// Requirements:
-    /// `msg.sender` must approve Paycrest contract on `_token` of at least `amount` before function call.
-    /// `_token` must be an acceptable token. @dev See {isTokenSupported}.
-    /// `amount` must be greater than minimum
-    /// `_refundable` refundable address must not be zero address
-    /// @param _token address of the token.
-    /// @param _amount amount in the decimal of `_token` above.
-    /// @param _institutionCode institution code of the sender.
-    /// @param _label reference of the sender.
-    /// @param _rate rate at which sender intended to sell `_amount` of `_token`.
-    /// @param _senderFeeRecipient address that is going to recieve `_senderFee` in `_token` when there is a need to refund.
-    /// @param _senderFee amount in the decimal of `_token` that is going to be paid to `_senderFeeRecipient` when there is a need to refund.
-    /// @param _refundAddress address that is going to recieve `_amount` in `_token` when there is a need to refund.
-    /// @param messageHash hash must be the result of a hash operation for the verification to be secure. message
-    /// @return _orderId the bytes20 which is the orderId
+    /**
+     * @notice Locks the sender's amount of token into Paycrest.
+     * @dev Requirements:
+     * - `msg.sender` must approve Paycrest contract on `_token` of at least `amount` before function call.
+     * - `_token` must be an acceptable token. See {isTokenSupported}.
+     * - `amount` must be greater than minimum.
+     * - `_refundable` refundable address must not be zero address.
+     * @param _token The address of the token.
+     * @param _amount The amount in the decimal of `_token` to be locked.
+     * @param _institutionCode The institution code of the sender.
+     * @param _label The reference of the sender.
+     * @param _rate The rate at which the sender intends to sell `_amount` of `_token`.
+     * @param _senderFeeRecipient The address that will receive `_senderFee` in `_token` when there is a need to refund.
+     * @param _senderFee The amount in the decimal of `_token` that will be paid to `_senderFeeRecipient` when there is a need to refund.
+     * @param _refundAddress The address that will receive `_amount` in `_token` when there is a need to refund.
+     * @param messageHash The hash of the message.
+     * @return _orderId The ID of the order.
+     */
     function createOrder(
         address _token, 
         uint256 _amount, 
@@ -1856,57 +1931,83 @@ interface IPaycrest {
         address _senderFeeRecipient,
         uint256 _senderFee,
         address _refundAddress, 
-        string calldata messageHash)  external returns(bytes32 _orderId);
+        string calldata messageHash
+    ) external returns(bytes32 _orderId);
 
-    /// @notice settle transaction and distribute rewards accordingly.
-    /// Requirements:
-    /// {only aggregators call}.
-    /// `_orderId` it must be less than total ids.
-    /// `_orderId` it must be an open Id.
-    /// `_primaryValidator` must have stake on the Paycrest staking platform.
-    /// `_secondaryValidators` must have stake on the Paycrest staking platform.
-    /// `amount` must be greater than minimum
-    /// `_refundable` refundable address must not be zero address
-    /// @param _orderId transaction Id.
-    /// @param _label reference of the sender.
-    /// @param _liquidityProvider address of the liquidity provider.
-    /// @param _settlePercent rate at which the transaction is settled.
-    /// @param _isPartner is the liquidity provider a partner.
-    /// @return return the status of transaction {bool}
-    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _label, address _liquidityProvider, uint64 _settlePercent, bool _isPartner)  external returns(bytes32, address);
+    /**
+     * @notice Settles a transaction and distributes rewards accordingly.
+     * @dev Requirements:
+     * - Only aggregators can call this function.
+     * - `_orderId` must be less than total IDs.
+     * - `_orderId` must be an open ID.
+     * - `_primaryValidator` must have stake on the Paycrest staking platform.
+     * - `_secondaryValidators` must have stake on the Paycrest staking platform.
+     * - `amount` must be greater than minimum.
+     * - `_refundable` refundable address must not be zero address.
+     * @param _orderId The ID of the transaction.
+     * @param _label The reference of the sender.
+     * @param _liquidityProvider The address of the liquidity provider.
+     * @param _settlePercent The rate at which the transaction is settled.
+     * @param _isPartner Whether the liquidity provider is a partner.
+     * @return _orderId The ID of the order.
+     * @return _liquidityProvider The address of the liquidity provider.
+     */
+    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _label, address _liquidityProvider, uint64 _settlePercent, bool _isPartner) external returns(bytes32, address);
 
-    /// @notice refund to the specified refundable address.
-    /// Requirements:
-    /// {only aggregators call}.
-    /// `_orderId` it must be less than total ids.
-    /// `_orderId` it must be an open Id.
-    /// `isFulfilled` must be false.
-    /// @param _fee amount to be deducted from the amount to be refunded
-    /// @param _orderId transaction Id.
-    /// @param _label reference of the sender.
-    /// @return return the status of transaction {bool}
-    function refund(uint256 _fee, bytes32 _orderId, bytes32 _label)  external returns(bool);
+    /**
+     * @notice Refunds to the specified refundable address.
+     * @dev Requirements:
+     * - Only aggregators can call this function.
+     * - `_orderId` must be less than total IDs.
+     * - `_orderId` must be an open ID.
+     * - `isFulfilled` must be false.
+     * @param _fee The amount to be deducted from the amount to be refunded.
+     * @param _orderId The ID of the transaction.
+     * @param _label The reference of the sender.
+     * @return Whether the refund is successful.
+     */
+    function refund(uint256 _fee, bytes32 _orderId, bytes32 _label) external returns(bool);
 
-    /// @notice get supported token from Paycrest.
-    /// @param _token address of the token to check.
-    /// @return return the status of `_token` {bool}
+    /**
+     * @notice Checks if a token is supported by Paycrest.
+     * @param _token The address of the token to check.
+     * @return Whether the token is supported.
+     */
     function isTokenSupported(address _token) external view returns(bool);
 
-    /// @notice get order details.
-    /// @param _orderId transaction Id.
+    /**
+     * @notice Gets the details of an order.
+     * @param _orderId The ID of the order.
+     * @return return The order details.
+     */
     function getOrderInfo(bytes32 _orderId) external view returns(Order memory);
 
-    /// @notice get every rewards and address on Paycrest.
-    /// @return protocolReward amount that will be taken in percentage on all trade.
-    /// @return max_bps maximum amount in bps "100% == 100_000".
-    function getFeeDetails() external view returns(
-        uint64 protocolReward, 
-        uint256 max_bps
-    );
+    /**
+     * @notice Gets the fee details of Paycrest.
+     * @return protocolReward The protocol reward amount.
+     * @return max_bps The maximum basis points.
+     */
+    function getFeeDetails() external view returns(uint64 protocolReward, uint256 max_bps);
 
-    /// @notice get public key of liquidity aggregator.
-    /// @return aggregator public key.
+    /**
+     * @notice Gets the aggregator's public key.
+     * @return return The aggregator's public key.
+     */
     function getAggregator() external view returns(bytes memory);
+
+    /**
+     * @notice Gets the details of a supported institution by code.
+     * @param _code The institution code.
+     * @return return The institution details.
+     */
+    function getSupportedInstitutionByCode(bytes32 _code) external view returns(SharedStructs.InstitutionByCode memory);
+
+    /**
+     * @notice Gets the details of supported institutions by currency.
+     * @param _currency The currency code.
+     * @return return An array of institutions.
+     */ 
+    function getSupportedInstitutions(bytes32 _currency) external view returns(SharedStructs.Institution[] memory);
 }
 
 
@@ -1916,14 +2017,6 @@ interface IPaycrest {
 pragma solidity ^0.8.18;
 
 contract PaycrestSettingManager is OwnableUpgradeable { 
-    struct Institution {
-        bytes32 code;
-        bytes32 name;
-    }
-    struct InstitutionByCode {
-        bytes32 name;
-        bytes32 currency;
-    }
     uint256 internal MAX_BPS;
     uint64 internal protocolFeePercent;
     address internal treasuryAddress;
@@ -1935,8 +2028,8 @@ contract PaycrestSettingManager is OwnableUpgradeable {
 
     mapping(address => bool) internal _isTokenSupported;
 
-    mapping(bytes32 => Institution[]) internal supportedInstitutions;
-    mapping(bytes32 => InstitutionByCode) internal supportedInstitutionsByCode;
+    mapping(bytes32 => SharedStructs.Institution[]) internal supportedInstitutions;
+    mapping(bytes32 => SharedStructs.InstitutionByCode) internal supportedInstitutionsByCode;
 
     event SettingManagerBool(bytes32 what, address value, bool status);
     event ProtocolFeesUpdated(uint64 protocolFee);
@@ -1954,11 +2047,11 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         emit SettingManagerBool(what, value, status);
     }
 
-    function setSupportedInstitutions(bytes32 currency, Institution[] memory institutions) external onlyOwner { 
+    function setSupportedInstitutions(bytes32 currency, SharedStructs.Institution[] memory institutions) external onlyOwner { 
         uint256 length = institutions.length;
         for (uint i = 0; i < length; ) {
             supportedInstitutions[currency].push(institutions[i]);
-            supportedInstitutionsByCode[institutions[i].code] = InstitutionByCode({
+            supportedInstitutionsByCode[institutions[i].code] = SharedStructs.InstitutionByCode({
                 name: institutions[i].name, currency: currency
             });
             unchecked {
@@ -1975,6 +2068,7 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
         if (what == "treasury") treasuryAddress = value;
+        if (what == "aggregator") _aggregatorAddress = value;
         emit ProtocolAddressesUpdated(treasuryAddress);
     }
 
@@ -1993,6 +2087,11 @@ pragma solidity ^0.8.18;
 
 
 
+
+/**
+ * @title Paycrest
+ * @dev Paycrest contract for handling orders and settlements.
+ */
 contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable { 
     using SafeERC20Upgradeable for IERC20;
     using ECDSAUpgradeable for bytes32;
@@ -2011,12 +2110,18 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         _disableInitializers();
     }
 
+    /**
+     * @dev Initialize function.
+     */
     function initialize() external initializer {
         MAX_BPS = 100_000;
         __Ownable_init();
         __Pausable_init();
     }
 
+    /**
+     * @dev Modifier that allows only the aggregator to call a function.
+     */
     modifier onlyAggregator {
         require(msg.sender == _aggregatorAddress, "OnlyAggregator");
         _;
@@ -2025,12 +2130,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     /* ##################################################################
                                 OWNER FUNCTIONS
     ################################################################## */
-    /** @dev pause */
+    /**
+     * @dev Pause the contract.
+     */
     function pause() external onlyOwner {
         _pause();
     }
 
-    /** @dev unpause */
+    /**
+     * @dev Unpause the contract.
+     */
     function unpause() external onlyOwner {
         _unpause();
     }
@@ -2052,6 +2161,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     ) external whenNotPaused() returns(bytes32 orderId) {
         // checks that are required
         _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee, _institutionCode);
+
+        // validate messageHash
+        require(bytes(messageHash).length > 0, "InvalidMessageHash");
 
         // transfer token from msg.sender to contract
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
@@ -2076,9 +2188,18 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         });
 
         // emit deposit event
-        emit Deposit(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
+        emit OrderCreated(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
     }
 
+    /**
+     * @dev Internal function to handle order creation.
+     * @param _token The address of the token being traded.
+     * @param _amount The amount of tokens being traded.
+     * @param _refundAddress The address to refund the tokens in case of cancellation.
+     * @param _senderFeeRecipient The address of the recipient for the sender fee.
+     * @param _senderFee The amount of the sender fee.
+     * @param _institutionCode The code of the institution associated with the order.
+     */
     function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, bytes32 _institutionCode) internal view {
         require(_isTokenSupported[_token], "TokenNotSupported");
         require(_amount > 0, "AmountIsZero");
@@ -2102,7 +2223,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         address _liquidityProvider, 
         uint64 _settlePercent,
         bool _isPartner
-        )  external onlyAggregator() returns(bytes32, address) {
+    ) external onlyAggregator() returns(bytes32, address) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
 
@@ -2120,7 +2241,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             order[_orderId].isFulfilled = true;
             if (order[_orderId].senderFee > 0) {
                 // transfer sender fee
-                transferSenderFee(_orderId);
+                _transferSenderFee(_orderId);
             }
         }
         
@@ -2133,17 +2254,21 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
 
         // emit event
-        emit Settled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
+        emit OrderSettled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
         return (_orderId, token);
     }
 
-    function transferSenderFee(bytes32 _orderId) internal {
+    /**
+     * @dev Internal function to transfer the sender fee.
+     * @param _orderId The ID of the order.
+     */
+    function _transferSenderFee(bytes32 _orderId) internal {
         address recipient = order[_orderId].senderFeeRecipient;
         uint256 _fee = order[_orderId].senderFee;
         // transfer sender fee
         IERC20(order[_orderId].token).transfer(recipient, _fee);
         // emmit event
-        emit TransferSenderFee(recipient, _fee);
+        emit SenderFeeTransferred(recipient, _fee);
     }
 
     /** @dev See {refund-IPaycrest}. */
@@ -2161,11 +2286,18 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     
         // transfer to sender and emit event
         IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, refundAmount);
-        emit Refunded(_fee, _orderId, _label);
+        emit OrderRefunded(_fee, _orderId, _label);
 
         return true;
     }
 
+    /**
+     * @dev Calculates the fees for a given order.
+     * @param _orderId The ID of the order.
+     * @param _settlePercent The percentage of the order amount to settle.
+     * @param _isPartner Flag indicating if the order is from a partner.
+     * @return _feeParams The fee parameters including amount to settle the liquidity provider and the protocol fee.
+     */
     function _calculateFees(bytes32 _orderId, uint96 _settlePercent, bool _isPartner) private view returns(fee memory _feeParams ) {
         // get the total amount associated with the orderId
         uint256 amount = order[_orderId].amount;
@@ -2179,7 +2311,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         // deduct protocol fees from the new total amount
         _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
         
-        // substract total fees from the new amount after getting the scheduled amount
+        // subtract total fees from the new amount after getting the scheduled amount
         _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
 
         // if (_isPartner) protocol fee should be 0, and the whole protocol fee should be added to liquidity provider
@@ -2202,15 +2334,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         return _isTokenSupported[_token];
     }
 
-    /** @dev See {getSupportedInstitutionName-IPaycrest}. */
-    function getSupportedInstitutionName(bytes32 code) external view returns (InstitutionByCode memory) {
-        return supportedInstitutionsByCode[code];
+    /** @dev See {getSupportedInstitutionByCode-IPaycrest}. */
+    function getSupportedInstitutionByCode(bytes32 _code) external view returns(SharedStructs.InstitutionByCode memory) {
+        return supportedInstitutionsByCode[_code];
     }
 
-    function getSupportedInstitutions(bytes32 currency) external view returns (Institution[] memory) {
-        Institution[] memory institutions = supportedInstitutions[currency];
+    /** @dev See {getSupportedInstitutions-IPaycrest}. */
+    function getSupportedInstitutions(bytes32 _currency) external view returns(SharedStructs.Institution[] memory) {
+        SharedStructs.Institution[] memory institutions = supportedInstitutions[_currency];
         uint256 length = institutions.length;
-        Institution[] memory result = new Institution[](length);
+        SharedStructs.Institution[] memory result = new SharedStructs.Institution[](length);
         
         for (uint256 i = 0; i < length; ) {
             result[i] = institutions[i];

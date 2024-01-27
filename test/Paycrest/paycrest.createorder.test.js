@@ -31,11 +31,12 @@ describe("Paycrest create order", function () {
     ] = await ethers.getSigners();
 
     ({ paycrest, mockUSDC } = await paycrestFixture());
-
+    
     this.mockUSDT = await deployContract("MockUSDC");
+    
     this.mockUSDC = mockUSDC;
     this.paycrest = paycrest;
-
+    
     this.mintAmount = ethers.utils.parseEther("1000100");
     this.senderFee = ethers.utils.parseEther("100");
     await this.mockUSDC.connect(this.alice).mint(this.mintAmount);
@@ -43,7 +44,7 @@ describe("Paycrest create order", function () {
     await this.mockUSDC
       .connect(this.alice)
       .transfer(this.sender.address, this.mintAmount);
-
+    
     expect(await this.mockUSDC.balanceOf(this.alice.address)).to.eq(
       ZERO_AMOUNT
     );
@@ -51,17 +52,15 @@ describe("Paycrest create order", function () {
       this.mintAmount
     );
 
-    const whitelist = ethers.utils.formatBytes32String("whitelist");
+    const token = ethers.utils.formatBytes32String("token");
 
     await expect(
       this.paycrest
         .connect(this.deployer)
-        .settingManagerBool(whitelist, this.sender.address, true)
+        .settingManagerBool(token, this.mockUSDC.address, true)
     )
       .to.emit(this.paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(whitelist, this.sender.address, true);
-
-    console.log("this.paycrest.address", this.paycrest.address);
+      .withArgs(token, this.mockUSDC.address, true);
   });
 
   it("Should be able to create order by Sender for Alice", async function () {
@@ -76,12 +75,12 @@ describe("Paycrest create order", function () {
       .connect(this.sender)
       .approve(this.paycrest.address, this.mintAmount);
     const rate = 750;
-    const institutionCode = ret.firstBank.code;
+    const institutionCode = ret.accessBank.code;
 
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { account_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
 
     const password = "123";
@@ -116,7 +115,7 @@ describe("Paycrest create order", function () {
           messageHash.toString()
         )
     )
-      .to.emit(this.paycrest, Events.Paycrest.Deposit)
+      .to.emit(this.paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
         this.mockUSDC.address,
         this.mintAmount,
@@ -154,8 +153,8 @@ describe("Paycrest create order", function () {
     expect(this.amount).to.eq(this.mintAmount);
 
     [this.name, this.currency] =
-      await this.paycrest.getSupportedInstitutionName(institutionCode);
-    expect(this.name).to.eq(ret.firstBank.name);
+      await this.paycrest.getSupportedInstitutionByCode(institutionCode);
+    expect(this.name).to.eq(ret.accessBank.name);
     expect(this.currency).to.eq(ret.currency);
 
     expect(await this.mockUSDC.balanceOf(this.alice.address)).to.eq(
@@ -166,12 +165,11 @@ describe("Paycrest create order", function () {
     var bytes = CryptoJS.AES.decrypt(messageHash.substring(2), password);
     var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
 
-    console.log(decryptedData); // [{id: 1}, {id: 2}]
-
     const mockUSDC = await this.paycrest.isTokenSupported(
       this.mockUSDC.address
     );
     expect(mockUSDC).to.eq(true);
+    expect(decryptedData[0].bank_account).to.eq("09090990901");
   });
 
   it("Should revert when creating order with non-supported token", async function () {
@@ -186,11 +184,11 @@ describe("Paycrest create order", function () {
       .connect(this.sender)
       .approve(this.paycrest.address, this.mintAmount);
     const rate = 750;
-    const institutionCode = ret.firstBank.code;
+    const institutionCode = ret.accessBank.code;
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
     const password = "123";
 
@@ -262,11 +260,11 @@ describe("Paycrest create order", function () {
       .connect(this.sender)
       .approve(this.paycrest.address, this.mintAmount);
     const rate = 750;
-    const institutionCode = ret.firstBank.code;
+    const institutionCode = ret.accessBank.code;
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
     const password = "123";
 
@@ -338,11 +336,11 @@ describe("Paycrest create order", function () {
       .connect(this.sender)
       .approve(this.paycrest.address, this.mintAmount);
     const rate = 750;
-    const institutionCode = ret.firstBank.code;
+    const institutionCode = ret.accessBank.code;
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
     const password = "123";
 
@@ -417,8 +415,8 @@ describe("Paycrest create order", function () {
     const invalidInstitutionCode = ethers.utils.formatBytes32String("0000");
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
     const password = "123";
 

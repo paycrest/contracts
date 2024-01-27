@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IPaycrest",
-  "sourceName": "contracts/interface/IPaycrest.sol",
+  "sourceName": "contracts/interfaces/IPaycrest.sol",
   "abi": [
     {
       "anonymous": false,
@@ -49,7 +49,7 @@
           "type": "string"
         }
       ],
-      "name": "Deposit",
+      "name": "OrderCreated",
       "type": "event"
     },
     {
@@ -58,7 +58,7 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "_fee",
+          "name": "fee",
           "type": "uint256"
         },
         {
@@ -74,26 +74,7 @@
           "type": "bytes32"
         }
       ],
-      "name": "Refunded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "validator",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "RewardValidator",
+      "name": "OrderRefunded",
       "type": "event"
     },
     {
@@ -102,7 +83,7 @@
         {
           "indexed": false,
           "internalType": "bytes32",
-          "name": "_splitOrderId",
+          "name": "splitOrderId",
           "type": "bytes32"
         },
         {
@@ -130,7 +111,7 @@
           "type": "uint96"
         }
       ],
-      "name": "Settled",
+      "name": "OrderSettled",
       "type": "event"
     },
     {
@@ -149,7 +130,7 @@
           "type": "uint256"
         }
       ],
-      "name": "TransferSenderFee",
+      "name": "SenderFeeTransferred",
       "type": "event"
     },
     {
@@ -303,6 +284,68 @@
           "internalType": "struct IPaycrest.Order",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_code",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getSupportedInstitutionByCode",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "name",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "currency",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct SharedStructs.InstitutionByCode",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_currency",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getSupportedInstitutions",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "code",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "name",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct SharedStructs.Institution[]",
+          "name": "",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
