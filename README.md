@@ -51,15 +51,15 @@ npx hardhat run scripts/updateProtocolFees.ts --network <network>
   <tbody>
     <tr>
       <td>Paycrest Proxy</td>
-      <td>0x2226bd00a217c61497d89E1Db8058095a34448BC</td>
+      <td>0xba31A1adb519A2C76475cE231FB1445047971358</td>
     </tr>
     <tr>
       <td>Paycrest Implementation</td>
-      <td>0xc97A6fe4B134E4b5bD27f694900C3a88EaF6Bfe2</td>
+      <td>0x5646A1f2950530fA86eE374306BE3fEB39FD3002</td>
     </tr>
     <tr>
       <td>Proxy Admin</td>
-      <td>0x0048A1caF94494aF8102770922464f27c36d51B0</td>
+      <td>0xaB298765d2dfA58e2cb1f5B524196D071b664977</td>
     </tr>
     <tr>
       <td></td>
