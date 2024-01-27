@@ -23,6 +23,16 @@ describe("Ownable settings", function () {
 
     [admin, keeper, alice, hacker, sender, Mark, treasuryAddress, aggregator] =
       await ethers.getSigners();
+
+    const token = ethers.utils.formatBytes32String("token");
+
+    await expect(
+      paycrest
+        .connect(admin)
+        .settingManagerBool(token, mockUSDC.address, true)
+    )
+      .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
+      .withArgs(token, mockUSDC.address, true);
   }
 
   it("should get supported token", async function () {
@@ -37,163 +47,70 @@ describe("Ownable settings", function () {
     expect(Alice).to.eq(false);
   });
 
-  it("should be able to whitelist sender and emit events", async function () {
-    await setupAndResetFork();
-    const whitelist = ethers.utils.formatBytes32String("whitelist");
-
-    await expect(
-      paycrest
-        .connect(admin)
-        .settingManagerBool(whitelist, sender.address, true)
-    )
-      .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(whitelist, sender.address, true);
-
-    expect(await paycrest.getWhitelistedStatus(sender.address)).to.eq(true);
-  });
-
-  it("should be able to set supported arrays of Institution", async function () {
+  it("should set array of supported institutions", async function () {
     await setupAndResetFork();
     const currency = ethers.utils.formatBytes32String("NGN");
 
-    const firstBank = {
-      code: ethers.utils.formatBytes32String("191"),
-      name: ethers.utils.formatBytes32String("First Bank"),
-    };
-
-    const opay = {
-      code: ethers.utils.formatBytes32String("192"),
-      name: ethers.utils.formatBytes32String("Opay"),
-    };
-    const palmpay = {
-      code: ethers.utils.formatBytes32String("193"),
-      name: ethers.utils.formatBytes32String("Palmpay Bank"),
-    };
     const accessBank = {
-      code: ethers.utils.formatBytes32String("194"),
-      name: ethers.utils.formatBytes32String("Access Bank"),
+      code: ethers.utils.formatBytes32String("ABNGNGLA"),
+      name: ethers.utils.formatBytes32String("ACCESS BANK"),
     };
-    const gtb = {
-      code: ethers.utils.formatBytes32String("195"),
-      name: ethers.utils.formatBytes32String("GTB"),
-    };
-    const stanbic = {
-      code: ethers.utils.formatBytes32String("196"),
-      name: ethers.utils.formatBytes32String("Stanbic IBTC Bank"),
-    };
+    const diamondBank = {
+      code: ethers.utils.formatBytes32String("DBLNNGLA"),
+      name: ethers.utils.formatBytes32String("DIAMOND BANK"),
+    }
 
-    // await expect(
     paycrest
       .connect(admin)
       .setSupportedInstitutions(currency, [
-        firstBank,
-        opay,
-        palmpay,
         accessBank,
-        gtb,
-        stanbic,
+        diamondBank,
       ]);
-    const currencies = await paycrest.getSupportedInstitutions(currency);
-    // expect(currencies.length).to.eq(6);
-    // console.log("all currencies", currencies);
+    const institutions = await paycrest.connect(admin).getSupportedInstitutions(currency);
+    expect(institutions.length).to.eq(2);
+      
+    [this.accessBankName, this.currency] =
+      await paycrest.getSupportedInstitutionByCode(accessBank.code);
+    expect(this.accessBankName).to.eq(accessBank.name);
+    expect(this.currency).to.eq(currency);
 
-    [this.firstBankName, this.currency] =
-      await paycrest.getSupportedInstitutionName(firstBank.code);
-    // expect(this.firstBankName).to.eq(firstBank.name);
-    // expect(this.currency).to.eq(currency);
-    [this.opayName, this.currency] = await paycrest.getSupportedInstitutionName(
-      opay.code
-    );
-    // expect(this.opayName).to.eq(opay.name);
-    // expect(this.currency).to.eq(currency);
-    // [this.palmpayName, this.currency] =
-    //   await paycrest.getSupportedInstitutionName(palmpay.code);
-    // expect(this.palmpayName).to.eq(palmpay.name);
-    // expect(this.currency).to.eq(currency);
-    // [this.accessBankName, this.currency] =
-    //   await paycrest.getSupportedInstitutionName(accessBank.code);
-    // expect(this.accessBankName).to.eq(accessBank.name);
-    // expect(this.currency).to.eq(currency);
-    // [this.gtbName, this.currency] = await paycrest.getSupportedInstitutionName(
-    //   gtb.code
-    // );
-    // expect(this.gtbName).to.eq(gtb.name);
-    // expect(this.currency).to.eq(currency);
-    // [this.stanbicName, this.currency] =
-    //   await paycrest.getSupportedInstitutionName(stanbic.code);
-    // expect(this.stanbicName).to.eq(stanbic.name);
-    // expect(this.currency).to.eq(currency);
+    [this.diamondBankName, this.currency] =
+      await paycrest.getSupportedInstitutionByCode(diamondBank.code);
+    expect(this.diamondBankName).to.eq(diamondBank.name);
+    expect(this.currency).to.eq(currency);
   });
 
-  it("should revert when non-owner want to set Institution", async function () {
+  it("should revert when non-owner sets supported institutions", async function () {
     await setupAndResetFork();
     const currency = ethers.utils.formatBytes32String("NGN");
     const zeroIndexBytes = ethers.utils.formatBytes32String("");
 
-    const firstBank = {
-      code: ethers.utils.formatBytes32String("191"),
-      name: ethers.utils.formatBytes32String("First Bank"),
-    };
-
-    const opay = {
-      code: ethers.utils.formatBytes32String("192"),
-      name: ethers.utils.formatBytes32String("Opay"),
-    };
-    const palmpay = {
-      code: ethers.utils.formatBytes32String("193"),
-      name: ethers.utils.formatBytes32String("Palmpay Bank"),
-    };
     const accessBank = {
-      code: ethers.utils.formatBytes32String("194"),
-      name: ethers.utils.formatBytes32String("Access Bank"),
+      code: ethers.utils.formatBytes32String("ABNGNGLA"),
+      name: ethers.utils.formatBytes32String("ACCESS BANK"),
     };
-    const gtb = {
-      code: ethers.utils.formatBytes32String("195"),
-      name: ethers.utils.formatBytes32String("GTB"),
-    };
-    const stanbic = {
-      code: ethers.utils.formatBytes32String("196"),
-      name: ethers.utils.formatBytes32String("Stanbic IBTC Bank"),
-    };
+    const diamondBank = {
+      code: ethers.utils.formatBytes32String("DBLNNGLA"),
+      name: ethers.utils.formatBytes32String("DIAMOND BANK"),
+    }
 
     await expect(
       paycrest
         .connect(hacker)
         .setSupportedInstitutions(currency, [
-          firstBank,
-          opay,
-          palmpay,
           accessBank,
-          gtb,
-          stanbic,
+          diamondBank
         ])
     ).to.be.revertedWith(Errors.Ownable.onlyOwner);
 
-    [this.firstBankName, this.currency] =
-      await paycrest.getSupportedInstitutionName(firstBank.code);
-    expect(this.firstBankName).to.eq(zeroIndexBytes);
-    expect(this.currency).to.eq(zeroIndexBytes);
-    [this.opayName, this.currency] = await paycrest.getSupportedInstitutionName(
-      opay.code
-    );
-    expect(this.opayName).to.eq(zeroIndexBytes);
-    expect(this.currency).to.eq(zeroIndexBytes);
-    [this.palmpayName, this.currency] =
-      await paycrest.getSupportedInstitutionName(palmpay.code);
-    expect(this.palmpayName).to.eq(zeroIndexBytes);
-    expect(this.currency).to.eq(zeroIndexBytes);
     [this.accessBankName, this.currency] =
-      await paycrest.getSupportedInstitutionName(accessBank.code);
+      await paycrest.getSupportedInstitutionByCode(accessBank.code);
     expect(this.accessBankName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
-    [this.gtbName, this.currency] = await paycrest.getSupportedInstitutionName(
-      gtb.code
-    );
-    expect(this.gtbName).to.eq(zeroIndexBytes);
-    expect(this.currency).to.eq(zeroIndexBytes);
-    [this.stanbicName, this.currency] =
-      await paycrest.getSupportedInstitutionName(stanbic.code);
-    expect(this.stanbicName).to.eq(zeroIndexBytes);
+
+    [this.diamondBankName, this.currency] =
+      await paycrest.getSupportedInstitutionByCode(diamondBank.code);
+    expect(this.diamondBankName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
   });
 
@@ -207,7 +124,7 @@ describe("Ownable settings", function () {
         .connect(admin)
         .updateProtocolFees(protocolFeePercent)
     )
-      .to.emit(paycrest, Events.Paycrest.PaycrestFees)
+      .to.emit(paycrest, Events.Paycrest.ProtocolFeesUpdated)
       .withArgs(protocolFeePercent);
 
     [this.protocolFeePecent, this.MAXBPS] =
@@ -227,20 +144,15 @@ describe("Ownable settings", function () {
     ).to.be.revertedWith(Errors.Ownable.onlyOwner);
   });
 
-  it("should update fee recipients, stake contract and aggregator", async function () {
+  it("should update treasury address", async function () {
     await setupAndResetFork();
-    const fee = ethers.utils.formatBytes32String("fee");
-    const _aggregator = ethers.utils.formatBytes32String("aggregator");
+    const treasury = ethers.utils.formatBytes32String("treasury");
 
-    await paycrest
-      .connect(admin)
-      .updateProtocolAddresses(fee, treasuryAddress.address);
-
-    await paycrest
-      .connect(admin)
-      .updateProtocolAddresses(_aggregator, aggregator.address);
-
-    expect(await paycrest.getAggregatorAddress()).to.eq(aggregator.address);
+    await expect(
+      paycrest
+        .connect(admin)
+        .updateProtocolAddresses(treasury, treasuryAddress.address)
+    ).to.be.emit(paycrest, Events.Paycrest.ProtocolAddressesUpdated);
 
   });
 });

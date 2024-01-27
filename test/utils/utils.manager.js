@@ -17,36 +17,22 @@ const Errors = {
     AmountIsZero: "AmountIsZero",
     ThrowZeroAddress: "ThrowZeroAddress",
     InvalidSigner: "InvalidSigner",
-    Unsuported: "Unsuported",
+    Unsupported: "Unsupported",
     OrderFulfilled: "OrderFulfilled",
     UnableToProcessRewards: "UnableToProcessRewards",
     InvalidInstitutionCode: "InvalidInstitutionCode",
-  },
-
-  PaycrestValidators: {
-    ThrowInitPaused: "ThrowInitPaused",
-    TokenNotSupported: "TokenNotSupported",
-    MinimumRequired: "MinimumRequired",
-    Insufficient: "Insufficient",
-  },
+  }
 };
 
 const Events = {
   Paycrest: {
-    Deposit: "Deposit",
-    Settled: "Settled",
-    Refunded: "Refunded",
+    OrderCreated: "OrderCreated",
+    OrderSettled: "OrderSettled",
+    OrderRefunded: "OrderRefunded",
     SettingManagerBool: "SettingManagerBool",
-    PaycrestFees: "PaycrestFees",
-  },
-
-  PaycrestValidators: {
-    NewTokenSupported: "NewTokenSupported",
-    Initialized: "Initialized",
-    Staked: "Staked",
-    Withdrawn: "Withdrawn",
-    RewardValidators: "RewardValidators",
-  },
+    ProtocolFeesUpdated: "ProtocolFeesUpdated",
+    ProtocolAddressesUpdated: "ProtocolAddressesUpdated",
+  }
 };
 
 async function deployContract(name, args = [], value = 0) {
@@ -55,6 +41,7 @@ async function deployContract(name, args = [], value = 0) {
 
   if (value > 0) instance = await Contract.deploy(...args, { value });
   else instance = await Contract.deploy(...args);
+
   return instance;
 }
 
@@ -84,7 +71,6 @@ async function setSupportedInstitution(instance, signer) {
     diamondBank,
   };
 }
-
 
 async function calculateFee(instance, amount) {
   const feeBps = await instance.getFeeBPS();

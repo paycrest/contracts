@@ -6,9 +6,13 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import {PaycrestSettingManager} from "./PaycrestSettingManager.sol";
-import {IPaycrest, IERC20} from "./interface/IPaycrest.sol";
+import {IPaycrest, IERC20} from "./interfaces/IPaycrest.sol";
+import {SharedStructs} from "./libraries/SharedStructs.sol";
 
-
+/**
+ * @title Paycrest
+ * @dev Paycrest contract for handling orders and settlements.
+ */
 contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable { 
     using SafeERC20Upgradeable for IERC20;
     using ECDSAUpgradeable for bytes32;
@@ -27,12 +31,18 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         _disableInitializers();
     }
 
+    /**
+     * @dev Initialize function.
+     */
     function initialize() external initializer {
         MAX_BPS = 100_000;
         __Ownable_init();
         __Pausable_init();
     }
 
+    /**
+     * @dev Modifier that allows only the aggregator to call a function.
+     */
     modifier onlyAggregator {
         require(msg.sender == _aggregatorAddress, "OnlyAggregator");
         _;
@@ -41,12 +51,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     /* ##################################################################
                                 OWNER FUNCTIONS
     ################################################################## */
-    /** @dev pause */
+    /**
+     * @dev Pause the contract.
+     */
     function pause() external onlyOwner {
         _pause();
     }
 
-    /** @dev unpause */
+    /**
+     * @dev Unpause the contract.
+     */
     function unpause() external onlyOwner {
         _unpause();
     }
@@ -68,6 +82,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     ) external whenNotPaused() returns(bytes32 orderId) {
         // checks that are required
         _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee, _institutionCode);
+
+        // validate messageHash
+        require(bytes(messageHash).length > 0, "InvalidMessageHash");
 
         // transfer token from msg.sender to contract
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
@@ -92,9 +109,18 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         });
 
         // emit deposit event
-        emit Deposit(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
+        emit OrderCreated(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
     }
 
+    /**
+     * @dev Internal function to handle order creation.
+     * @param _token The address of the token being traded.
+     * @param _amount The amount of tokens being traded.
+     * @param _refundAddress The address to refund the tokens in case of cancellation.
+     * @param _senderFeeRecipient The address of the recipient for the sender fee.
+     * @param _senderFee The amount of the sender fee.
+     * @param _institutionCode The code of the institution associated with the order.
+     */
     function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, bytes32 _institutionCode) internal view {
         require(_isTokenSupported[_token], "TokenNotSupported");
         require(_amount > 0, "AmountIsZero");
@@ -118,7 +144,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         address _liquidityProvider, 
         uint64 _settlePercent,
         bool _isPartner
-        )  external onlyAggregator() returns(bytes32, address) {
+    ) external onlyAggregator() returns(bytes32, address) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
 
@@ -136,7 +162,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             order[_orderId].isFulfilled = true;
             if (order[_orderId].senderFee > 0) {
                 // transfer sender fee
-                transferSenderFee(_orderId);
+                _transferSenderFee(_orderId);
             }
         }
         
@@ -149,17 +175,21 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
 
         // emit event
-        emit Settled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
+        emit OrderSettled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
         return (_orderId, token);
     }
 
-    function transferSenderFee(bytes32 _orderId) internal {
+    /**
+     * @dev Internal function to transfer the sender fee.
+     * @param _orderId The ID of the order.
+     */
+    function _transferSenderFee(bytes32 _orderId) internal {
         address recipient = order[_orderId].senderFeeRecipient;
         uint256 _fee = order[_orderId].senderFee;
         // transfer sender fee
         IERC20(order[_orderId].token).transfer(recipient, _fee);
         // emmit event
-        emit TransferSenderFee(recipient, _fee);
+        emit SenderFeeTransferred(recipient, _fee);
     }
 
     /** @dev See {refund-IPaycrest}. */
@@ -177,11 +207,18 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     
         // transfer to sender and emit event
         IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, refundAmount);
-        emit Refunded(_fee, _orderId, _label);
+        emit OrderRefunded(_fee, _orderId, _label);
 
         return true;
     }
 
+    /**
+     * @dev Calculates the fees for a given order.
+     * @param _orderId The ID of the order.
+     * @param _settlePercent The percentage of the order amount to settle.
+     * @param _isPartner Flag indicating if the order is from a partner.
+     * @return _feeParams The fee parameters including amount to settle the liquidity provider and the protocol fee.
+     */
     function _calculateFees(bytes32 _orderId, uint96 _settlePercent, bool _isPartner) private view returns(fee memory _feeParams ) {
         // get the total amount associated with the orderId
         uint256 amount = order[_orderId].amount;
@@ -195,7 +232,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         // deduct protocol fees from the new total amount
         _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
         
-        // substract total fees from the new amount after getting the scheduled amount
+        // subtract total fees from the new amount after getting the scheduled amount
         _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
 
         // if (_isPartner) protocol fee should be 0, and the whole protocol fee should be added to liquidity provider
@@ -218,15 +255,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         return _isTokenSupported[_token];
     }
 
-    /** @dev See {getSupportedInstitutionName-IPaycrest}. */
-    function getSupportedInstitutionName(bytes32 code) external view returns (InstitutionByCode memory) {
-        return supportedInstitutionsByCode[code];
+    /** @dev See {getSupportedInstitutionByCode-IPaycrest}. */
+    function getSupportedInstitutionByCode(bytes32 _code) external view returns(SharedStructs.InstitutionByCode memory) {
+        return supportedInstitutionsByCode[_code];
     }
 
-    function getSupportedInstitutions(bytes32 currency) external view returns (Institution[] memory) {
-        Institution[] memory institutions = supportedInstitutions[currency];
+    /** @dev See {getSupportedInstitutions-IPaycrest}. */
+    function getSupportedInstitutions(bytes32 _currency) external view returns(SharedStructs.Institution[] memory) {
+        SharedStructs.Institution[] memory institutions = supportedInstitutions[_currency];
         uint256 length = institutions.length;
-        Institution[] memory result = new Institution[](length);
+        SharedStructs.Institution[] memory result = new SharedStructs.Institution[](length);
         
         for (uint256 i = 0; i < length; ) {
             result[i] = institutions[i];

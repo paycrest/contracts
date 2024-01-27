@@ -18,7 +18,7 @@ const {
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
-describe("Paycrest create order", function () {
+describe("Paycrest settle order", function () {
   beforeEach(async function () {
     [
       this.deployer,
@@ -35,26 +35,27 @@ describe("Paycrest create order", function () {
 
     ({ paycrest, mockUSDC } = await paycrestFixture());
 
-    // this.mockUSDC = usdc;
-    // this.mockUSDT = usdt;
-
     this.mintAmount = ethers.utils.parseEther("1000100");
     this.senderFee = ethers.utils.parseEther("100");
-    this.stakeAmount = ethers.utils.parseEther("1000000");
 
-    this.liquidityProviderAmount = ethers.utils.parseEther("950000");
-    this.protocolFeeAmount = ethers.utils.parseEther("50000");
-    this.rewards = ethers.utils.parseEther("250");
-    this.secondaryValidatorReward = ethers.utils.parseEther("250");
+    this.liquidityProviderAmount = ethers.utils.parseEther("900000");
+    this.protocolFeeAmount = ethers.utils.parseEther("100000");
+
+    // charge 10% as protocol fee
+    const protocolFeePercent = BigNumber.from(10_000);
+
+    await expect(
+      paycrest
+        .connect(this.deployer)
+        .updateProtocolFees(protocolFeePercent)
+    )
+      .to.emit(paycrest, Events.Paycrest.ProtocolFeesUpdated)
+      .withArgs(protocolFeePercent);
 
     await mockUSDC.connect(this.alice).mint(this.mintAmount);
-    await mockUSDC.connect(this.bob).mint(this.stakeAmount);
 
     expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(
       this.mintAmount
-    );
-    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(
-      this.stakeAmount
     );
     await mockUSDC
       .connect(this.alice)
@@ -75,34 +76,38 @@ describe("Paycrest create order", function () {
       ZERO_AMOUNT
     );
 
-    const fee = ethers.utils.formatBytes32String("fee");
+    const treasury = ethers.utils.formatBytes32String("treasury");
+
+    await expect(
+      paycrest
+      .connect(this.deployer)
+      .updateProtocolAddresses(treasury, this.treasuryAddress.address)
+    ).to.emit(paycrest, Events.Paycrest.ProtocolAddressesUpdated);
+
     const aggregator = ethers.utils.formatBytes32String("aggregator");
 
-    await paycrest
+    await expect(
+      paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(fee, this.treasuryAddress.address);
-
-    await paycrest
-      .connect(this.deployer)
-      .updateProtocolAddresses(aggregator, this.aggregator.address);
+      .updateProtocolAddresses(aggregator, this.aggregator.address)
+    ).to.emit(paycrest, Events.Paycrest.ProtocolAddressesUpdated);
 
     expect(
       await mockUSDC.allowance(this.alice.address, paycrest.address)
     ).to.equal(ZERO_AMOUNT);
 
-
-    const whitelist = ethers.utils.formatBytes32String("whitelist");
+    const token = ethers.utils.formatBytes32String("token");
 
     await expect(
       paycrest
         .connect(this.deployer)
-        .settingManagerBool(whitelist, this.sender.address, true)
+        .settingManagerBool(token, mockUSDC.address, true)
     )
       .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(whitelist, this.sender.address, true);
+      .withArgs(token, mockUSDC.address, true);
   });
 
-  it("Should be able to create order by the sender and settled by liquidity aggregator", async function () {
+  it("Should be able to create order by the sender and settled by the liquidity aggregator", async function () {
     const ret = await setSupportedInstitution(paycrest, this.deployer);
 
     await mockUSDC
@@ -114,11 +119,11 @@ describe("Paycrest create order", function () {
     ).to.equal(this.mintAmount);
 
     const rate = 750;
-    const institutionCode = ret.firstBank.code;
+    const institutionCode = ret.accessBank.code;
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
     const password = "123";
 
@@ -152,7 +157,7 @@ describe("Paycrest create order", function () {
           messageHash.toString()
         )
     )
-      .to.emit(paycrest, Events.Paycrest.Deposit)
+      .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
         mockUSDC.address,
         this.mintAmount,
@@ -207,10 +212,8 @@ describe("Paycrest create order", function () {
           false
         )
     )
-      .to.emit(paycrest, Events.Paycrest.Settled)
+      .to.emit(paycrest, Events.Paycrest.OrderSettled)
       .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
-
-    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.stakeAmount);
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
@@ -235,11 +238,11 @@ describe("Paycrest create order", function () {
     ).to.equal(this.mintAmount);
 
     const rate = 750;
-    const institutionCode = ret.firstBank.code;
+    const institutionCode = ret.accessBank.code;
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
     const password = "123";
 
@@ -273,7 +276,7 @@ describe("Paycrest create order", function () {
           messageHash.toString()
         )
     )
-      .to.emit(paycrest, Events.Paycrest.Deposit)
+      .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
         mockUSDC.address,
         this.mintAmount,
@@ -326,7 +329,7 @@ describe("Paycrest create order", function () {
           true
         )
     )
-      .to.emit(paycrest, Events.Paycrest.Settled)
+      .to.emit(paycrest, Events.Paycrest.OrderSettled)
       .withArgs(
         orderId,
         orderId,
@@ -334,8 +337,6 @@ describe("Paycrest create order", function () {
         this.liquidityProvider.address,
         MAX_BPS
       );
-    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.stakeAmount);
-    // 999,750 000000000000000000
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount.add(this.protocolFeeAmount)
@@ -357,11 +358,11 @@ describe("Paycrest create order", function () {
     ).to.equal(this.mintAmount);
 
     const rate = 750;
-    const institutionCode = ret.firstBank.code;
+    const institutionCode = ret.accessBank.code;
     const data = [
       { bank_account: "09090990901" },
-      { bank_name: "opay" },
-      { accoun_name: "opay opay" },
+      { bank_name: "ACCESS BANK" },
+      { account_name: "Jeff Dean" },
     ];
     const password = "123";
 
@@ -395,7 +396,7 @@ describe("Paycrest create order", function () {
           messageHash.toString()
         )
     )
-      .to.emit(paycrest, Events.Paycrest.Deposit)
+      .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
         mockUSDC.address,
         this.mintAmount,
@@ -447,10 +448,8 @@ describe("Paycrest create order", function () {
           false
         )
     )
-      .to.emit(paycrest, Events.Paycrest.Settled)
+      .to.emit(paycrest, Events.Paycrest.OrderSettled)
       .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
-
-    expect(await mockUSDC.balanceOf(this.bob.address)).to.eq(this.stakeAmount);
 
     expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
