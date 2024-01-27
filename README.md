@@ -1,129 +1,81 @@
-<p>
-    <a href="https://solidity.readthedocs.io/en/v0.8.18/"><img alt="solidity v0.8.18" src="https://badgen.net/badge/solidity/v0.8.17/blue"></a>
-    <img src="https://github.com/Vaultka-Project/sake-contracts/actions/workflows/hardhat.yml/badge.svg" alt="tests.yml">
-</p>
+<a href="https://solidity.readthedocs.io/en/v0.8.18/"><img alt="solidity v0.8.18" src="https://badgen.net/badge/solidity/v0.8.18/blue"></a>
 
-# Paycrest
-An escrow contract is a type of smart contract that holds cryptocurrency or other digital assets temporarily until a transaction is completed. It acts as an intermediary between the parties involved in the transaction, ensuring that the funds are secure and released to the appropriate parties at the appropriate time.
+# Paycrest Contracts
+    
+## Description
 
-In the case of a cryptocurrency transaction, the escrow contract receives the agreed-upon amount of cryptocurrency from the sender and holds it until the provider fulfills the order and the recipient confirms that they have received the payment. Once the validator confirms the payment, the escrow contract sends the cryptocurrency to the seller's and validators' wallets.
+Paycrest contracts are multi-chain EVM-based smart contracts that facilitate the on-chain lifecycle of a payment order. They empower a sender to create a payment order, enable a liquidity provider to receive cryptocurrency in escrow, and much more.
 
-- [ ] Escrow Contract
-- [ ] Enable multiple currencies
-# 
-# Paycrest validator
-A validator contract is a smart contract designed to reward transaction validators and enable them to stake cryptocurrency. Validators play an essential role in maintaining the paycrest protocol security and integrity by validating transactions.
+## Deployment
 
-In a validator contract, validators are incentivized to perform their duties correctly by earning rewards in the form of cryptocurrency. The contract uses a specific algorithm to determine which validator gets the transaction to validate, the validator's performance and allocate rewards accordingly.
+Deployment is done using Hardhat scripts
 
-The validator contract also enables validators to stake cryptocurrency, which means locking up a certain amount of cryptocurrency as collateral to guarantee their performance. Validators who perform their duties correctly and meet the contract's requirements will receive their staked cryptocurrency back, plus rewards for their services. Validators who fail to meet the contract's requirements may lose their staked cryptocurrency as a penalty.
-This project demonstrates a basic Hardhat use case. and how the contract can be depolyed
-# 
-Try running some of the following tasks:
+#### Deploy and verify upgradeable proxy contract
 
-```shell
-$ REPORT_GAS=true npx hardhat test
-$ npx hardhat node
-$ npx hardhat run deploy/paycrest.js
+```bash
+npx hardhat run scripts/deploy.ts --network <network>
+
+npx hardhat verify --network <network> <contract_address>
 ```
+
+#### Upgrade proxy contract
+
+```bash
+npx hardhat run scripts/upgrade.ts --network <network>
+```
+
+#### Owner configurations
+
+Update network settings, currencies, and supported institutions in `scripts/config.ts`
+
+```bash
+npx hardhat run scripts/setSupportedInstitutions.ts --network <network>
+
+npx hardhat run scripts/setSupportedTokens.ts --network <network>
+
+npx hardhat run scripts/updateProtocolAddresses.ts --network <network>
+
+npx hardhat run scripts/updateProtocolFees.ts --network <network>
+```
+
+
+## Testnet Contracts (Polygon Mumbai)
+
+<table>
+  <thead>
+    <tr>
+      <th>Contracts</th>
+      <th>Address</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Paycrest Proxy</td>
+      <td>0x2226bd00a217c61497d89E1Db8058095a34448BC</td>
+    </tr>
+    <tr>
+      <td>Paycrest Implementation</td>
+      <td>0xc97A6fe4B134E4b5bD27f694900C3a88EaF6Bfe2</td>
+    </tr>
+    <tr>
+      <td>Proxy Admin</td>
+      <td>0x0048A1caF94494aF8102770922464f27c36d51B0</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+    </tr>
+    </tr>
+  </tbody>
+</table>
 
 ## Testing
 
 Contract tests are defined under the tests directory. To run all the tests, run:
 
 ```bash
-$ npx hardhat test
+npx hardhat test
 ```
-
-# Deployment
-
-You can find a deployment utility with hardhat to easily deploy the smart contracts locally
-&nbsp;
-
-## How to deploy on Hardhat?
-
-1. run the command below, list of tags will be added later, you can choos to use one of the available `--tags` if required.
-
-```bash
-$ npx hardhat run  scripts/paycrest.js --network <network>
-```
-
-## BSC and Matic Testnet Contracts
-
-<table>
-  <thead>
-    <tr>
-      <th>Contracts</th>
-      <th>Address</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Mock USDC</td>
-      <td>0xcCe1093D2BB8De654827D4f50428A6AF52957Db0</td>
-    </tr>
-    <tr>
-      <td>Admin</td>
-      <td>0x11CB3C090CD54f8d38Ae80c430444A76269c7Ef5</td>
-    </tr>
-    <tr>
-      <td>Paycrest proxies</td>
-      <td>0x53B7F3FefAb5375c768A3D8b6fa16733898F6e75</td>
-    </tr>
-    <tr>
-      <td>Paycrest Validator proxies</td>
-      <td>0x868a22D2844877338FAD5e1B36a4Bd29268A1078</td>
-    </tr>
-    <tr>
-      <td>Paycrest Impl</td>
-      <td>0xB3021890F6DC09357E5ef5D322a10db4D9cF8a84</td>
-    </tr>
-    <tr>
-      <td>Paycrest Validator Impl</td>
-      <td>0x09E250ad70420BD0631e4C5eB3789c6C2Fbf47ED</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td></td>
-    </tr>
-    </tr>
-  </tbody>
-</table>
-
-## Tron Shasta Contracts
-
-<table>
-  <thead>
-    <tr>
-      <th>Contracts</th>
-      <th>Address</th>
-      <th>link</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Mock USDC</td>
-      <td>TS9byD5hoYMc5jQTUj974wyxcKP3bMwpvf</td>
-      <td>https://shasta.tronscan.org/#/contract/TS9byD5hoYMc5jQTUj974wyxcKP3bMwpvf/code</td>
-    </tr>
-    <tr>
-      <td>Paycrest</td>
-      <td>TVR1Rm6JKBBCBUu4hmgGGvqr2exQHQQ612</td>
-      <td>https://shasta.tronscan.org/#/contract/TVR1Rm6JKBBCBUu4hmgGGvqr2exQHQQ612/code</td>
-    </tr>
-    <tr>
-      <td>Paycrest Validator</td>
-      <td>TBdCenqaMtHpvKSoUoLJJN5k6bxYbUtUyR</td>
-      <td>https://shasta.tronscan.org/#/contract/TBdCenqaMtHpvKSoUoLJJN5k6bxYbUtUyR/code</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-    </tr>
-  </tbody>
-</table>
 
 ## **Commits and PRs**
 
@@ -136,9 +88,9 @@ $ git commit -m "docs: Add documentation for feature x"
 $ git commit -m "test: Add test suite for feature x"
 ```
 
-Further details on `conventional commits` can be found here: https://www.conventionalcommits.org/en/v1.0.0/
+Further details on `conventional commits` can be found [here](https://www.conventionalcommits.org/en/v1.0.0/)
 
-## Contributor ✨
+## Contributors ✨
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -147,6 +99,7 @@ Further details on `conventional commits` can be found here: https://www.convent
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://onahprosperity.github.io/"><img src="https://avatars.githubusercontent.com/u/40717516?v=4?s=50" width="50px;" alt="Prosperity"/><br /><sub><b>Prosperity</b></sub></a><br /><a href="https://github.com/paycrest/contracts" title="code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://chibie.github.io/"><img src="https://avatars.githubusercontent.com/u/6025509?v=4" width="50px;" alt="chibie"/><br /><sub><b>chibie</b></sub></a><br /><a href="https://github.com/paycrest/contracts" title="code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
@@ -166,3 +119,6 @@ Further details on `conventional commits` can be found here: https://www.convent
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
+## License
+[Affero General Public License v3.0](https://choosealicense.com/licenses/agpl-3.0/)

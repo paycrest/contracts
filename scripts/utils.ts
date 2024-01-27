@@ -1,6 +1,6 @@
 import readline from "readline";
 import dotenv from "dotenv";
-import { ethers, network } from "hardhat";
+import { artifacts, ethers, network } from "hardhat";
 import { NETWORKS } from "./config";
 
 dotenv.config();
@@ -59,6 +59,7 @@ export async function getContracts(): Promise<any> {
   assertEnvironment();
 
   const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
+  const Paycrest = await artifacts.readArtifact("Paycrest");
   
   // Get signer
   const provider = new ethers.providers.JsonRpcProvider(networkConfig.RPC_URL);

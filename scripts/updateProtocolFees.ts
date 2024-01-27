@@ -1,4 +1,6 @@
 import { network } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
+
 import { NETWORKS } from "./config";
 import { getContracts } from "./utils";
 
@@ -9,8 +11,13 @@ async function main() {
   const { paycrestInstance, wallet } = await getContracts();
   const contractWithSigner = paycrestInstance.connect(wallet);
 
+  const treasuryFeePercent = BigNumber.from(networkConfig.TREASURY_FEE_PERCENT);
+
   // call contract methods
-  await contractWithSigner.updateProtocolFees(networkConfig.TREASURY_FEE_PERCENT);
+  const tx = await contractWithSigner.updateProtocolFees(treasuryFeePercent);
+
+  await tx.wait();
+  console.log(`✅ Update Protocol fees: ${tx.hash}`);
 }
 
 main().catch((error) => {
