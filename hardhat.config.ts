@@ -31,19 +31,19 @@ const config: HardhatUserConfig = {
     },
     mumbai: {
       url: `https://polygon-mumbai.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: [DEPLOYER_PRIVATE_KEY!],
+      accounts: [DEPLOYER_PRIVATE_KEY || ""],
       chainId: 80001,
       saveDeployments: true,
     },
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
-      accounts: [DEPLOYER_PRIVATE_KEY!],
+      accounts: [DEPLOYER_PRIVATE_KEY || ""],
       chainId: 97,
       saveDeployments: true,
     },
     baseGoerli: {
       url: "https://goerli.base.org",
-      accounts: [DEPLOYER_PRIVATE_KEY!],
+      accounts: [DEPLOYER_PRIVATE_KEY || ""],
       chainId: 84531,
       gasPrice: 1000000000,
       saveDeployments: true,
