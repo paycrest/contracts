@@ -14,11 +14,14 @@ async function deployPaycrest(): Promise<any> {
   const factory = await ethers.getContractFactory("Paycrest");
   const contract = await upgrades.deployProxy(factory);
 
-  console.log(`Deploying Paycrest to ${contract.address}`);
-
   const tx = await contract.deployTransaction.wait();
-
+  
   console.log("✅ Deployed Paycrest: ", tx.transactionHash);
+
+  // const implementationAddress = await contract.implementation();
+
+  console.log(`Proxy Contract Address: ${contract.address}`);
+  // console.log("Implementation Contract Address:", implementationAddress);
 
   return tx;
 }
@@ -26,12 +29,6 @@ async function deployPaycrest(): Promise<any> {
 async function main() {
   // Deploy Paycrest
   await deployPaycrest();
-
-  // fs.access(dirResolver, fs.F_OK, (err) => {
-  //   if (err) {
-  //     fs.writeFileSync(dirResolver, JSON.stringify(network, null, 4));
-  //   }
-  // });
 }
 
 main().catch((error) => {

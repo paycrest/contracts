@@ -13,6 +13,8 @@ dotenv.config();
 
 let { DEPLOYER_PRIVATE_KEY, ALCHEMY_API_KEY, INFURA_API_KEY, BASE_API_KEY, ARBISCAN_API_KEY, BSCSCAN_API_KEY, POLYGONSCAN_API_KEY } = process.env;
 
+const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
+
 const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
@@ -31,19 +33,19 @@ const config: HardhatUserConfig = {
     },
     mumbai: {
       url: `https://polygon-mumbai.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: [DEPLOYER_PRIVATE_KEY || ""],
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
       chainId: 80001,
       saveDeployments: true,
     },
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
-      accounts: [DEPLOYER_PRIVATE_KEY || ""],
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
       chainId: 97,
       saveDeployments: true,
     },
     baseGoerli: {
       url: "https://goerli.base.org",
-      accounts: [DEPLOYER_PRIVATE_KEY || ""],
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
       chainId: 84531,
       gasPrice: 1000000000,
       saveDeployments: true,
