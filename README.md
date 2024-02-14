@@ -36,6 +36,8 @@ npx hardhat run scripts/setSupportedTokens.ts --network <network>
 npx hardhat run scripts/updateProtocolAddresses.ts --network <network>
 
 npx hardhat run scripts/updateProtocolFees.ts --network <network>
+
+npx hardhat run scripts/updateProtocolAggregator.ts --network <network>
 ```
 
 

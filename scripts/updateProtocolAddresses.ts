@@ -12,11 +12,16 @@ async function main() {
   const contractWithSigner = paycrestInstance.connect(wallet);
 
   const treasury = ethers.utils.formatBytes32String("treasury");
+  const aggregator = ethers.utils.formatBytes32String("aggregator");
 
   // Call contract methods
-  const tx = await contractWithSigner.updateProtocolAddresses(treasury, process.env.TREASURY_ADDRESS);
+  let tx = await contractWithSigner.updateProtocolAddresses(treasury, process.env.TREASURY_ADDRESS);
   await tx.wait();
-  console.log(`✅ Update Protocol addresses: ${tx.hash}`);
+  console.log(`✅ Update Protocol treasury address: ${tx.hash}`);
+
+  tx = await contractWithSigner.updateProtocolAddresses(aggregator, process.env.AGGREGATOR_ADDRESS);
+  await tx.wait();
+  console.log(`✅ Update Protocol aggregator address: ${tx.hash}`);
 }
 
 main().catch((error) => {

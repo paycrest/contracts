@@ -2014,6 +2014,11 @@ interface IPaycrest {
 // File contracts/PaycrestSettingManager.sol
 
 // License-Identifier: UNLICENSED
+
+/**
+ * @title PaycrestSettingManager
+ * @dev This contract manages the settings and configurations for the Paycrest protocol.
+ */
 pragma solidity ^0.8.18;
 
 contract PaycrestSettingManager is OwnableUpgradeable { 
@@ -2040,6 +2045,15 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     /* ##################################################################
                                 OWNER FUNCTIONS
     ################################################################## */
+
+    /**
+     * @dev Sets the boolean value for a specific setting.
+     * @param what The setting to be updated.
+     * @param value The address or value associated with the setting.
+     * @param status The boolean value to be set.
+     * Requirements:
+     * - The value must not be a zero address.
+     */
     function settingManagerBool(bytes32 what, address value, bool status) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
         if (what == "token") _isTokenSupported[value] = status;
@@ -2047,6 +2061,11 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         emit SettingManagerBool(what, value, status);
     }
 
+    /**
+     * @dev Sets the supported institutions for a specific currency.
+     * @param currency The currency for which the institutions are being set.
+     * @param institutions The array of institutions to be set.
+     */
     function setSupportedInstitutions(bytes32 currency, SharedStructs.Institution[] memory institutions) external onlyOwner { 
         uint256 length = institutions.length;
         for (uint i = 0; i < length; ) {
@@ -2060,11 +2079,22 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         }
     }
 
+    /**
+     * @dev Updates the protocol fees percentage.
+     * @param _protocolFeePercent The new protocol fees percentage to be set.
+     */
     function updateProtocolFees(uint64 _protocolFeePercent) external onlyOwner {
         protocolFeePercent = _protocolFeePercent;
         emit ProtocolFeesUpdated(_protocolFeePercent);
     }
 
+    /**
+     * @dev Updates the protocol addresses.
+     * @param what The address type to be updated (treasury or aggregator).
+     * @param value The new address to be set.
+     * Requirements:
+     * - The value must not be a zero address.
+     */
     function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
         if (what == "treasury") treasuryAddress = value;
@@ -2072,6 +2102,10 @@ contract PaycrestSettingManager is OwnableUpgradeable {
         emit ProtocolAddressesUpdated(treasuryAddress);
     }
 
+    /**
+     * @dev Updates the protocol aggregator.
+     * @param aggregator The new aggregator to be set.
+     */
     function updateProtocolAggregator(bytes calldata aggregator) external onlyOwner {
         _aggregator = aggregator;
         emit SetAggregator(aggregator);
