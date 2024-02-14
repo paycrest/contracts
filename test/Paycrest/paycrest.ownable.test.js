@@ -8,7 +8,7 @@ const { expect } = require("chai");
 
 describe("Ownable settings", function () {
   let paycrest;
-  let mockUSDC;
+  let mockUSDT;
   let admin;
   let treasuryAddress;
   let aggregator;
@@ -19,7 +19,7 @@ describe("Ownable settings", function () {
   let Mark;
 
   async function setupAndResetFork() {
-    ({ paycrest, mockUSDC } = await paycrestFixture());
+    ({ paycrest, mockUSDT } = await paycrestFixture());
 
     [admin, keeper, alice, hacker, sender, Mark, treasuryAddress, aggregator] =
       await ethers.getSigners();
@@ -29,16 +29,16 @@ describe("Ownable settings", function () {
     await expect(
       paycrest
         .connect(admin)
-        .settingManagerBool(token, mockUSDC.address, true)
+        .settingManagerBool(token, mockUSDT.address, true)
     )
       .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(token, mockUSDC.address, true);
+      .withArgs(token, mockUSDT.address, true);
   }
 
   it("should get supported token", async function () {
     await setupAndResetFork();
-    const _mockUSDC = await paycrest.isTokenSupported(mockUSDC.address);
-    expect(_mockUSDC).to.eq(true);
+    const _mockUSDT = await paycrest.isTokenSupported(mockUSDT.address);
+    expect(_mockUSDT).to.eq(true);
   });
 
   it("should revert for unsupported token", async function () {

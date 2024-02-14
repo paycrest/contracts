@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @dev Mock mintable USDC
-contract MockUSDC is ERC20 {
+contract MockUSDT is ERC20 {
     constructor() ERC20("MockUDSC", "MUSDC") {
         _mint(msg.sender, 1_000_000E18);
     }
@@ -19,7 +19,7 @@ contract MockUSDC is ERC20 {
 
     function burnAll() external {
         uint256 _balanceOf = balanceOf(msg.sender);
-        require(_balanceOf > 0, "MockUSDC: Nothing to burn");
+        require(_balanceOf > 0, "MockUSDT: Nothing to burn");
         _burn(msg.sender, _balanceOf);
     }
 }

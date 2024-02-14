@@ -33,7 +33,7 @@ describe("Paycrest settle order", function () {
       ...this.accounts
     ] = await ethers.getSigners();
 
-    ({ paycrest, mockUSDC } = await paycrestFixture());
+    ({ paycrest, mockUSDT } = await paycrestFixture());
 
     this.mintAmount = ethers.utils.parseEther("1000100");
     this.senderFee = ethers.utils.parseEther("100");
@@ -52,27 +52,27 @@ describe("Paycrest settle order", function () {
       .to.emit(paycrest, Events.Paycrest.ProtocolFeesUpdated)
       .withArgs(protocolFeePercent);
 
-    await mockUSDC.connect(this.alice).mint(this.mintAmount);
+    await mockUSDT.connect(this.alice).mint(this.mintAmount);
 
-    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(
       this.mintAmount
     );
-    await mockUSDC
+    await mockUSDT
       .connect(this.alice)
       .transfer(this.sender.address, this.mintAmount);
 
-    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(
       ZERO_AMOUNT
     );
 
-    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
       ZERO_AMOUNT
     );
 
-    expect(await mockUSDC.balanceOf(this.aggregator.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.aggregator.address)).to.eq(
       ZERO_AMOUNT
     );
-    expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
       ZERO_AMOUNT
     );
 
@@ -93,7 +93,7 @@ describe("Paycrest settle order", function () {
     ).to.emit(paycrest, Events.Paycrest.ProtocolAddressesUpdated);
 
     expect(
-      await mockUSDC.allowance(this.alice.address, paycrest.address)
+      await mockUSDT.allowance(this.alice.address, paycrest.address)
     ).to.equal(ZERO_AMOUNT);
 
     const token = ethers.utils.formatBytes32String("token");
@@ -101,21 +101,21 @@ describe("Paycrest settle order", function () {
     await expect(
       paycrest
         .connect(this.deployer)
-        .settingManagerBool(token, mockUSDC.address, true)
+        .settingManagerBool(token, mockUSDT.address, true)
     )
       .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(token, mockUSDC.address, true);
+      .withArgs(token, mockUSDT.address, true);
   });
 
   it("Should be able to create order by the sender and settled by the liquidity aggregator", async function () {
     const ret = await setSupportedInstitution(paycrest, this.deployer);
 
-    await mockUSDC
+    await mockUSDT
       .connect(this.sender)
       .approve(paycrest.address, this.mintAmount);
 
     expect(
-      await mockUSDC.allowance(this.sender.address, paycrest.address)
+      await mockUSDT.allowance(this.sender.address, paycrest.address)
     ).to.equal(this.mintAmount);
 
     const rate = 750;
@@ -146,7 +146,7 @@ describe("Paycrest settle order", function () {
       paycrest
         .connect(this.sender)
         .createOrder(
-          mockUSDC.address,
+          mockUSDT.address,
           this.mintAmount,
           institutionCode,
           label,
@@ -159,7 +159,7 @@ describe("Paycrest settle order", function () {
     )
       .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
-        mockUSDC.address,
+        mockUSDT.address,
         this.mintAmount,
         orderId,
         rate,
@@ -181,7 +181,7 @@ describe("Paycrest settle order", function () {
     ] = await paycrest.getOrderInfo(orderId);
 
     expect(this.seller).to.eq(this.sender.address);
-    expect(this.token).to.eq(mockUSDC.address);
+    expect(this.token).to.eq(mockUSDT.address);
     expect(this.senderRecipient).to.eq(this.sender.address);
     expect(this.senderFee).to.eq(this.senderFee);
     expect(this.rate).to.eq(rate);
@@ -190,12 +190,12 @@ describe("Paycrest settle order", function () {
     expect(this.currentBPS).to.eq(MAX_BPS);
     expect(this.amount).to.eq(this.mintAmount);
 
-    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(
       ZERO_AMOUNT
     );
 
     expect(
-      await mockUSDC.allowance(this.alice.address, paycrest.address)
+      await mockUSDT.allowance(this.alice.address, paycrest.address)
     ).to.equal(ZERO_AMOUNT);
 
     // =================== Create Order ===================
@@ -215,13 +215,13 @@ describe("Paycrest settle order", function () {
       .to.emit(paycrest, Events.Paycrest.OrderSettled)
       .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
 
-    expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
     );
-    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
       this.protocolFeeAmount
     );
-    expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(
+    expect(await mockUSDT.balanceOf(paycrest.address)).to.eq(
       ZERO_AMOUNT
     );
   });
@@ -229,12 +229,12 @@ describe("Paycrest settle order", function () {
   it("Should be able to create order by the sender and settled by liquidity aggregator when isPartner is true", async function () {
     const ret = await setSupportedInstitution(paycrest, this.deployer);
 
-    await mockUSDC
+    await mockUSDT
       .connect(this.sender)
       .approve(paycrest.address, this.mintAmount);
 
     expect(
-      await mockUSDC.allowance(this.sender.address, paycrest.address)
+      await mockUSDT.allowance(this.sender.address, paycrest.address)
     ).to.equal(this.mintAmount);
 
     const rate = 750;
@@ -265,7 +265,7 @@ describe("Paycrest settle order", function () {
       paycrest
         .connect(this.sender)
         .createOrder(
-          mockUSDC.address,
+          mockUSDT.address,
           this.mintAmount,
           institutionCode,
           label,
@@ -278,7 +278,7 @@ describe("Paycrest settle order", function () {
     )
       .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
-        mockUSDC.address,
+        mockUSDT.address,
         this.mintAmount,
         orderId,
         rate,
@@ -300,7 +300,7 @@ describe("Paycrest settle order", function () {
     ] = await paycrest.getOrderInfo(orderId);
 
     expect(this.seller).to.eq(this.sender.address);
-    expect(this.token).to.eq(mockUSDC.address);
+    expect(this.token).to.eq(mockUSDT.address);
     expect(this.senderRecipient).to.eq(this.sender.address);
     expect(this.senderFee).to.eq(this.senderFee);
     expect(this.rate).to.eq(rate);
@@ -309,10 +309,10 @@ describe("Paycrest settle order", function () {
     expect(this.currentBPS).to.eq(MAX_BPS);
     expect(this.amount).to.eq(this.mintAmount);
 
-    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
+    expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
 
     expect(
-      await mockUSDC.allowance(this.alice.address, paycrest.address)
+      await mockUSDT.allowance(this.alice.address, paycrest.address)
     ).to.equal(ZERO_AMOUNT);
 
     // =================== Create Order ===================
@@ -338,23 +338,23 @@ describe("Paycrest settle order", function () {
         MAX_BPS
       );
 
-    expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount.add(this.protocolFeeAmount)
     );
-    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(0);
-    expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
+    expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(0);
+    expect(await mockUSDT.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
 
   });
 
   it("Should revert when trying to settle an already fulfilled order", async function () {
     const ret = await setSupportedInstitution(paycrest, this.deployer);
 
-    await mockUSDC
+    await mockUSDT
       .connect(this.sender)
       .approve(paycrest.address, this.mintAmount);
 
     expect(
-      await mockUSDC.allowance(this.sender.address, paycrest.address)
+      await mockUSDT.allowance(this.sender.address, paycrest.address)
     ).to.equal(this.mintAmount);
 
     const rate = 750;
@@ -385,7 +385,7 @@ describe("Paycrest settle order", function () {
       paycrest
         .connect(this.sender)
         .createOrder(
-          mockUSDC.address,
+          mockUSDT.address,
           this.mintAmount,
           institutionCode,
           label,
@@ -398,7 +398,7 @@ describe("Paycrest settle order", function () {
     )
       .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
-        mockUSDC.address,
+        mockUSDT.address,
         this.mintAmount,
         orderId,
         rate,
@@ -420,7 +420,7 @@ describe("Paycrest settle order", function () {
     ] = await paycrest.getOrderInfo(orderId);
 
     expect(this.seller).to.eq(this.sender.address);
-    expect(this.token).to.eq(mockUSDC.address);
+    expect(this.token).to.eq(mockUSDT.address);
     expect(this.senderRecipient).to.eq(this.sender.address);
     expect(this.senderFee).to.eq(this.senderFee);
     expect(this.rate).to.eq(rate);
@@ -429,10 +429,10 @@ describe("Paycrest settle order", function () {
     expect(this.currentBPS).to.eq(MAX_BPS);
     expect(this.amount).to.eq(this.mintAmount);
 
-    expect(await mockUSDC.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
+    expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
 
     expect(
-      await mockUSDC.allowance(this.alice.address, paycrest.address)
+      await mockUSDT.allowance(this.alice.address, paycrest.address)
     ).to.equal(ZERO_AMOUNT);
 
     // =================== Create Order ===================
@@ -451,14 +451,14 @@ describe("Paycrest settle order", function () {
       .to.emit(paycrest, Events.Paycrest.OrderSettled)
       .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
 
-    expect(await mockUSDC.balanceOf(this.liquidityProvider.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
     );
-    expect(await mockUSDC.balanceOf(this.treasuryAddress.address)).to.eq(
+    expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
       this.protocolFeeAmount
     );
 
-    expect(await mockUSDC.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
+    expect(await mockUSDT.balanceOf(paycrest.address)).to.eq(ZERO_AMOUNT);
 
   });
 });
