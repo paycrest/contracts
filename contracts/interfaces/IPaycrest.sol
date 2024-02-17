@@ -24,7 +24,7 @@ interface IPaycrest {
      * @param label The label of the deposit.
      * @param messageHash The hash of the message.
      */
-    event OrderCreated(address indexed token, uint256 indexed amount, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 label, string messageHash);
+    event OrderCreated(address indexed token, uint256 indexed amount, uint256 protocolFee, bytes32 indexed orderId, uint256 rate, bytes32 institutionCode, bytes32 label, string messageHash);
 
     /**
      * @dev Emitted when an aggregator settles a transaction.
@@ -76,6 +76,7 @@ interface IPaycrest {
      * @param token The address of the token.
      * @param senderFeeRecipient The address of the sender fee recipient.
      * @param senderFee The fee to be paid to the sender fee recipient.
+     * @param protocolFee The protocol fee to be paid.
      * @param rate The rate at which the order is made.
      * @param isFulfilled Whether the order is fulfilled.
      * @param refundAddress The address to which the refund is made.
@@ -87,6 +88,7 @@ interface IPaycrest {
         address token;
         address senderFeeRecipient;
         uint256 senderFee;
+        uint256 protocolFee;
         uint96 rate;
         bool isFulfilled;
         address refundAddress;
@@ -141,11 +143,10 @@ interface IPaycrest {
      * @param _label The reference of the sender.
      * @param _liquidityProvider The address of the liquidity provider.
      * @param _settlePercent The rate at which the transaction is settled.
-     * @param _isPartner Whether the liquidity provider is a partner.
      * @return _orderId The ID of the order.
      * @return _liquidityProvider The address of the liquidity provider.
      */
-    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _label, address _liquidityProvider, uint64 _settlePercent, bool _isPartner) external returns(bytes32, address);
+    function settle(bytes32 _splitOrderId, bytes32 _orderId, bytes32 _label, address _liquidityProvider, uint64 _settlePercent) external returns(bytes32, address);
 
     /**
      * @notice Refunds to the specified refundable address.

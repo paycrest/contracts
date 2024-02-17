@@ -13,7 +13,7 @@ import {SharedStructs} from "./libraries/SharedStructs.sol";
  * @title Paycrest
  * @dev Paycrest contract for handling orders and settlements.
  */
-contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable { 
+contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20;
     using ECDSAUpgradeable for bytes32;
 
@@ -71,7 +71,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     /** @dev See {createOrder-IPaycrest}. */
     function createOrder(
         address _token, 
-        uint256 _amount, 
+        uint256 _amount,
         bytes32 _institutionCode,
         bytes32 _label,
         uint96 _rate, 
@@ -87,7 +87,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         require(bytes(messageHash).length > 0, "InvalidMessageHash");
 
         // transfer token from msg.sender to contract
-        IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+        IERC20(_token).transferFrom(msg.sender, address(this), _amount + _senderFee);
 
         // increase users nonce to avoid replay attacks
         _nonce[msg.sender] ++;
@@ -95,21 +95,24 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         // generate transaction id for the transaction
         orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
 
+
         // update transaction
+        uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
         order[orderId] = Order({
             seller: msg.sender,
             token: _token,
             senderFeeRecipient: _senderFeeRecipient,
             senderFee: _senderFee,
+            protocolFee: _protocolFee,
             rate: _rate,
             isFulfilled: false,
             refundAddress: _refundAddress,
             currentBPS: uint64(MAX_BPS),
-            amount: _amount
+            amount: _amount - _protocolFee
         });
 
         // emit deposit event
-        emit OrderCreated(_token, _amount, orderId, _rate, _institutionCode, _label, messageHash);
+        emit OrderCreated(_token, order[orderId].amount, _protocolFee, orderId, _rate, _institutionCode, _label, messageHash);
     }
 
     /**
@@ -130,7 +133,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         if (_senderFee > 0) {
             require(_senderFeeRecipient != address(0), "InvalidSenderFeeRecipient");
         }
-        require(_senderFee <= (_amount * 500) / MAX_BPS, "SenderFeeTooHigh");
     }
 
     /* ##################################################################
@@ -142,8 +144,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         bytes32 _orderId, 
         bytes32 _label,
         address _liquidityProvider, 
-        uint64 _settlePercent,
-        bool _isPartner
+        uint64 _settlePercent
     ) external onlyAggregator() returns(bytes32, address) {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
@@ -154,9 +155,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         // subtract sum of amount based on the input _settlePercent
         order[_orderId].currentBPS -= _settlePercent;
 
-        // if transaction amount is zero
-        // load the fees and transfer associated protocol fees to the protocol fee recipient
-        ( fee memory _feeParams  ) = _calculateFees(_orderId, _settlePercent, _isPartner);
         if(order[_orderId].currentBPS == 0) {
             // update the transaction to be fulfilled
             order[_orderId].isFulfilled = true;
@@ -166,13 +164,13 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             }
         }
         
-        if (_feeParams.protocolFee > 0) {
+        if (order[_orderId].protocolFee > 0) {
             // transfer protocol fee
-            IERC20(token).transfer(treasuryAddress, _feeParams.protocolFee);
+            IERC20(token).transfer(treasuryAddress, order[_orderId].protocolFee);
         }
 
         // transfer to liquidity provider 
-        IERC20(token).transfer(_liquidityProvider, _feeParams.liquidityProviderAmount);
+        IERC20(token).transfer(_liquidityProvider, order[_orderId].amount);
 
         // emit event
         emit OrderSettled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
@@ -210,36 +208,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         emit OrderRefunded(_fee, _orderId, _label);
 
         return true;
-    }
-
-    /**
-     * @dev Calculates the fees for a given order.
-     * @param _orderId The ID of the order.
-     * @param _settlePercent The percentage of the order amount to settle.
-     * @param _isPartner Flag indicating if the order is from a partner.
-     * @return _feeParams The fee parameters including amount to settle the liquidity provider and the protocol fee.
-     */
-    function _calculateFees(bytes32 _orderId, uint96 _settlePercent, bool _isPartner) private view returns(fee memory _feeParams ) {
-        // get the total amount associated with the orderId
-        uint256 amount = order[_orderId].amount;
-
-        // get sender fee from amount
-        amount = amount - order[_orderId].senderFee;
-
-        // get the settled percent that is scheduled for this amount
-        _feeParams.liquidityProviderAmount = (amount * _settlePercent) / MAX_BPS;
-
-        // deduct protocol fees from the new total amount
-        _feeParams.protocolFee = (_feeParams.liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
-        
-        // subtract total fees from the new amount after getting the scheduled amount
-        _feeParams.liquidityProviderAmount = (_feeParams.liquidityProviderAmount - _feeParams.protocolFee);
-
-        // if (_isPartner) protocol fee should be 0, and the whole protocol fee should be added to liquidity provider
-        if (_isPartner) {
-            _feeParams.liquidityProviderAmount += _feeParams.protocolFee;
-            _feeParams.protocolFee = 0;
-        }
     }
     
     /* ##################################################################

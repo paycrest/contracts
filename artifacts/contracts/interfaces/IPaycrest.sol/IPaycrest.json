@@ -19,6 +19,12 @@
           "type": "uint256"
         },
         {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "protocolFee",
+          "type": "uint256"
+        },
+        {
           "indexed": true,
           "internalType": "bytes32",
           "name": "orderId",
@@ -256,6 +262,11 @@
               "type": "uint256"
             },
             {
+              "internalType": "uint256",
+              "name": "protocolFee",
+              "type": "uint256"
+            },
+            {
               "internalType": "uint96",
               "name": "rate",
               "type": "uint96"
@@ -425,11 +436,6 @@
           "internalType": "uint64",
           "name": "_settlePercent",
           "type": "uint64"
-        },
-        {
-          "internalType": "bool",
-          "name": "_isPartner",
-          "type": "bool"
         }
       ],
       "name": "settle",

@@ -38,6 +38,8 @@ describe("Paycrest create order", function () {
     this.paycrest = paycrest;
     
     this.mintAmount = ethers.utils.parseEther("1000100");
+    this.orderAmount = ethers.utils.parseEther("1000000");
+    this.protocolFee = ethers.utils.parseEther("5000");
     this.senderFee = ethers.utils.parseEther("100");
     await this.mockUSDT.connect(this.alice).mint(this.mintAmount);
     await this.mockDAI.connect(this.alice).mint(this.mintAmount);
@@ -65,15 +67,24 @@ describe("Paycrest create order", function () {
 
   it("Should be able to create order by Sender for Alice", async function () {
     const ret = await setSupportedInstitution(this.paycrest, this.deployer);
-    const fee = ethers.utils.formatBytes32String("fee");
+    const treasury = ethers.utils.formatBytes32String("treasury");
+    const aggregator = ethers.utils.formatBytes32String("aggregator");
 
     await this.paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(fee, this.treasuryAddress.address);
+      .updateProtocolAddresses(treasury, this.treasuryAddress.address);
+
+    await this.paycrest
+      .connect(this.deployer)
+      .updateProtocolAddresses(treasury, this.aggregator.address);
+
+    await this.paycrest
+      .connect(this.deployer)
+      .updateProtocolFees(FEE_BPS);
 
     await this.mockUSDT
       .connect(this.sender)
-      .approve(this.paycrest.address, this.mintAmount);
+      .approve(this.paycrest.address, this.orderAmount + this.senderFee);
     const rate = 750;
     const institutionCode = ret.accessBank.code;
 
@@ -105,7 +116,7 @@ describe("Paycrest create order", function () {
         .connect(this.sender)
         .createOrder(
           this.mockUSDT.address,
-          this.mintAmount,
+          this.orderAmount,
           institutionCode,
           label,
           rate,
@@ -118,7 +129,8 @@ describe("Paycrest create order", function () {
       .to.emit(this.paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
         this.mockUSDT.address,
-        this.mintAmount,
+        BigNumber.from(this.orderAmount).sub(this.protocolFee),
+        this.protocolFee,
         orderId,
         rate,
         institutionCode,
@@ -131,6 +143,7 @@ describe("Paycrest create order", function () {
       this.token,
       this.senderRecipient,
       this.senderFee,
+      this.protocolFee,
       this.rate,
       this.isFulfilled,
       this.refundAddress,
@@ -150,7 +163,7 @@ describe("Paycrest create order", function () {
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(this.alice.address);
     expect(this.currentBPS).to.eq(MAX_BPS);
-    expect(this.amount).to.eq(this.mintAmount);
+    expect(this.amount).to.eq(BigNumber.from(this.orderAmount).sub(this.protocolFee));
 
     [this.name, this.currency] =
       await this.paycrest.getSupportedInstitutionByCode(institutionCode);
@@ -212,7 +225,7 @@ describe("Paycrest create order", function () {
         .connect(this.sender)
         .createOrder(
           this.mockDAI.address,
-          this.mintAmount,
+          this.orderAmount,
           institutionCode,
           label,
           rate,
@@ -228,6 +241,7 @@ describe("Paycrest create order", function () {
       this.token,
       this.senderRecipient,
       this.senderFee,
+      this.protocolFee,
       this.rate,
       this.isFulfilled,
       this.refundAddress,
@@ -304,6 +318,7 @@ describe("Paycrest create order", function () {
       this.token,
       this.senderRecipient,
       this.senderFee,
+      this.protocolFee,
       this.rate,
       this.isFulfilled,
       this.refundAddress,
@@ -364,7 +379,7 @@ describe("Paycrest create order", function () {
         .connect(this.sender)
         .createOrder(
           this.mockUSDT.address,
-          this.mintAmount,
+          this.orderAmount,
           institutionCode,
           label,
           rate,
@@ -380,6 +395,7 @@ describe("Paycrest create order", function () {
       this.token,
       this.senderRecipient,
       this.senderFee,
+      this.protocolFee,
       this.rate,
       this.isFulfilled,
       this.refundAddress,
@@ -456,6 +472,7 @@ describe("Paycrest create order", function () {
       this.token,
       this.senderRecipient,
       this.senderFee,
+      this.protocolFee,
       this.rate,
       this.isFulfilled,
       this.refundAddress,
