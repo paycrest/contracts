@@ -158,15 +158,16 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         if(order[_orderId].currentBPS == 0) {
             // update the transaction to be fulfilled
             order[_orderId].isFulfilled = true;
+
             if (order[_orderId].senderFee > 0) {
                 // transfer sender fee
-                _transferSenderFee(_orderId);
+                _transferSenderFee(_orderId); 
             }
-        }
-        
-        if (order[_orderId].protocolFee > 0) {
-            // transfer protocol fee
-            IERC20(token).transfer(treasuryAddress, order[_orderId].protocolFee);
+
+            if (order[_orderId].protocolFee > 0) {
+                // transfer protocol fee
+                IERC20(token).transfer(treasuryAddress, order[_orderId].protocolFee);
+            }
         }
 
         // transfer to liquidity provider 
