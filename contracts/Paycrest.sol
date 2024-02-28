@@ -111,7 +111,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             amount: _amount - _protocolFee
         });
 
-        // emit deposit event
+        // emit order created event
         emit OrderCreated(_token, order[orderId].amount, _protocolFee, orderId, _rate, _institutionCode, _label, messageHash);
     }
 
@@ -173,7 +173,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         // transfer to liquidity provider 
         IERC20(token).transfer(_liquidityProvider, order[_orderId].amount);
 
-        // emit event
+        // emit settled event
         emit OrderSettled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
         return (_orderId, token);
     }
@@ -187,7 +187,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         uint256 _fee = order[_orderId].senderFee;
         // transfer sender fee
         IERC20(order[_orderId].token).transfer(recipient, _fee);
-        // emmit event
+        // emit event
         emit SenderFeeTransferred(recipient, _fee);
     }
 
@@ -196,16 +196,21 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
 
-        // deduct fee from order amount
-        uint256 refundAmount = order[_orderId].amount - _fee;
+        // transfer refund fee to treasury
         IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
 
         // reset state values
         order[_orderId].isFulfilled = true;
         order[_orderId].currentBPS = 0;
     
-        // transfer to sender and emit event
+        // deduct fee from order amount
+        uint256 refundAmount = order[_orderId].amount + order[_orderId].protocolFee - _fee;
+
+        // transfer refund amount and sender fee to the refund address
         IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, refundAmount);
+        IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, order[_orderId].senderFee);
+
+        // emit refunded event
         emit OrderRefunded(_fee, _orderId, _label);
 
         return true;
