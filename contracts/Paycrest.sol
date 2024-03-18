@@ -77,20 +77,20 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
         uint96 _rate, 
         address _senderFeeRecipient,
         uint256 _senderFee,
-        address _refundAddress, 
+        address _refundAddress,
         string calldata messageHash
     ) external whenNotPaused() returns(bytes32 orderId) {
         // checks that are required
         _handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee, _institutionCode);
 
         // validate messageHash
-        require(bytes(messageHash).length > 0, "InvalidMessageHash");
+        require(bytes(messageHash).length != 0, "InvalidMessageHash");
 
         // transfer token from msg.sender to contract
         IERC20(_token).transferFrom(msg.sender, address(this), _amount + _senderFee);
 
         // increase users nonce to avoid replay attacks
-        _nonce[msg.sender] ++;
+        _nonce[msg.sender]++;
 
         // generate transaction id for the transaction
         orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
@@ -125,12 +125,12 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
      * @param _institutionCode The code of the institution associated with the order.
      */
     function _handler(address _token, uint256 _amount, address _refundAddress, address _senderFeeRecipient, uint256 _senderFee, bytes32 _institutionCode) internal view {
-        require(_isTokenSupported[_token], "TokenNotSupported");
-        require(_amount > 0, "AmountIsZero");
+        require(_isTokenSupported[_token] == 1, "TokenNotSupported");
+        require(_amount != 0, "AmountIsZero");
         require(_refundAddress != address(0), "ThrowZeroAddress");
         require(supportedInstitutionsByCode[_institutionCode].name != bytes32(0), "InvalidInstitutionCode");
 
-        if (_senderFee > 0) {
+        if (_senderFee != 0) {
             require(_senderFeeRecipient != address(0), "InvalidSenderFeeRecipient");
         }
     }
@@ -159,22 +159,24 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
             // update the transaction to be fulfilled
             order[_orderId].isFulfilled = true;
 
-            if (order[_orderId].senderFee > 0) {
+            if (order[_orderId].senderFee != 0) {
                 // transfer sender fee
                 _transferSenderFee(_orderId); 
             }
 
-            if (order[_orderId].protocolFee > 0) {
+            if (order[_orderId].protocolFee != 0) {
                 // transfer protocol fee
                 IERC20(token).transfer(treasuryAddress, order[_orderId].protocolFee);
             }
         }
 
         // transfer to liquidity provider 
-        IERC20(token).transfer(_liquidityProvider, order[_orderId].amount);
+        uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / MAX_BPS;
+        IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
+        order[_orderId].amount -= liquidityProviderAmount;
 
         // emit settled event
-        emit OrderSettled(_splitOrderId, _orderId, _label,  _liquidityProvider, _settlePercent);
+        emit OrderSettled(_splitOrderId, _orderId, _label, _liquidityProvider, _settlePercent);
         return (_orderId, token);
     }
 
@@ -226,7 +228,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 
     /** @dev See {isTokenSupported-IPaycrest}. */
     function isTokenSupported(address _token) external view returns(bool) {
-        return _isTokenSupported[_token];
+        if (_isTokenSupported[_token] == 1) return true;
+        return false;
     }
 
     /** @dev See {getSupportedInstitutionByCode-IPaycrest}. */
@@ -236,18 +239,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 
     /** @dev See {getSupportedInstitutions-IPaycrest}. */
     function getSupportedInstitutions(bytes32 _currency) external view returns(SharedStructs.Institution[] memory) {
-        SharedStructs.Institution[] memory institutions = supportedInstitutions[_currency];
-        uint256 length = institutions.length;
-        SharedStructs.Institution[] memory result = new SharedStructs.Institution[](length);
-        
-        for (uint256 i = 0; i < length; ) {
-            result[i] = institutions[i];
-            unchecked {
-                i++;
-            }
-        }
-        
-        return result;
+        return supportedInstitutions[_currency];
     }
 
     /** @dev See {getFeeDetails-IPaycrest}. */
@@ -261,5 +253,5 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     /** @dev See {getAggregator-IPaycrest}. */
     function getAggregator() external view returns(bytes memory) {
         return _aggregator;
-    } 
+    }
 }

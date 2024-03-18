@@ -66,17 +66,17 @@ describe("Paycrest create order", function () {
   });
 
   it("Should be able to create order by Sender for Alice", async function () {
-    const ret = await setSupportedInstitution(this.paycrest, this.deployer);
+    const ret = await setSupportedInstitutions(this.paycrest, this.deployer);
     const treasury = ethers.utils.formatBytes32String("treasury");
     const aggregator = ethers.utils.formatBytes32String("aggregator");
 
     await this.paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(treasury, this.treasuryAddress.address);
+      .updateProtocolAddress(treasury, this.treasuryAddress.address);
 
     await this.paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(treasury, this.aggregator.address);
+      .updateProtocolAddress(aggregator, this.aggregator.address);
 
     await this.paycrest
       .connect(this.deployer)
@@ -186,12 +186,12 @@ describe("Paycrest create order", function () {
   });
 
   it("Should revert when creating order with non-supported token", async function () {
-    const ret = await setSupportedInstitution(this.paycrest, this.deployer);
+    const ret = await setSupportedInstitutions(this.paycrest, this.deployer);
     const fee = ethers.utils.formatBytes32String("fee");
 
     await this.paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(fee, this.treasuryAddress.address);
+      .updateProtocolAddress(fee, this.treasuryAddress.address);
 
     await this.mockDAI
       .connect(this.sender)
@@ -263,12 +263,12 @@ describe("Paycrest create order", function () {
   });
 
   it("Should revert when creating order with zero input amount", async function () {
-    const ret = await setSupportedInstitution(this.paycrest, this.deployer);
+    const ret = await setSupportedInstitutions(this.paycrest, this.deployer);
     const fee = ethers.utils.formatBytes32String("fee");
 
     await this.paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(fee, this.treasuryAddress.address);
+      .updateProtocolAddress(fee, this.treasuryAddress.address);
 
     await this.mockUSDT
       .connect(this.sender)
@@ -340,12 +340,12 @@ describe("Paycrest create order", function () {
   });
 
   it("Should revert when creating order with zero address as refundable address", async function () {
-    const ret = await setSupportedInstitution(this.paycrest, this.deployer);
+    const ret = await setSupportedInstitutions(this.paycrest, this.deployer);
     const fee = ethers.utils.formatBytes32String("fee");
 
     await this.paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(fee, this.treasuryAddress.address);
+      .updateProtocolAddress(fee, this.treasuryAddress.address);
 
     await this.mockUSDT
       .connect(this.sender)
@@ -417,12 +417,12 @@ describe("Paycrest create order", function () {
   });
 
   it("Should revert when creating order with invalid supported institutions", async function () {
-    const ret = await setSupportedInstitution(this.paycrest, this.deployer);
+    const ret = await setSupportedInstitutions(this.paycrest, this.deployer);
     const fee = ethers.utils.formatBytes32String("fee");
 
     await this.paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(fee, this.treasuryAddress.address);
+      .updateProtocolAddress(fee, this.treasuryAddress.address);
 
     await this.mockUSDT
       .connect(this.sender)

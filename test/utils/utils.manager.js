@@ -30,8 +30,9 @@ const Events = {
     OrderSettled: "OrderSettled",
     OrderRefunded: "OrderRefunded",
     SettingManagerBool: "SettingManagerBool",
+    SupportedInstitutionsUpdated: "SupportedInstitutionsUpdated",
     ProtocolFeesUpdated: "ProtocolFeesUpdated",
-    ProtocolAddressesUpdated: "ProtocolAddressesUpdated",
+    ProtocolAddressUpdated: "ProtocolAddressUpdated",
   }
 };
 
@@ -45,7 +46,7 @@ async function deployContract(name, args = [], value = 0) {
   return instance;
 }
 
-async function setSupportedInstitution(instance, signer) {
+async function setSupportedInstitutions(instance, signer) {
   const currency = ethers.utils.formatBytes32String("NGN");
 
   const accessBank = {
@@ -72,13 +73,6 @@ async function setSupportedInstitution(instance, signer) {
   };
 }
 
-async function calculateFee(instance, amount) {
-  const feeBps = await instance.getFeeBPS();
-  const feeBN = amount.mul(feeBps).div(MAX_BPS);
-  const userDeductedFee = amount.sub(feeBN);
-  return userDeductedFee;
-}
-
 async function mockMintDeposit(paycrest, account, usdc, amount) {
   await usdc.connect(account).mint(amount);
   await usdc.connect(account).approve(paycrest.address, amount);
@@ -93,5 +87,5 @@ module.exports = {
   Events,
   deployContract,
   mockMintDeposit,
-  setSupportedInstitution,
+  setSupportedInstitutions,
 };
