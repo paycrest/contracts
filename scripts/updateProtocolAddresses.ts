@@ -15,13 +15,13 @@ async function main() {
   const aggregator = ethers.utils.formatBytes32String("aggregator");
 
   // Call contract methods
-  let tx = await contractWithSigner.updateProtocolAddresses(treasury, process.env.TREASURY_ADDRESS);
+  let tx = await contractWithSigner.updateProtocolAddress(treasury, process.env.TREASURY_ADDRESS);
   await tx.wait();
-  console.log(`✅ Update Protocol treasury address: ${tx.hash}`);
+  console.log(`✅ Update treasury address: ${tx.hash}`);
 
-  tx = await contractWithSigner.updateProtocolAddresses(aggregator, process.env.AGGREGATOR_ADDRESS);
+  tx = await contractWithSigner.updateProtocolAddress(aggregator, process.env.AGGREGATOR_ADDRESS);
   await tx.wait();
-  console.log(`✅ Update Protocol aggregator address: ${tx.hash}`);
+  console.log(`✅ Update aggregator address: ${tx.hash}`);
 }
 
 main().catch((error) => {

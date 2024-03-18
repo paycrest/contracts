@@ -20,16 +20,17 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     // this should decrease if more slots are needed on this contract to avoid collisions with base contract
     uint256[50] private __gap;
 
-    mapping(address => bool) internal _isTokenSupported;
+    mapping(address => uint256) internal _isTokenSupported;
 
     mapping(bytes32 => SharedStructs.Institution[]) internal supportedInstitutions;
     mapping(bytes32 => SharedStructs.InstitutionByCode) internal supportedInstitutionsByCode;
 
-    event SettingManagerBool(bytes32 what, address value, bool status);
+    event SettingManagerBool(bytes32 indexed what, address indexed value, uint256 status);
+    event SupportedInstitutionsUpdated(bytes32 indexed currency, SharedStructs.Institution[] institutions); 
     event ProtocolFeesUpdated(uint64 protocolFee);
-    event ProtocolAddressesUpdated(address treasuryAddress);
-    event SetAggregator(bytes aggregator);
-    event SetFeeRecipient(address treasuryAddress);
+    event ProtocolAddressUpdated(bytes32 indexed what, address indexed treasuryAddress);
+    event SetAggregator(bytes indexed aggregator);
+    event SetFeeRecipient(address indexed treasuryAddress);
     
     /* ##################################################################
                                 OWNER FUNCTIONS
@@ -43,11 +44,14 @@ contract PaycrestSettingManager is OwnableUpgradeable {
      * Requirements:
      * - The value must not be a zero address.
      */
-    function settingManagerBool(bytes32 what, address value, bool status) external onlyOwner {
+    function settingManagerBool(bytes32 what, address value, uint256 status) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
-        if (what == "token") _isTokenSupported[value] = status;
+        require(status == 1 || status == 2, "Paycrest: invalid status");
+        if (what == "token") {
+            _isTokenSupported[value] = status;
+            emit SettingManagerBool(what, value, status);
+        }
 
-        emit SettingManagerBool(what, value, status);
     }
 
     /**
@@ -55,17 +59,18 @@ contract PaycrestSettingManager is OwnableUpgradeable {
      * @param currency The currency for which the institutions are being set.
      * @param institutions The array of institutions to be set.
      */
-    function setSupportedInstitutions(bytes32 currency, SharedStructs.Institution[] memory institutions) external onlyOwner { 
-        uint256 length = institutions.length;
-        for (uint i = 0; i < length; ) {
+    function setSupportedInstitutions(bytes32 currency, SharedStructs.Institution[] memory institutions) external onlyOwner {
+        delete supportedInstitutions[currency];
+        for (uint i; i < institutions.length; ) {
             supportedInstitutions[currency].push(institutions[i]);
             supportedInstitutionsByCode[institutions[i].code] = SharedStructs.InstitutionByCode({
                 name: institutions[i].name, currency: currency
             });
             unchecked {
-                i++;
+                ++i;
             }
         }
+        emit SupportedInstitutionsUpdated(currency, supportedInstitutions[currency]);
     }
 
     /**
@@ -78,17 +83,17 @@ contract PaycrestSettingManager is OwnableUpgradeable {
     }
 
     /**
-     * @dev Updates the protocol addresses.
+     * @dev Updates a protocol address.
      * @param what The address type to be updated (treasury or aggregator).
      * @param value The new address to be set.
      * Requirements:
      * - The value must not be a zero address.
      */
-    function updateProtocolAddresses(bytes32 what, address value) external onlyOwner {
+    function updateProtocolAddress(bytes32 what, address value) external onlyOwner {
         require(value != address(0), "Paycrest: zero address");
         if (what == "treasury") treasuryAddress = value;
         if (what == "aggregator") _aggregatorAddress = value;
-        emit ProtocolAddressesUpdated(treasuryAddress);
+        emit ProtocolAddressUpdated(what, value);
     }
 
     /**

@@ -29,10 +29,10 @@ describe("Ownable settings", function () {
     await expect(
       paycrest
         .connect(admin)
-        .settingManagerBool(token, mockUSDT.address, true)
+        .settingManagerBool(token, mockUSDT.address, BigNumber.from(1))
     )
       .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(token, mockUSDT.address, true);
+      .withArgs(token, mockUSDT.address, BigNumber.from(1));
   }
 
   it("should get supported token", async function () {
@@ -151,8 +151,8 @@ describe("Ownable settings", function () {
     await expect(
       paycrest
         .connect(admin)
-        .updateProtocolAddresses(treasury, treasuryAddress.address)
-    ).to.be.emit(paycrest, Events.Paycrest.ProtocolAddressesUpdated);
+        .updateProtocolAddress(treasury, treasuryAddress.address)
+    ).to.be.emit(paycrest, Events.Paycrest.ProtocolAddressUpdated);
 
   });
 });

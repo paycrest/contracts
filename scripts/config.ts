@@ -165,7 +165,7 @@ const INSTITUTIONS = {
     },
     {
       code: ethers.utils.formatBytes32String("SAHVNGPC"),
-      name: ethers.utils.formatBytes32String("SAFEHAVEN MICROFINANCE BANK"),
+      name: ethers.utils.formatBytes32String("SAFE HAVEN MICROFINANCE BANK"),
     }
   ]
 };

@@ -83,16 +83,16 @@ describe("Paycrest settle order", function () {
     await expect(
       paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(treasury, this.treasuryAddress.address)
-    ).to.emit(paycrest, Events.Paycrest.ProtocolAddressesUpdated);
+      .updateProtocolAddress(treasury, this.treasuryAddress.address)
+    ).to.emit(paycrest, Events.Paycrest.ProtocolAddressUpdated);
 
     const aggregator = ethers.utils.formatBytes32String("aggregator");
 
     await expect(
       paycrest
       .connect(this.deployer)
-      .updateProtocolAddresses(aggregator, this.aggregator.address)
-    ).to.emit(paycrest, Events.Paycrest.ProtocolAddressesUpdated);
+      .updateProtocolAddress(aggregator, this.aggregator.address)
+    ).to.emit(paycrest, Events.Paycrest.ProtocolAddressUpdated);
 
     await expect(
       paycrest
@@ -116,7 +116,7 @@ describe("Paycrest settle order", function () {
   });
 
   it("Should be able to create order by the sender and settled by the liquidity aggregator", async function () {
-    const ret = await setSupportedInstitution(paycrest, this.deployer);
+    const ret = await setSupportedInstitutions(paycrest, this.deployer);
 
     await mockUSDT
       .connect(this.sender)
@@ -236,7 +236,7 @@ describe("Paycrest settle order", function () {
   });
 
   it("Should revert when trying to settle an already fulfilled order", async function () {
-    const ret = await setSupportedInstitution(paycrest, this.deployer);
+    const ret = await setSupportedInstitutions(paycrest, this.deployer);
 
     await mockUSDT
       .connect(this.sender)
