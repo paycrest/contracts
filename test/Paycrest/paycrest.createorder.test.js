@@ -12,7 +12,7 @@ const {
   MAX_BPS,
   Errors,
   Events,
-  setSupportedInstitution,
+  setSupportedInstitutions,
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 const label = ethers.utils.formatBytes32String("label");
@@ -59,10 +59,10 @@ describe("Paycrest create order", function () {
     await expect(
       this.paycrest
         .connect(this.deployer)
-        .settingManagerBool(token, this.mockUSDT.address, true)
+        .settingManagerBool(token, this.mockUSDT.address, BigNumber.from(1))
     )
       .to.emit(this.paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(token, this.mockUSDT.address, true);
+      .withArgs(token, this.mockUSDT.address, BigNumber.from(1));
   });
 
   it("Should be able to create order by Sender for Alice", async function () {
@@ -84,7 +84,8 @@ describe("Paycrest create order", function () {
 
     await this.mockUSDT
       .connect(this.sender)
-      .approve(this.paycrest.address, this.orderAmount + this.senderFee);
+      .approve(this.paycrest.address, this.orderAmount.add(this.senderFee));
+
     const rate = 750;
     const institutionCode = ret.accessBank.code;
 

@@ -6,11 +6,11 @@
  */
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 import {SharedStructs} from "./libraries/SharedStructs.sol";
 
-contract PaycrestSettingManager is OwnableUpgradeable { 
+contract PaycrestSettingManager is Ownable2StepUpgradeable { 
     uint256 internal MAX_BPS;
     uint64 internal protocolFeePercent;
     address internal treasuryAddress;

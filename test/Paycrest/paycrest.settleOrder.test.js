@@ -14,7 +14,7 @@ const {
   MAX_BPS,
   Errors,
   Events,
-  setSupportedInstitution,
+  setSupportedInstitutions,
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
@@ -109,10 +109,10 @@ describe("Paycrest settle order", function () {
     await expect(
       paycrest
         .connect(this.deployer)
-        .settingManagerBool(token, mockUSDT.address, true)
+        .settingManagerBool(token, mockUSDT.address, BigNumber.from(1))
     )
       .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
-      .withArgs(token, mockUSDT.address, true);
+      .withArgs(token, mockUSDT.address, BigNumber.from(1));
   });
 
   it("Should be able to create order by the sender and settled by the liquidity aggregator", async function () {
