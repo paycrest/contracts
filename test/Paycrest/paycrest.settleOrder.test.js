@@ -5,14 +5,10 @@ const CryptoJS = require("crypto-js");
 const { paycrestFixture } = require("../fixtures/paycrest.js");
 const label = ethers.utils.formatBytes32String("label");
 
-
 const {
-  deployContract,
   ZERO_AMOUNT,
-  ZERO_ADDRESS,
   FEE_BPS,
   MAX_BPS,
-  Errors,
   Events,
   setSupportedInstitutions,
 } = require("../utils/utils.manager.js");
