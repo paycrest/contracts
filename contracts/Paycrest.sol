@@ -36,7 +36,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
      */
     function initialize() external initializer {
         MAX_BPS = 100_000;
-        __Ownable_init();
+        __Ownable2Step_init();
         __Pausable_init();
     }
 
@@ -94,7 +94,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 
         // generate transaction id for the transaction
         orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
-
 
         // update transaction
         uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
@@ -187,8 +186,10 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
     function _transferSenderFee(bytes32 _orderId) internal {
         address recipient = order[_orderId].senderFeeRecipient;
         uint256 _fee = order[_orderId].senderFee;
+
         // transfer sender fee
         IERC20(order[_orderId].token).transfer(recipient, _fee);
+
         // emit event
         emit SenderFeeTransferred(recipient, _fee);
     }
