@@ -15,7 +15,6 @@ const {
   setSupportedInstitutions,
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
-const label = ethers.utils.formatBytes32String("label");
 
 describe("Paycrest create order", function () {
   beforeEach(async function () {
@@ -119,7 +118,6 @@ describe("Paycrest create order", function () {
           this.mockUSDT.address,
           this.orderAmount,
           institutionCode,
-          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -129,13 +127,13 @@ describe("Paycrest create order", function () {
     )
       .to.emit(this.paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
+        this.sender.address,
         this.mockUSDT.address,
         BigNumber.from(this.orderAmount).sub(this.protocolFee),
         this.protocolFee,
         orderId,
         rate,
         institutionCode,
-        label,
         messageHash.toString()
       );
 
@@ -145,7 +143,6 @@ describe("Paycrest create order", function () {
       this.senderRecipient,
       this.senderFee,
       this.protocolFee,
-      this.rate,
       this.isFulfilled,
       this.refundAddress,
       this.currentBPS,
@@ -160,7 +157,6 @@ describe("Paycrest create order", function () {
     expect(this.token).to.eq(this.mockUSDT.address);
     expect(this.senderRecipient).to.eq(this.sender.address);
     expect(this.senderFee).to.eq(this.senderFee);
-    expect(this.rate).to.eq(rate);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(this.alice.address);
     expect(this.currentBPS).to.eq(MAX_BPS);
@@ -228,7 +224,6 @@ describe("Paycrest create order", function () {
           this.mockDAI.address,
           this.orderAmount,
           institutionCode,
-          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -243,7 +238,6 @@ describe("Paycrest create order", function () {
       this.senderRecipient,
       this.senderFee,
       this.protocolFee,
-      this.rate,
       this.isFulfilled,
       this.refundAddress,
       this.currentBPS,
@@ -252,7 +246,6 @@ describe("Paycrest create order", function () {
 
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
-    expect(this.rate).to.eq(ZERO_AMOUNT);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
@@ -305,7 +298,6 @@ describe("Paycrest create order", function () {
           this.mockUSDT.address,
           ZERO_AMOUNT,
           institutionCode,
-          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -320,7 +312,6 @@ describe("Paycrest create order", function () {
       this.senderRecipient,
       this.senderFee,
       this.protocolFee,
-      this.rate,
       this.isFulfilled,
       this.refundAddress,
       this.currentBPS,
@@ -329,7 +320,6 @@ describe("Paycrest create order", function () {
 
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
-    expect(this.rate).to.eq(ZERO_AMOUNT);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
@@ -382,7 +372,6 @@ describe("Paycrest create order", function () {
           this.mockUSDT.address,
           this.orderAmount,
           institutionCode,
-          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -397,7 +386,6 @@ describe("Paycrest create order", function () {
       this.senderRecipient,
       this.senderFee,
       this.protocolFee,
-      this.rate,
       this.isFulfilled,
       this.refundAddress,
       this.currentBPS,
@@ -406,7 +394,6 @@ describe("Paycrest create order", function () {
 
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
-    expect(this.rate).to.eq(ZERO_AMOUNT);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
@@ -459,7 +446,6 @@ describe("Paycrest create order", function () {
           this.mockUSDT.address,
           this.mintAmount,
           invalidInstitutionCode,
-          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -474,7 +460,6 @@ describe("Paycrest create order", function () {
       this.senderRecipient,
       this.senderFee,
       this.protocolFee,
-      this.rate,
       this.isFulfilled,
       this.refundAddress,
       this.currentBPS,
@@ -483,7 +468,6 @@ describe("Paycrest create order", function () {
 
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
-    expect(this.rate).to.eq(ZERO_AMOUNT);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
