@@ -68,7 +68,6 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 		address _token,
 		uint256 _amount,
 		bytes32 _institutionCode,
-		bytes32 _label,
 		uint96 _rate,
 		address _senderFeeRecipient,
 		uint256 _senderFee,
@@ -100,12 +99,11 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 		// update transaction
 		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
 		order[orderId] = Order({
-			seller: msg.sender,
+			sender: msg.sender,
 			token: _token,
 			senderFeeRecipient: _senderFeeRecipient,
 			senderFee: _senderFee,
 			protocolFee: _protocolFee,
-			rate: _rate,
 			isFulfilled: false,
 			refundAddress: _refundAddress,
 			currentBPS: uint64(MAX_BPS),
@@ -114,13 +112,13 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 
 		// emit order created event
 		emit OrderCreated(
+			order[orderId].sender,
 			_token,
 			order[orderId].amount,
 			_protocolFee,
 			orderId,
 			_rate,
 			_institutionCode,
-			_label,
 			messageHash
 		);
 	}
@@ -162,10 +160,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	function settle(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
-		bytes32 _label,
 		address _liquidityProvider,
 		uint64 _settlePercent
-	) external onlyAggregator returns (bytes32, address) {
+	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 
@@ -196,8 +193,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 		order[_orderId].amount -= liquidityProviderAmount;
 
 		// emit settled event
-		emit OrderSettled(_splitOrderId, _orderId, _label, _liquidityProvider, _settlePercent);
-		return (_orderId, token);
+		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
+
+		return true;
 	}
 
 	/**
@@ -216,15 +214,11 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	}
 
 	/** @dev See {refund-IPaycrest}. */
-	function refund(
-		uint256 _fee,
-		bytes32 _orderId,
-		bytes32 _label
-	) external onlyAggregator returns (bool) {
+	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 
-		// transfer refund fee to treasury
+		// transfer refund fee to the treasury
 		IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
 
 		// reset state values
@@ -242,7 +236,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 		);
 
 		// emit refunded event
-		emit OrderRefunded(_fee, _orderId, _label);
+		emit OrderRefunded(_fee, _orderId);
 
 		return true;
 	}

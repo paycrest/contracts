@@ -3,7 +3,6 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const CryptoJS = require("crypto-js");
 
 const { paycrestFixture } = require("../fixtures/paycrest.js");
-const label = ethers.utils.formatBytes32String("label");
 
 const {
   ZERO_AMOUNT,
@@ -153,7 +152,6 @@ describe("Paycrest settle order", function () {
           mockUSDT.address,
           this.orderAmount,
           institutionCode,
-          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -163,13 +161,13 @@ describe("Paycrest settle order", function () {
     )
       .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
+        this.sender.address,
         mockUSDT.address,
         BigNumber.from(this.orderAmount).sub(this.protocolFee),
         this.protocolFee,
         orderId,
         rate,
         institutionCode,
-        label,
         messageHash.toString()
       );
 
@@ -179,7 +177,6 @@ describe("Paycrest settle order", function () {
       this.senderRecipient,
       this.senderFee,
       this.protocolFee,
-      this.rate,
       this.isFulfilled,
       this.refundAddress,
       this.currentBPS,
@@ -190,7 +187,6 @@ describe("Paycrest settle order", function () {
     expect(this.token).to.eq(mockUSDT.address);
     expect(this.senderRecipient).to.eq(this.sender.address);
     expect(this.senderFee).to.eq(this.senderFee);
-    expect(this.rate).to.eq(rate);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(this.alice.address);
     expect(this.currentBPS).to.eq(MAX_BPS);
@@ -212,13 +208,12 @@ describe("Paycrest settle order", function () {
         .settle(
           orderId,
           orderId,
-          label,
           this.liquidityProvider.address,
           MAX_BPS,
         )
     )
       .to.emit(paycrest, Events.Paycrest.OrderSettled)
-      .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
+      .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
     expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount
@@ -273,7 +268,6 @@ describe("Paycrest settle order", function () {
           mockUSDT.address,
           this.orderAmount,
           institutionCode,
-          label,
           rate,
           this.sender.address,
           this.senderFee,
@@ -283,13 +277,13 @@ describe("Paycrest settle order", function () {
     )
       .to.emit(paycrest, Events.Paycrest.OrderCreated)
       .withArgs(
+        this.sender.address,
         mockUSDT.address,
         BigNumber.from(this.orderAmount).sub(this.protocolFee),
         this.protocolFee,
         orderId,
         rate,
         institutionCode,
-        label,
         messageHash.toString()
       );
 
@@ -299,7 +293,6 @@ describe("Paycrest settle order", function () {
       this.senderRecipient,
       this.senderFee,
       this.protocolFee,
-      this.rate,
       this.isFulfilled,
       this.refundAddress,
       this.currentBPS,
@@ -310,7 +303,6 @@ describe("Paycrest settle order", function () {
     expect(this.token).to.eq(mockUSDT.address);
     expect(this.senderRecipient).to.eq(this.sender.address);
     expect(this.senderFee).to.eq(this.senderFee);
-    expect(this.rate).to.eq(rate);
     expect(this.isFulfilled).to.eq(false);
     expect(this.refundAddress).to.eq(this.alice.address);
     expect(this.currentBPS).to.eq(MAX_BPS);
@@ -329,13 +321,12 @@ describe("Paycrest settle order", function () {
         .settle(
           orderId,
           orderId,
-          label,
           this.liquidityProvider.address,
           MAX_BPS,
         )
     )
       .to.emit(paycrest, Events.Paycrest.OrderSettled)
-      .withArgs(orderId, orderId, label, this.liquidityProvider.address, MAX_BPS);
+      .withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
     expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
       this.liquidityProviderAmount

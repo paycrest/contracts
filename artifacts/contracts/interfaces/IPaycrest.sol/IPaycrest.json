@@ -9,6 +9,12 @@
         {
           "indexed": true,
           "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
           "name": "token",
           "type": "address"
         },
@@ -25,7 +31,7 @@
           "type": "uint256"
         },
         {
-          "indexed": true,
+          "indexed": false,
           "internalType": "bytes32",
           "name": "orderId",
           "type": "bytes32"
@@ -40,12 +46,6 @@
           "indexed": false,
           "internalType": "bytes32",
           "name": "institutionCode",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "label",
           "type": "bytes32"
         },
         {
@@ -72,12 +72,6 @@
           "internalType": "bytes32",
           "name": "orderId",
           "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "label",
-          "type": "bytes32"
         }
       ],
       "name": "OrderRefunded",
@@ -96,12 +90,6 @@
           "indexed": true,
           "internalType": "bytes32",
           "name": "orderId",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "label",
           "type": "bytes32"
         },
         {
@@ -154,11 +142,6 @@
         {
           "internalType": "bytes32",
           "name": "_institutionCode",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "_label",
           "type": "bytes32"
         },
         {
@@ -243,7 +226,7 @@
           "components": [
             {
               "internalType": "address",
-              "name": "seller",
+              "name": "sender",
               "type": "address"
             },
             {
@@ -265,11 +248,6 @@
               "internalType": "uint256",
               "name": "protocolFee",
               "type": "uint256"
-            },
-            {
-              "internalType": "uint96",
-              "name": "rate",
-              "type": "uint96"
             },
             {
               "internalType": "bool",
@@ -392,11 +370,6 @@
           "internalType": "bytes32",
           "name": "_orderId",
           "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "_label",
-          "type": "bytes32"
         }
       ],
       "name": "refund",
@@ -423,11 +396,6 @@
           "type": "bytes32"
         },
         {
-          "internalType": "bytes32",
-          "name": "_label",
-          "type": "bytes32"
-        },
-        {
           "internalType": "address",
           "name": "_liquidityProvider",
           "type": "address"
@@ -441,14 +409,9 @@
       "name": "settle",
       "outputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "bool",
           "name": "",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
+          "type": "bool"
         }
       ],
       "stateMutability": "nonpayable",
