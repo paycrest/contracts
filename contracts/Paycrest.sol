@@ -189,8 +189,8 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 
 		// transfer to liquidity provider
 		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / MAX_BPS;
-		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 		order[_orderId].amount -= liquidityProviderAmount;
+		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event
 		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
