@@ -224,10 +224,9 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 		uint256 refundAmount = order[_orderId].amount + order[_orderId].protocolFee - _fee;
 
 		// transfer refund amount and sender fee to the refund address
-		IERC20(order[_orderId].token).transfer(order[_orderId].refundAddress, refundAmount);
 		IERC20(order[_orderId].token).transfer(
 			order[_orderId].refundAddress,
-			order[_orderId].senderFee
+			refundAmount + order[_orderId].senderFee
 		);
 
 		// emit refunded event
