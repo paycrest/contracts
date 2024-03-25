@@ -97,7 +97,7 @@ contract PaycrestSettingManager is Ownable2StepUpgradeable {
 	 */
 	function updateProtocolAddress(bytes32 what, address value) external onlyOwner {
 		require(value != address(0), 'Paycrest: zero address');
-		bool updated = false;
+		bool updated;
 		if (what == 'treasury') {
 			require(treasuryAddress != value, 'Paycrest: treasury address already set');
 			treasuryAddress = value;

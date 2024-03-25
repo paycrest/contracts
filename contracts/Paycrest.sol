@@ -211,7 +211,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
-		require(order[_orderId].protocolFee > _fee, 'FeeExceedsProtocolFee');
+		require(order[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
 
 		// transfer refund fee to the treasury
 		IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
