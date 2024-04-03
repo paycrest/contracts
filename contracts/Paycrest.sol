@@ -105,6 +105,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 			senderFee: _senderFee,
 			protocolFee: _protocolFee,
 			isFulfilled: false,
+			isRefunded: false,
 			refundAddress: _refundAddress,
 			currentBPS: uint64(MAX_BPS),
 			amount: _amount - _protocolFee
@@ -211,13 +212,14 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!order[_orderId].isRefunded, 'OrderRefunded');
 		require(order[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
 
 		// transfer refund fee to the treasury
 		IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
 
 		// reset state values
-		order[_orderId].isFulfilled = true;
+		order[_orderId].isRefunded = true;
 		order[_orderId].currentBPS = 0;
 
 		// deduct fee from order amount

@@ -89,6 +89,7 @@ interface IPaycrest {
 	 * @param senderFee The fee to be paid to the sender fee recipient.
 	 * @param protocolFee The protocol fee to be paid.
 	 * @param isFulfilled Whether the order is fulfilled.
+	 * @param isRefunded Whether the order is refunded.
 	 * @param refundAddress The address to which the refund is made.
 	 * @param currentBPS The current basis points.
 	 * @param amount The amount of the order.
@@ -100,6 +101,7 @@ interface IPaycrest {
 		uint256 senderFee;
 		uint256 protocolFee;
 		bool isFulfilled;
+		bool isRefunded;
 		address refundAddress;
 		uint96 currentBPS;
 		uint256 amount;

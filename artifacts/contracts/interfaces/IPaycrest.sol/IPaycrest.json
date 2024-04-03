@@ -255,6 +255,11 @@
               "type": "bool"
             },
             {
+              "internalType": "bool",
+              "name": "isRefunded",
+              "type": "bool"
+            },
+            {
               "internalType": "address",
               "name": "refundAddress",
               "type": "address"

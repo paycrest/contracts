@@ -19,6 +19,7 @@ const Errors = {
     InvalidSigner: "InvalidSigner",
     Unsupported: "Unsupported",
     OrderFulfilled: "OrderFulfilled",
+    OrderRefunded: "OrderRefunded",
     UnableToProcessRewards: "UnableToProcessRewards",
     InvalidInstitutionCode: "InvalidInstitutionCode",
   }

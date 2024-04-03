@@ -144,6 +144,7 @@ describe("Paycrest create order", function () {
       this.senderFee,
       this.protocolFee,
       this.isFulfilled,
+      this.isRefunded,
       this.refundAddress,
       this.currentBPS,
       this.amount,
@@ -158,6 +159,7 @@ describe("Paycrest create order", function () {
     expect(this.senderRecipient).to.eq(this.sender.address);
     expect(this.senderFee).to.eq(this.senderFee);
     expect(this.isFulfilled).to.eq(false);
+    expect(this.isRefunded).to.eq(false);
     expect(this.refundAddress).to.eq(this.alice.address);
     expect(this.currentBPS).to.eq(MAX_BPS);
     expect(this.amount).to.eq(BigNumber.from(this.orderAmount).sub(this.protocolFee));
@@ -239,6 +241,7 @@ describe("Paycrest create order", function () {
       this.senderFee,
       this.protocolFee,
       this.isFulfilled,
+      this.isRefunded,
       this.refundAddress,
       this.currentBPS,
       this.amount,
@@ -247,6 +250,7 @@ describe("Paycrest create order", function () {
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
     expect(this.isFulfilled).to.eq(false);
+    expect(this.isRefunded).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
     expect(this.amount).to.eq(ZERO_AMOUNT);
@@ -313,6 +317,7 @@ describe("Paycrest create order", function () {
       this.senderFee,
       this.protocolFee,
       this.isFulfilled,
+      this.isRefunded,
       this.refundAddress,
       this.currentBPS,
       this.amount,
@@ -321,6 +326,7 @@ describe("Paycrest create order", function () {
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
     expect(this.isFulfilled).to.eq(false);
+    expect(this.isRefunded).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
     expect(this.amount).to.eq(ZERO_AMOUNT);
@@ -387,6 +393,7 @@ describe("Paycrest create order", function () {
       this.senderFee,
       this.protocolFee,
       this.isFulfilled,
+      this.isRefunded,
       this.refundAddress,
       this.currentBPS,
       this.amount,
@@ -395,6 +402,7 @@ describe("Paycrest create order", function () {
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
     expect(this.isFulfilled).to.eq(false);
+    expect(this.isRefunded).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
     expect(this.amount).to.eq(ZERO_AMOUNT);
@@ -461,6 +469,7 @@ describe("Paycrest create order", function () {
       this.senderFee,
       this.protocolFee,
       this.isFulfilled,
+      this.isRefunded,
       this.refundAddress,
       this.currentBPS,
       this.amount,
@@ -469,6 +478,7 @@ describe("Paycrest create order", function () {
     expect(this.seller).to.eq(ZERO_ADDRESS);
     expect(this.token).to.eq(ZERO_ADDRESS);
     expect(this.isFulfilled).to.eq(false);
+    expect(this.isRefunded).to.eq(false);
     expect(this.refundAddress).to.eq(ZERO_ADDRESS);
     expect(this.currentBPS).to.eq(ZERO_AMOUNT);
     expect(this.amount).to.eq(ZERO_AMOUNT);
