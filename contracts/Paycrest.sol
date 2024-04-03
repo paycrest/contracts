@@ -166,6 +166,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!order[_orderId].isRefunded, 'OrderRefunded');
 
 		// load the token into memory
 		address token = order[_orderId].token;
