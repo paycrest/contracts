@@ -11,7 +11,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-let { DEPLOYER_PRIVATE_KEY, ALCHEMY_API_KEY, INFURA_API_KEY, BASE_API_KEY, ARBISCAN_API_KEY, BSCSCAN_API_KEY, POLYGONSCAN_API_KEY } = process.env;
+let { DEPLOYER_PRIVATE_KEY, SHIELD3_API_KEY, ETHERSCAN_API_KEY, BASESCAN_API_KEY, ARBISCAN_API_KEY, BSCSCAN_API_KEY, POLYGONSCAN_API_KEY } = process.env;
 
 const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
 
@@ -25,28 +25,64 @@ const config: HardhatUserConfig = {
     hardhat: {
       saveDeployments: true,
       forking: {
-        url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+        url: `https://rpc.shield3.com/v3/0x89/${SHIELD3_API_KEY}/rpc`,
         enabled: true,
         // blockNumber: 103882851, // (Mar-25-2023 04:09:31 PM +UTC)
       },
       // allowUnlimitedContractSize: true,
     },
-    mumbai: {
-      url: `https://polygon-mumbai.infura.io/v3/${INFURA_API_KEY}`,
+
+    // Mainnets
+    arbitrumOne: {
+      url: `https://rpc.shield3.com/v3/0xa4b1/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 80001,
+      chainId: 42161,
       saveDeployments: true,
     },
-    bscTestnet: {
-      url: "https://data-seed-prebsc-1-s3.binance.org:8545/",
+    base: {
+      url: `https://rpc.shield3.com/v3/0x2105/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 97,
+      chainId: 8453,
       saveDeployments: true,
     },
-    baseGoerli: {
-      url: "https://goerli.base.org",
+    bsc: {
+      url: `https://rpc.shield3.com/v3/0x38/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 84531,
+      chainId: 56,
+      saveDeployments: true,
+    },
+    polygon: {
+      url: `https://rpc.shield3.com/v3/0x89/${SHIELD3_API_KEY}/rpc`,
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+      chainId: 137,
+      saveDeployments: true,
+    },
+    mainnet: {
+      url: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+      chainId: 1,
+      saveDeployments: true,
+    },
+
+    // Testnets
+    amoy: {
+      url: `https://rpc.shield3.com/v3/0x13882/${SHIELD3_API_KEY}/rpc`,
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+      chainId: 84532,
+      gasPrice: 1000000000,
+      saveDeployments: true,
+    },
+    baseSepolia: {
+      url: `https://rpc.shield3.com/v3/0x14a34/${SHIELD3_API_KEY}/rpc`,
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+      chainId: 84532,
+      gasPrice: 1000000000,
+      saveDeployments: true,
+    },
+    sepolia: {
+      url: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+      chainId: 84532,
       gasPrice: 1000000000,
       saveDeployments: true,
     },
@@ -71,10 +107,12 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      "base": BASE_API_KEY!,
+      "base": BASESCAN_API_KEY!,
       arbitrumOne: ARBISCAN_API_KEY!,
       bsc: BSCSCAN_API_KEY!,
-      polygonMumbai: POLYGONSCAN_API_KEY!,
+      polygon: POLYGONSCAN_API_KEY!,
+      mainnet: ETHERSCAN_API_KEY!,
+      sepolia: ETHERSCAN_API_KEY!,
     },
     customChains: [
       {

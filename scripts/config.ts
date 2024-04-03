@@ -3,18 +3,22 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-let { INFURA_API_KEY } = process.env;
+let { SHIELD3_API_KEY } = process.env;
 
 const NETWORKS = {
+  /////////////////////////////////
+  // Mainnets
+  /////////////////////////////////
+
   /**
    * @dev Arbitrum One
    */
   42161: {
-    RPC_URL: "https://arb1.arbitrum.io/rpc",
+    RPC_URL: `https://rpc.shield3.com/v3/0xa4b1/${SHIELD3_API_KEY}/rpc`,
     SUPPORTED_TOKENS: {
-      USDC: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+      USDC: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
       USDT: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-      IMPERSONATE_ACCOUNT: "0xe68ee8a12c611fd043fb05d65e1548dc1383f2b9",
+      IMPERSONATE_ACCOUNT: "",
     },
     TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
     PAYCREST_CONTRACT: "",
@@ -22,17 +26,113 @@ const NETWORKS = {
   },
 
   /**
-   * @dev Polygon Mumbai
+   * @dev Base
    */
-  80001: {
-    RPC_URL: `https://polygon-mumbai.infura.io/v3/${INFURA_API_KEY}`,
+  8453: {
+    RPC_URL: `https://rpc.shield3.com/v3/0x2105/${SHIELD3_API_KEY}/rpc`,
     SUPPORTED_TOKENS: {
-      USDC: "0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97",
-      USDT: "0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832",
-      "6TEST": "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
+      USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     },
     TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
-    PAYCREST_CONTRACT: "0x4b5a61A6Df4A29FEFf459E4a992e0f913d989A18",
+    PAYCREST_CONTRACT: "",
+    IMPERSONATE_ACCOUNT: "",
+  },
+
+  /**
+   * @dev Binance Smart Chain
+   */
+  56: {
+    RPC_URL: `https://rpc.shield3.com/v3/0x38/${SHIELD3_API_KEY}/rpc`,
+    SUPPORTED_TOKENS: {
+      USDC: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      USDT: "0x55d398326f99059ff775485246999027b3197955",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    PAYCREST_CONTRACT: "",
+    IMPERSONATE_ACCOUNT: "",
+  },
+
+  /**
+   * @dev Polygon Mainnet
+   */
+  137: {
+    RPC_URL: `https://rpc.shield3.com/v3/0x89/${SHIELD3_API_KEY}/rpc`,
+    SUPPORTED_TOKENS: {
+      USDC: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      USDT: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    PAYCREST_CONTRACT: "",
+    IMPERSONATE_ACCOUNT: "",
+  },
+
+  /**
+   * @dev Ethereum Mainnet
+   */
+  1: {
+    RPC_URL: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
+    SUPPORTED_TOKENS: {
+      USDC: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      USDT: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    PAYCREST_CONTRACT: "",
+    IMPERSONATE_ACCOUNT: "",
+  },
+
+  /////////////////////////////////
+  // Testnets
+  /////////////////////////////////
+
+  /**
+   * @dev Polygon Amoy
+   */
+  80002: {
+    RPC_URL: `https://rpc.shield3.com/v3/0x13882/${SHIELD3_API_KEY}/rpc`,
+    SUPPORTED_TOKENS: {
+      USDC: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    PAYCREST_CONTRACT: "",
+    IMPERSONATE_ACCOUNT: "",
+  },
+
+  /**
+   * @dev Arbitrum Sepolia
+   */
+  421614: {
+    RPC_URL: `https://rpc.shield3.com/v3/0x66eee/${SHIELD3_API_KEY}/rpc`,
+    SUPPORTED_TOKENS: {
+      USDC: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    PAYCREST_CONTRACT: "",
+    IMPERSONATE_ACCOUNT: "",
+  },
+
+  /**
+   * @dev Base Sepolia
+   */
+  84532: {
+    RPC_URL: `https://rpc.shield3.com/v3/0x14a34/${SHIELD3_API_KEY}/rpc`,
+    SUPPORTED_TOKENS: {
+      USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    PAYCREST_CONTRACT: "",
+    IMPERSONATE_ACCOUNT: "",
+  },
+
+  /**
+   * @dev Ethereum Sepolia
+   */
+  11155111: {
+    RPC_URL: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
+    SUPPORTED_TOKENS: {
+      USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    PAYCREST_CONTRACT: "",
     IMPERSONATE_ACCOUNT: "",
   },
 };
