@@ -6,10 +6,10 @@ import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SharedStructs} from '../libraries/SharedStructs.sol';
 
 /**
- * @title IPaycrest
- * @dev Interface for the Paycrest contract.
+ * @title IGateway
+ * @notice Interface for the Gateway contract.
  */
-interface IPaycrest {
+interface IGateway {
 	/* ##################################################################
                                 EVENTS
     ################################################################## */
@@ -111,9 +111,9 @@ interface IPaycrest {
                                 EXTERNAL CALLS
     ################################################################## */
 	/**
-	 * @notice Locks the sender's amount of token into Paycrest.
+	 * @notice Locks the sender's amount of token into Gateway.
 	 * @dev Requirements:
-	 * - `msg.sender` must approve Paycrest contract on `_token` of at least `amount` before function call.
+	 * - `msg.sender` must approve Gateway contract on `_token` of at least `amount` before function call.
 	 * - `_token` must be an acceptable token. See {isTokenSupported}.
 	 * - `amount` must be greater than minimum.
 	 * - `_refundAddress` refund address must not be zero address.
@@ -164,7 +164,7 @@ interface IPaycrest {
 	function refund(uint256 _fee, bytes32 _orderId) external returns (bool);
 
 	/**
-	 * @notice Checks if a token is supported by Paycrest.
+	 * @notice Checks if a token is supported by Gateway.
 	 * @param _token The address of the token to check.
 	 * @return bool the token is supported.
 	 */
@@ -178,17 +178,11 @@ interface IPaycrest {
 	function getOrderInfo(bytes32 _orderId) external view returns (Order memory);
 
 	/**
-	 * @notice Gets the fee details of Paycrest.
+	 * @notice Gets the fee details of Gateway.
 	 * @return protocolReward The protocol reward amount.
 	 * @return max_bps The maximum basis points.
 	 */
 	function getFeeDetails() external view returns (uint64 protocolReward, uint256 max_bps);
-
-	/**
-	 * @notice Gets the aggregator's public key.
-	 * @return return The aggregator's public key.
-	 */
-	function getAggregator() external view returns (bytes memory);
 
 	/**
 	 * @notice Gets the details of a supported institution by code.

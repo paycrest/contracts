@@ -3,15 +3,15 @@ pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 
-import {PaycrestSettingManager} from './PaycrestSettingManager.sol';
-import {IPaycrest, IERC20} from './interfaces/IPaycrest.sol';
+import {GatewaySettingManager} from './GatewaySettingManager.sol';
+import {IGateway, IERC20} from './interfaces/IGateway.sol';
 import {SharedStructs} from './libraries/SharedStructs.sol';
 
 /**
- * @title Paycrest
- * @dev Paycrest contract for handling orders and settlements.
+ * @title Gateway
+ * @notice This contract serves as a gateway for creating orders and managing settlements.
  */
-contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
+contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	struct fee {
 		uint256 protocolFee;
 		uint256 liquidityProviderAmount;
@@ -63,7 +63,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	/* ##################################################################
                                 USER CALLS
     ################################################################## */
-	/** @dev See {createOrder-IPaycrest}. */
+	/** @dev See {createOrder-IGateway}. */
 	function createOrder(
 		address _token,
 		uint256 _amount,
@@ -157,7 +157,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	/* ##################################################################
                                 AGGREGATOR FUNCTIONS
     ################################################################## */
-	/** @dev See {settle-IPaycrest}. */
+	/** @dev See {settle-IGateway}. */
 	function settle(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
@@ -209,7 +209,7 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {refund-IPaycrest}. */
+	/** @dev See {refund-IGateway}. */
 	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
@@ -241,38 +241,33 @@ contract Paycrest is IPaycrest, PaycrestSettingManager, PausableUpgradeable {
 	/* ##################################################################
                                 VIEW CALLS
     ################################################################## */
-	/** @dev See {getOrderInfo-IPaycrest}. */
+	/** @dev See {getOrderInfo-IGateway}. */
 	function getOrderInfo(bytes32 _orderId) external view returns (Order memory) {
 		return order[_orderId];
 	}
 
-	/** @dev See {isTokenSupported-IPaycrest}. */
+	/** @dev See {isTokenSupported-IGateway}. */
 	function isTokenSupported(address _token) external view returns (bool) {
 		if (_isTokenSupported[_token] == 1) return true;
 		return false;
 	}
 
-	/** @dev See {getSupportedInstitutionByCode-IPaycrest}. */
+	/** @dev See {getSupportedInstitutionByCode-IGateway}. */
 	function getSupportedInstitutionByCode(
 		bytes32 _code
 	) external view returns (SharedStructs.InstitutionByCode memory) {
 		return supportedInstitutionsByCode[_code];
 	}
 
-	/** @dev See {getSupportedInstitutions-IPaycrest}. */
+	/** @dev See {getSupportedInstitutions-IGateway}. */
 	function getSupportedInstitutions(
 		bytes32 _currency
 	) external view returns (SharedStructs.Institution[] memory) {
 		return supportedInstitutions[_currency];
 	}
 
-	/** @dev See {getFeeDetails-IPaycrest}. */
+	/** @dev See {getFeeDetails-IGateway}. */
 	function getFeeDetails() external view returns (uint64, uint256) {
 		return (protocolFeePercent, MAX_BPS);
-	}
-
-	/** @dev See {getAggregator-IPaycrest}. */
-	function getAggregator() external view returns (bytes memory) {
-		return _aggregator;
 	}
 }

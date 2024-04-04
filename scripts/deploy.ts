@@ -4,19 +4,19 @@ import { confirmContinue, assertEnvironment } from "./utils";
 assertEnvironment();
 
 // Function declarations
-async function deployPaycrest(): Promise<any> {
+async function deployGateway(): Promise<any> {
   await confirmContinue({
-    contract: "Paycrest",
+    contract: "Gateway",
     network: network.name,
     chainId: network.config.chainId,
   });
 
-  const factory = await ethers.getContractFactory("Paycrest");
+  const factory = await ethers.getContractFactory("Gateway");
   const contract = await upgrades.deployProxy(factory);
 
   const tx = await contract.deployTransaction.wait();
   
-  console.log("✅ Deployed Paycrest: ", tx.transactionHash);
+  console.log("✅ Deployed Gateway: ", tx.transactionHash);
 
   // const implementationAddress = await contract.implementation();
 
@@ -27,8 +27,8 @@ async function deployPaycrest(): Promise<any> {
 }
 
 async function main() {
-  // Deploy Paycrest
-  await deployPaycrest();
+  // Deploy Gateway
+  await deployGateway();
 }
 
 main().catch((error) => {

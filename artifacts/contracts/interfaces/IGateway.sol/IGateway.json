@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "IPaycrest",
-  "sourceName": "contracts/interfaces/IPaycrest.sol",
+  "contractName": "IGateway",
+  "sourceName": "contracts/interfaces/IGateway.sol",
   "abi": [
     {
       "anonymous": false,
@@ -183,19 +183,6 @@
     },
     {
       "inputs": [],
-      "name": "getAggregator",
-      "outputs": [
-        {
-          "internalType": "bytes",
-          "name": "",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "getFeeDetails",
       "outputs": [
         {
@@ -275,7 +262,7 @@
               "type": "uint256"
             }
           ],
-          "internalType": "struct IPaycrest.Order",
+          "internalType": "struct IGateway.Order",
           "name": "",
           "type": "tuple"
         }

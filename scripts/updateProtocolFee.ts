@@ -8,16 +8,16 @@ const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
 
 async function main() {
   // Get contract instances
-  const { paycrestInstance, wallet } = await getContracts();
-  const contractWithSigner = paycrestInstance.connect(wallet);
+  const { gatewayInstance, wallet } = await getContracts();
+  const contractWithSigner = gatewayInstance.connect(wallet);
 
   const treasuryFeePercent = BigNumber.from(networkConfig.TREASURY_FEE_PERCENT);
 
   // call contract methods
-  const tx = await contractWithSigner.updateProtocolFees(treasuryFeePercent);
+  const tx = await contractWithSigner.updateProtocolFee(treasuryFeePercent);
 
   await tx.wait();
-  console.log(`✅ Update Protocol fees: ${tx.hash}`);
+  console.log(`✅ Update protocol fee: ${tx.hash}`);
 }
 
 main().catch((error) => {

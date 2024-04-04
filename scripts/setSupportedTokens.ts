@@ -1,3 +1,4 @@
+import { BigNumber } from "@ethersproject/bignumber";
 import { ethers, network } from "hardhat";
 import { NETWORKS } from "./config";
 import { getContracts } from "./utils";
@@ -6,8 +7,8 @@ const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
 
 async function main() {
   // Get contract instances
-  const { paycrestInstance, wallet } = await getContracts();
-  const contractWithSigner = paycrestInstance.connect(wallet);
+  const { gatewayInstance, wallet } = await getContracts();
+  const contractWithSigner = gatewayInstance.connect(wallet);
 
   const token = ethers.utils.formatBytes32String("token");
 
@@ -16,7 +17,7 @@ async function main() {
 
   // Call contract methods
   Object.entries(networkConfig.SUPPORTED_TOKENS).forEach(async ([key, value], index) => {
-    const tx = await contractWithSigner.settingManagerBool(token, value, true, {
+    const tx = await contractWithSigner.settingManagerBool(token, value, BigNumber.from(1), {
       nonce: currentNonce + index,
     });
     await tx.wait();

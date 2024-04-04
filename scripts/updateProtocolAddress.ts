@@ -8,8 +8,8 @@ assertEnvironment();
 
 async function main() {
   // Get contract instances
-  const { paycrestInstance, wallet } = await getContracts();
-  const contractWithSigner = paycrestInstance.connect(wallet);
+  const { gatewayInstance, wallet } = await getContracts();
+  const contractWithSigner = gatewayInstance.connect(wallet);
 
   const treasury = ethers.utils.formatBytes32String("treasury");
   const aggregator = ethers.utils.formatBytes32String("aggregator");

@@ -22,16 +22,6 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    hardhat: {
-      saveDeployments: true,
-      forking: {
-        url: `https://rpc.shield3.com/v3/0x89/${SHIELD3_API_KEY}/rpc`,
-        enabled: true,
-        // blockNumber: 103882851, // (Mar-25-2023 04:09:31 PM +UTC)
-      },
-      // allowUnlimitedContractSize: true,
-    },
-
     // Mainnets
     arbitrumOne: {
       url: `https://rpc.shield3.com/v3/0xa4b1/${SHIELD3_API_KEY}/rpc`,
@@ -68,22 +58,22 @@ const config: HardhatUserConfig = {
     amoy: {
       url: `https://rpc.shield3.com/v3/0x13882/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 84532,
-      gasPrice: 1000000000,
+      chainId: 80002,
+      gasPrice: "auto",
       saveDeployments: true,
     },
     baseSepolia: {
       url: `https://rpc.shield3.com/v3/0x14a34/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
       chainId: 84532,
-      gasPrice: 1000000000,
+      gasPrice: "auto",
       saveDeployments: true,
     },
     sepolia: {
       url: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 84532,
-      gasPrice: 1000000000,
+      chainId: 11155111,
+      gasPrice: "auto",
       saveDeployments: true,
     },
   },
@@ -140,5 +130,21 @@ task("flat", "Flattens and prints contracts and their dependencies (Resolves lic
     flattened = flattened.replace(/pragma experimental ABIEncoderV2;\n/gm, ((i) => (m: any) => (!i++ ? m : ""))(0));
     console.log(flattened);
   });
+
+task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
+  const accounts = await hre.ethers.getSigners();
+  const provider = hre.ethers.provider;
+
+  for (const account of accounts) {
+      console.log(
+          "%s (%i ETH)",
+          account.address,
+          // hre.ethers.utils.formatEther(
+              // getBalance returns wei amount, format to ETH amount
+              await provider.getBalance(account.address)
+          // )
+      );
+  }
+});
 
 export default config;

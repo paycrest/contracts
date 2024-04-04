@@ -4,8 +4,8 @@ import { getContracts } from "./utils";
 
 async function main() {
   // Get contract instances
-  const { paycrestInstance, wallet } = await getContracts();
-  const contractWithSigner = paycrestInstance.connect(wallet);
+  const { gatewayInstance, wallet } = await getContracts();
+  const contractWithSigner = gatewayInstance.connect(wallet);
 
   // Get the current nonce
   const currentNonce = await wallet.getTransactionCount();

@@ -35,13 +35,11 @@ npx hardhat run scripts/setSupportedTokens.ts --network <network>
 
 npx hardhat run scripts/updateProtocolAddress.ts --network <network>
 
-npx hardhat run scripts/updateProtocolFees.ts --network <network>
-
-npx hardhat run scripts/updateProtocolAggregator.ts --network <network>
+npx hardhat run scripts/updateProtocolFee.ts --network <network>
 ```
 
 
-## Testnet Contracts (Polygon Mumbai)
+## Testnet Contracts (Ethereum Sepolia)
 
 <table>
   <thead>
@@ -52,16 +50,16 @@ npx hardhat run scripts/updateProtocolAggregator.ts --network <network>
   </thead>
   <tbody>
     <tr>
-      <td>Paycrest Proxy</td>
-      <td>0xba31A1adb519A2C76475cE231FB1445047971358</td>
+      <td>Gateway Proxy</td>
+      <td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
     </tr>
     <tr>
-      <td>Paycrest Implementation</td>
-      <td>0x5646A1f2950530fA86eE374306BE3fEB39FD3002</td>
+      <td>Gateway Implementation</td>
+      <td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
     </tr>
     <tr>
       <td>Proxy Admin</td>
-      <td>0xaB298765d2dfA58e2cb1f5B524196D071b664977</td>
+      <td>0x4dE79DF01Dfc418dcCAED724c6e71a4a04D50bB7</td>
     </tr>
     <tr>
       <td></td>

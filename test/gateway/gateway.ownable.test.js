@@ -1,13 +1,13 @@
 const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
-const { paycrestFixture } = require("../fixtures/paycrest.js");
+const { gatewayFixture } = require("../fixtures/gateway.js");
 require("dotenv").config();
 
 const { Errors, Events } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
 describe("Ownable settings", function () {
-  let paycrest;
+  let gateway;
   let mockUSDT;
   let admin;
   let treasuryAddress;
@@ -19,7 +19,7 @@ describe("Ownable settings", function () {
   let Mark;
 
   async function setupAndResetFork() {
-    ({ paycrest, mockUSDT } = await paycrestFixture());
+    ({ gateway, mockUSDT } = await gatewayFixture());
 
     [admin, keeper, alice, hacker, sender, Mark, treasuryAddress, aggregator] =
       await ethers.getSigners();
@@ -27,23 +27,23 @@ describe("Ownable settings", function () {
     const token = ethers.utils.formatBytes32String("token");
 
     await expect(
-      paycrest
+      gateway
         .connect(admin)
         .settingManagerBool(token, mockUSDT.address, BigNumber.from(1))
     )
-      .to.emit(paycrest, Events.Paycrest.SettingManagerBool)
+      .to.emit(gateway, Events.Gateway.SettingManagerBool)
       .withArgs(token, mockUSDT.address, BigNumber.from(1));
   }
 
   it("should get supported token", async function () {
     await setupAndResetFork();
-    const _mockUSDT = await paycrest.isTokenSupported(mockUSDT.address);
+    const _mockUSDT = await gateway.isTokenSupported(mockUSDT.address);
     expect(_mockUSDT).to.eq(true);
   });
 
   it("should revert for unsupported token", async function () {
     await setupAndResetFork();
-    const Alice = await paycrest.isTokenSupported(alice.address);
+    const Alice = await gateway.isTokenSupported(alice.address);
     expect(Alice).to.eq(false);
   });
 
@@ -60,22 +60,22 @@ describe("Ownable settings", function () {
       name: ethers.utils.formatBytes32String("DIAMOND BANK"),
     }
 
-    paycrest
+    gateway
       .connect(admin)
       .setSupportedInstitutions(currency, [
         accessBank,
         diamondBank,
       ]);
-    const institutions = await paycrest.connect(admin).getSupportedInstitutions(currency);
+    const institutions = await gateway.connect(admin).getSupportedInstitutions(currency);
     expect(institutions.length).to.eq(2);
       
     [this.accessBankName, this.currency] =
-      await paycrest.getSupportedInstitutionByCode(accessBank.code);
+      await gateway.getSupportedInstitutionByCode(accessBank.code);
     expect(this.accessBankName).to.eq(accessBank.name);
     expect(this.currency).to.eq(currency);
 
     [this.diamondBankName, this.currency] =
-      await paycrest.getSupportedInstitutionByCode(diamondBank.code);
+      await gateway.getSupportedInstitutionByCode(diamondBank.code);
     expect(this.diamondBankName).to.eq(diamondBank.name);
     expect(this.currency).to.eq(currency);
   });
@@ -95,7 +95,7 @@ describe("Ownable settings", function () {
     }
 
     await expect(
-      paycrest
+      gateway
         .connect(hacker)
         .setSupportedInstitutions(currency, [
           accessBank,
@@ -104,12 +104,12 @@ describe("Ownable settings", function () {
     ).to.be.revertedWith(Errors.Ownable.onlyOwner);
 
     [this.accessBankName, this.currency] =
-      await paycrest.getSupportedInstitutionByCode(accessBank.code);
+      await gateway.getSupportedInstitutionByCode(accessBank.code);
     expect(this.accessBankName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
 
     [this.diamondBankName, this.currency] =
-      await paycrest.getSupportedInstitutionByCode(diamondBank.code);
+      await gateway.getSupportedInstitutionByCode(diamondBank.code);
     expect(this.diamondBankName).to.eq(zeroIndexBytes);
     expect(this.currency).to.eq(zeroIndexBytes);
   });
@@ -120,15 +120,15 @@ describe("Ownable settings", function () {
     const protocolFeePercent = BigNumber.from(10_000);
 
     await expect(
-      paycrest
+      gateway
         .connect(admin)
-        .updateProtocolFees(protocolFeePercent)
+        .updateProtocolFee(protocolFeePercent)
     )
-      .to.emit(paycrest, Events.Paycrest.ProtocolFeesUpdated)
+      .to.emit(gateway, Events.Gateway.ProtocolFeeUpdated)
       .withArgs(protocolFeePercent);
 
     [this.protocolFeePecent, this.MAXBPS] =
-      await paycrest.getFeeDetails();
+      await gateway.getFeeDetails();
     expect(this.protocolFeePecent).to.eq(protocolFeePercent);
   });
 
@@ -138,9 +138,9 @@ describe("Ownable settings", function () {
     const protocolFeePercent = BigNumber.from(10_000);
 
     await expect(
-      paycrest
+      gateway
         .connect(hacker)
-        .updateProtocolFees(protocolFeePercent)
+        .updateProtocolFee(protocolFeePercent)
     ).to.be.revertedWith(Errors.Ownable.onlyOwner);
   });
 
@@ -149,10 +149,10 @@ describe("Ownable settings", function () {
     const treasury = ethers.utils.formatBytes32String("treasury");
 
     await expect(
-      paycrest
+      gateway
         .connect(admin)
         .updateProtocolAddress(treasury, treasuryAddress.address)
-    ).to.be.emit(paycrest, Events.Paycrest.ProtocolAddressUpdated);
+    ).to.be.emit(gateway, Events.Gateway.ProtocolAddressUpdated);
 
   });
 });

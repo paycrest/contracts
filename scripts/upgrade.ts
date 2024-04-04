@@ -5,13 +5,13 @@ const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
 
 async function main() {
   const proxyContractAddress = networkConfig.PAYCREST_CONTRACT;
-  const factory = await ethers.getContractFactory("Paycrest");
+  const factory = await ethers.getContractFactory("Gateway");
   const contract = await upgrades.upgradeProxy(
     proxyContractAddress,
     factory
   );
 
-  console.log("✅ Upgraded Paycrest: ", contract.address);
+  console.log("✅ Upgraded Gateway: ", contract.address);
 }
 
 main().catch((error) => {

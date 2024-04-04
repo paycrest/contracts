@@ -59,21 +59,21 @@ export async function getContracts(): Promise<any> {
   assertEnvironment();
 
   const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
-  const Paycrest = await artifacts.readArtifact("Paycrest");
+  const Gateway = await artifacts.readArtifact("Gateway");
   
   // Get signer
   const provider = new ethers.providers.JsonRpcProvider(networkConfig.RPC_URL);
   const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
 
   // Get contract instances
-  const paycrestInstance = new ethers.Contract(
+  const gatewayInstance = new ethers.Contract(
     networkConfig.PAYCREST_CONTRACT,
-    Paycrest.abi,
+    Gateway.abi,
     provider
   );
 
   return {
     wallet,
-    paycrestInstance,
+    gatewayInstance,
   };
 }

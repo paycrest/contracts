@@ -1,5 +1,5 @@
 const TronWeb = require('tronweb');
-const Paycrest = require('../artifacts/contracts/Paycrest.sol/Paycrest.json');
+const Gateway = require('../artifacts/contracts/Gateway.sol/Gateway.json');
 
 const HttpProvider = TronWeb.providers.HttpProvider;
 const fullNode = new HttpProvider("https://api.trongrid.io");
@@ -19,8 +19,8 @@ async function contractInstance() {
     const tx = await tronWeb
       .contract()
       .new({
-        abi: Paycrest.abi,
-        bytecode: Paycrest.deployedBytecode,
+        abi: Gateway.abi,
+        bytecode: Gateway.deployedBytecode,
         feeLimit: 1000000000,
         callValue: 0,
         userFeePercentage: 1,

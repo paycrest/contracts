@@ -11,7 +11,7 @@ const Errors = {
     onlyOwner: "Ownable: caller is not the owner",
   },
 
-  Paycrest: {
+  Gateway: {
     OnlyAggregator: "OnlyAggregator",
     TokenNotSupported: "TokenNotSupported",
     AmountIsZero: "AmountIsZero",
@@ -26,13 +26,13 @@ const Errors = {
 };
 
 const Events = {
-  Paycrest: {
+  Gateway: {
     OrderCreated: "OrderCreated",
     OrderSettled: "OrderSettled",
     OrderRefunded: "OrderRefunded",
     SettingManagerBool: "SettingManagerBool",
     SupportedInstitutionsUpdated: "SupportedInstitutionsUpdated",
-    ProtocolFeesUpdated: "ProtocolFeesUpdated",
+    ProtocolFeeUpdated: "ProtocolFeeUpdated",
     ProtocolAddressUpdated: "ProtocolAddressUpdated",
   }
 };
@@ -74,9 +74,9 @@ async function setSupportedInstitutions(instance, signer) {
   };
 }
 
-async function mockMintDeposit(paycrest, account, usdc, amount) {
+async function mockMintDeposit(gateway, account, usdc, amount) {
   await usdc.connect(account).mint(amount);
-  await usdc.connect(account).approve(paycrest.address, amount);
+  await usdc.connect(account).approve(gateway.address, amount);
 }
 
 module.exports = {

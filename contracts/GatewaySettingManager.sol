@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 
 /**
- * @title PaycrestSettingManager
- * @dev This contract manages the settings and configurations for the Paycrest protocol.
+ * @title GatewaySettingManager
+ * @dev This contract manages the settings and configurations for the Gateway protocol.
  */
 pragma solidity ^0.8.18;
 
@@ -10,12 +10,11 @@ import '@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol';
 
 import {SharedStructs} from './libraries/SharedStructs.sol';
 
-contract PaycrestSettingManager is Ownable2StepUpgradeable {
+contract GatewaySettingManager is Ownable2StepUpgradeable {
 	uint256 internal MAX_BPS;
 	uint64 internal protocolFeePercent;
 	address internal treasuryAddress;
 	address internal _aggregatorAddress;
-	bytes internal _aggregator;
 
 	// this should decrease if more slots are needed on this contract to avoid collisions with base contract
 	uint256[50] private __gap;
@@ -30,9 +29,8 @@ contract PaycrestSettingManager is Ownable2StepUpgradeable {
 		bytes32 indexed currency,
 		SharedStructs.Institution[] institutions
 	);
-	event ProtocolFeesUpdated(uint64 protocolFee);
+	event ProtocolFeeUpdated(uint64 protocolFee);
 	event ProtocolAddressUpdated(bytes32 indexed what, address indexed treasuryAddress);
-	event SetAggregator(bytes indexed aggregator);
 	event SetFeeRecipient(address indexed treasuryAddress);
 
 	/* ##################################################################
@@ -48,8 +46,8 @@ contract PaycrestSettingManager is Ownable2StepUpgradeable {
 	 * - The value must not be a zero address.
 	 */
 	function settingManagerBool(bytes32 what, address value, uint256 status) external onlyOwner {
-		require(value != address(0), 'Paycrest: zero address');
-		require(status == 1 || status == 2, 'Paycrest: invalid status');
+		require(value != address(0), 'Gateway: zero address');
+		require(status == 1 || status == 2, 'Gateway: invalid status');
 		if (what == 'token') {
 			_isTokenSupported[value] = status;
 			emit SettingManagerBool(what, value, status);
@@ -80,12 +78,12 @@ contract PaycrestSettingManager is Ownable2StepUpgradeable {
 	}
 
 	/**
-	 * @dev Updates the protocol fees percentage.
-	 * @param _protocolFeePercent The new protocol fees percentage to be set.
+	 * @dev Updates the protocol fee percentage.
+	 * @param _protocolFeePercent The new protocol fee percentage to be set.
 	 */
-	function updateProtocolFees(uint64 _protocolFeePercent) external onlyOwner {
+	function updateProtocolFee(uint64 _protocolFeePercent) external onlyOwner {
 		protocolFeePercent = _protocolFeePercent;
-		emit ProtocolFeesUpdated(_protocolFeePercent);
+		emit ProtocolFeeUpdated(_protocolFeePercent);
 	}
 
 	/**
@@ -96,28 +94,19 @@ contract PaycrestSettingManager is Ownable2StepUpgradeable {
 	 * - The value must not be a zero address.
 	 */
 	function updateProtocolAddress(bytes32 what, address value) external onlyOwner {
-		require(value != address(0), 'Paycrest: zero address');
+		require(value != address(0), 'Gateway: zero address');
 		bool updated;
 		if (what == 'treasury') {
-			require(treasuryAddress != value, 'Paycrest: treasury address already set');
+			require(treasuryAddress != value, 'Gateway: treasury address already set');
 			treasuryAddress = value;
 			updated = true;
 		} else if (what == 'aggregator') {
-			require(_aggregatorAddress != value, 'Paycrest: aggregator address already set');
+			require(_aggregatorAddress != value, 'Gateway: aggregator address already set');
 			_aggregatorAddress = value;
 			updated = true;
 		}
 		if (updated) {
 			emit ProtocolAddressUpdated(what, value);
 		}
-	}
-
-	/**
-	 * @dev Updates the protocol aggregator.
-	 * @param aggregator The new aggregator to be set.
-	 */
-	function updateProtocolAggregator(bytes calldata aggregator) external onlyOwner {
-		_aggregator = aggregator;
-		emit SetAggregator(aggregator);
 	}
 }
