@@ -4,7 +4,7 @@ import { NETWORKS } from "./config";
 const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
 
 async function main() {
-  const proxyContractAddress = networkConfig.PAYCREST_CONTRACT;
+  const proxyContractAddress = networkConfig.GATEWAY_CONTRACT;
   const factory = await ethers.getContractFactory("Gateway");
   const contract = await upgrades.upgradeProxy(
     proxyContractAddress,

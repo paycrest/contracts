@@ -98,6 +98,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       "base": BASESCAN_API_KEY!,
+      "baseSepolia": BASESCAN_API_KEY!,
       arbitrumOne: ARBISCAN_API_KEY!,
       bsc: BSCSCAN_API_KEY!,
       polygon: POLYGONSCAN_API_KEY!,
@@ -113,6 +114,14 @@ const config: HardhatUserConfig = {
           browserURL: "https://basescan.org",
         },
       },
+      {
+        network: "baseSepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api",
+          browserURL: "https://sepolia.basescan.org",
+        },
+      }
     ],
   },
 };
@@ -139,10 +148,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
       console.log(
           "%s (%i ETH)",
           account.address,
-          // hre.ethers.utils.formatEther(
+          hre.ethers.utils.formatEther(
               // getBalance returns wei amount, format to ETH amount
               await provider.getBalance(account.address)
-          // )
+          )
       );
   }
 });

@@ -44,6 +44,7 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 <table>
   <thead>
     <tr>
+      <th>Network</th>
       <th>Contracts</th>
       <th>Address</th>
     </tr>

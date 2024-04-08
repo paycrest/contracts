@@ -67,7 +67,7 @@ export async function getContracts(): Promise<any> {
 
   // Get contract instances
   const gatewayInstance = new ethers.Contract(
-    networkConfig.PAYCREST_CONTRACT,
+    networkConfig.GATEWAY_CONTRACT,
     Gateway.abi,
     provider
   );
