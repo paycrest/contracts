@@ -39,35 +39,47 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 ```
 
 
-## Testnet Contracts (Ethereum Sepolia)
+## Testnet Contracts
 
 <table>
-  <thead>
-    <tr>
-      <th>Network</th>
-      <th>Contracts</th>
-      <th>Address</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Gateway Proxy</td>
-      <td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
-    </tr>
-    <tr>
-      <td>Gateway Implementation</td>
-      <td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
-    </tr>
-    <tr>
-      <td>Proxy Admin</td>
-      <td>0x4dE79DF01Dfc418dcCAED724c6e71a4a04D50bB7</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td></td>
-    </tr>
-    </tr>
-  </tbody>
+	<thead>
+		<tr>
+			<th>Network</th>
+			<th>Contracts</th>
+			<th>Address</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td rowspan="3">Ethereum Sepolia</td>
+			<td>Gateway Proxy</td>
+			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+		</tr>
+		<tr>
+			<td>Proxy Admin</td>
+			<td>0x4dE79DF01Dfc418dcCAED724c6e71a4a04D50bB7</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Base Sepolia</td>
+			<td>Gateway Proxy</td>
+			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+		</tr>
+		<tr>
+			<td>Proxy Admin</td>
+			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
+		</tr>
+	</tbody>
 </table>
 
 ## Testing
