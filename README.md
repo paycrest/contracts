@@ -51,7 +51,7 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 	</thead>
 	<tbody>
 		<tr>
-			<td rowspan="3">Ethereum Sepolia</td>
+			<td rowspan="2">Ethereum Sepolia</td>
 			<td>Gateway Proxy</td>
 			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
 		</tr>
@@ -63,7 +63,7 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="3">Base Sepolia</td>
+			<td rowspan="2">Base Sepolia</td>
 			<td>Gateway Proxy</td>
 			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
 		</tr>
@@ -86,7 +86,7 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 	</thead>
 	<tbody>
 		<tr>
-			<td rowspan="3">Ethereum</td>
+			<td rowspan="2">Ethereum</td>
 			<td>Gateway Proxy</td>
 			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
 		</tr>
@@ -98,7 +98,7 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="3">Arbitrum, Polygon, Base, BNB Smart Chain</td>
+			<td rowspan="2">Arbitrum, Polygon, Base, BNB Smart Chain</td>
 			<td>Gateway Proxy</td>
 			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
 		</tr>
