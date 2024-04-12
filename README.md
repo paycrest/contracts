@@ -60,10 +60,6 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
 		</tr>
 		<tr>
-			<td>Proxy Admin</td>
-			<td>0x4dE79DF01Dfc418dcCAED724c6e71a4a04D50bB7</td>
-		</tr>
-		<tr>
 			<td colspan="3"></td>
 		</tr>
 		<tr>
@@ -75,9 +71,40 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 			<td>Gateway Implementation</td>
 			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
 		</tr>
+	</tbody>
+</table>
+
+## Mainnet Contracts
+
+<table>
+	<thead>
 		<tr>
-			<td>Proxy Admin</td>
+			<th>Network</th>
+			<th>Contracts</th>
+			<th>Address</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td rowspan="3">Ethereum</td>
+			<td>Gateway Proxy</td>
 			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Arbitrum, Polygon, Base, BNB Smart Chain</td>
+			<td>Gateway Proxy</td>
+			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
 		</tr>
 	</tbody>
 </table>

@@ -14,7 +14,9 @@ async function main() {
   Object.entries(INSTITUTIONS).forEach(async ([key, value], index) => {
     const tx = await contractWithSigner.setSupportedInstitutions(
       CURRENCIES.find(currency => currency.code === ethers.utils.formatBytes32String(key))!.code,
-      INSTITUTIONS[key as keyof typeof INSTITUTIONS], {
+      INSTITUTIONS[key as keyof typeof INSTITUTIONS],
+      {
+        gasLimit: 4000000,
         nonce: currentNonce + index,
       }
     );

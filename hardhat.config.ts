@@ -148,10 +148,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
       console.log(
           "%s (%i ETH)",
           account.address,
-          hre.ethers.utils.formatEther(
+          // hre.ethers.utils.formatEther(
               // getBalance returns wei amount, format to ETH amount
               await provider.getBalance(account.address)
-          )
+          // )
       );
   }
 });
