@@ -21,6 +21,7 @@ async function contractInstance() {
       .new({
         abi: Gateway.abi,
         bytecode: Gateway.deployedBytecode,
+        name: Gateway.contractName,
         feeLimit: 1000000000,
         callValue: 0,
         userFeePercentage: 1,

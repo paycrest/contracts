@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "MockUSDT",
-  "sourceName": "contracts/mocks/MockUSDT.sol",
+  "sourceName": "contracts/mocks/MockUSDC.sol",
   "abi": [
     {
       "inputs": [],
