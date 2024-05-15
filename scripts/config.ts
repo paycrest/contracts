@@ -134,6 +134,21 @@ const NETWORKS = {
     GATEWAY_CONTRACT: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
     IMPERSONATE_ACCOUNT: "",
   },
+
+  /**
+   * @dev TRON Shasta
+   * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
+   */
+  1155: {
+    RPC_URL: `https://api.shasta.trongrid.io`,
+    SUPPORTED_TOKENS: {
+      "6TEST": "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    GATEWAY_CONTRACT: "TDJwpCwrWq6q1fU5jWxTZVaCJA1HJ4owXZ",
+    IMPERSONATE_ACCOUNT: "",
+    ADMIN_ADDRESS: "TAGu5dgdtAiP8iXpoohpKUPkE4SjbXY3of",
+  },
 };
 
 const CURRENCIES = [

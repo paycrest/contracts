@@ -1,0 +1,267 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x0358870a7d2246c928b5c47e5ba23b57e1231aa4",
+    "txHash": "6b050b259ba7376574c58d76ed65ed51ba6ec2660fd0f19489dec1e4f6de9730"
+  },
+  "proxies": [
+    {
+      "address": "0x314376445d0bd77065674c50b34e5123ed69b7ec",
+      "txHash": "0adbca79a5179d2f27173c2923ed9954f96342f980c9ce32c9266a79da978ab4",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x24a404df0bbbabafa030cd4462e4d94de6f12a46",
+      "txHash": "c5a587daffe94c490e015e1fb893acebb58070ca54625e9bc33e3c55807b0cfc",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "fc77a9dc465278e19b73fa6203ba5fa413ee940980324324d901c460897b7cc9": {
+      "address": "0x7835d8b0fdb1dc072d909dffa66918cba4374347",
+      "txHash": "f0d52a8740a989db7e910870c6a9d7ac6e861c8a7444493f0ff7f1c2509c5fcd",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_uint8",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:40"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "../@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "contract": "Ownable2StepUpgradeable",
+            "label": "_pendingOwner",
+            "type": "t_address",
+            "src": "../@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:21"
+          },
+          {
+            "contract": "Ownable2StepUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol:70"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "MAX_BPS",
+            "type": "t_uint256",
+            "src": "GatewaySettingManager.sol:14"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "protocolFeePercent",
+            "type": "t_uint64",
+            "src": "GatewaySettingManager.sol:15"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "treasuryAddress",
+            "type": "t_address",
+            "src": "GatewaySettingManager.sol:16"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "_aggregatorAddress",
+            "type": "t_address",
+            "src": "GatewaySettingManager.sol:17"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "GatewaySettingManager.sol:20"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "_isTokenSupported",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "GatewaySettingManager.sol:22"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "supportedInstitutions",
+            "type": "t_mapping(t_bytes32,t_array(t_struct(Institution)1078_storage)dyn_storage)",
+            "src": "GatewaySettingManager.sol:24"
+          },
+          {
+            "contract": "GatewaySettingManager",
+            "label": "supportedInstitutionsByCode",
+            "type": "t_mapping(t_bytes32,t_struct(InstitutionByCode)1083_storage)",
+            "src": "GatewaySettingManager.sol:25"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "_paused",
+            "type": "t_bool",
+            "src": "../@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:29"
+          },
+          {
+            "contract": "PausableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "../@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol:116"
+          },
+          {
+            "contract": "Gateway",
+            "label": "order",
+            "type": "t_mapping(t_bytes32,t_struct(Order)980_storage)",
+            "src": "Gateway.sol:20"
+          },
+          {
+            "contract": "Gateway",
+            "label": "_nonce",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "Gateway.sol:21"
+          },
+          {
+            "contract": "Gateway",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "Gateway.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_bytes32,t_struct(Order)980_storage)": {
+            "label": "mapping(bytes32 => struct IGateway.Order)"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_struct(Order)980_storage": {
+            "label": "struct IGateway.Order",
+            "members": [
+              {
+                "label": "sender",
+                "type": "t_address"
+              },
+              {
+                "label": "token",
+                "type": "t_address"
+              },
+              {
+                "label": "senderFeeRecipient",
+                "type": "t_address"
+              },
+              {
+                "label": "senderFee",
+                "type": "t_uint256"
+              },
+              {
+                "label": "protocolFee",
+                "type": "t_uint256"
+              },
+              {
+                "label": "isFulfilled",
+                "type": "t_bool"
+              },
+              {
+                "label": "isRefunded",
+                "type": "t_bool"
+              },
+              {
+                "label": "refundAddress",
+                "type": "t_address"
+              },
+              {
+                "label": "currentBPS",
+                "type": "t_uint96"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_uint96": {
+            "label": "uint96"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_uint64": {
+            "label": "uint64"
+          },
+          "t_mapping(t_bytes32,t_array(t_struct(Institution)1078_storage)dyn_storage)": {
+            "label": "mapping(bytes32 => struct SharedStructs.Institution[])"
+          },
+          "t_array(t_struct(Institution)1078_storage)dyn_storage": {
+            "label": "struct SharedStructs.Institution[]"
+          },
+          "t_struct(Institution)1078_storage": {
+            "label": "struct SharedStructs.Institution",
+            "members": [
+              {
+                "label": "code",
+                "type": "t_bytes32"
+              },
+              {
+                "label": "name",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_mapping(t_bytes32,t_struct(InstitutionByCode)1083_storage)": {
+            "label": "mapping(bytes32 => struct SharedStructs.InstitutionByCode)"
+          },
+          "t_struct(InstitutionByCode)1083_storage": {
+            "label": "struct SharedStructs.InstitutionByCode",
+            "members": [
+              {
+                "label": "name",
+                "type": "t_bytes32"
+              },
+              {
+                "label": "currency",
+                "type": "t_bytes32"
+              }
+            ]
+          },
+          "t_uint8": {
+            "label": "uint8"
+          }
+        },
+        "namespaces": {}
+      }
+    }
+  }
+}

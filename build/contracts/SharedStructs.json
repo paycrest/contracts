@@ -1,0 +1,371 @@
+{
+  "contractName": "SharedStructs",
+  "abi": [],
+  "bytecode": "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26474726f6e58221220cf4cd254afb7002854352753b57601ff6e6db2fbd8b382e6055018cba3f1451564736f6c63430008120033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea26474726f6e58221220cf4cd254afb7002854352753b57601ff6e6db2fbd8b382e6055018cba3f1451564736f6c63430008120033",
+  "sourceMap": "65:522:3:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "65:522:3:-:0;;;;;;;;",
+  "source": "// SPDX-License-Identifier: UNLICENSED\npragma solidity ^0.8.18;\n\nlibrary SharedStructs {\n    /**\n     * @dev Struct representing an institution.\n     * @param code The code of the institution.\n     * @param name The name of the institution.\n     */\n    struct Institution {\n        bytes32 code;\n        bytes32 name;\n    }\n\n    /**\n     * @dev Struct representing an institution by code.\n     * @param name The name of the institution.\n     * @param currency The currency of the institution.\n     */\n    struct InstitutionByCode {\n        bytes32 name;\n        bytes32 currency;\n    }\n}",
+  "sourcePath": "/Users/encryption/Downloads/projects/paycrest/paycrestContract/contracts/libraries/SharedStructs.sol",
+  "ast": {
+    "absolutePath": "/Users/encryption/Downloads/projects/paycrest/paycrestContract/contracts/libraries/SharedStructs.sol",
+    "exportedSymbols": {
+      "SharedStructs": [
+        1084
+      ]
+    },
+    "id": 1085,
+    "license": "UNLICENSED",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1073,
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".18"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "39:24:3"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "SharedStructs",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "id": 1084,
+        "linearizedBaseContracts": [
+          1084
+        ],
+        "name": "SharedStructs",
+        "nameLocation": "73:13:3",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "SharedStructs.Institution",
+            "id": 1078,
+            "members": [
+              {
+                "constant": false,
+                "id": 1075,
+                "mutability": "mutable",
+                "name": "code",
+                "nameLocation": "290:4:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1078,
+                "src": "282:12:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1074,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "282:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1077,
+                "mutability": "mutable",
+                "name": "name",
+                "nameLocation": "312:4:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1078,
+                "src": "304:12:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1076,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "304:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Institution",
+            "nameLocation": "260:11:3",
+            "nodeType": "StructDefinition",
+            "scope": 1084,
+            "src": "253:70:3",
+            "visibility": "public"
+          },
+          {
+            "canonicalName": "SharedStructs.InstitutionByCode",
+            "id": 1083,
+            "members": [
+              {
+                "constant": false,
+                "id": 1080,
+                "mutability": "mutable",
+                "name": "name",
+                "nameLocation": "548:4:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1083,
+                "src": "540:12:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1079,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "540:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1082,
+                "mutability": "mutable",
+                "name": "currency",
+                "nameLocation": "570:8:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1083,
+                "src": "562:16:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1081,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "562:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "InstitutionByCode",
+            "nameLocation": "512:17:3",
+            "nodeType": "StructDefinition",
+            "scope": 1084,
+            "src": "505:80:3",
+            "visibility": "public"
+          }
+        ],
+        "scope": 1085,
+        "src": "65:522:3",
+        "usedErrors": []
+      }
+    ],
+    "src": "39:548:3"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/encryption/Downloads/projects/paycrest/paycrestContract/contracts/libraries/SharedStructs.sol",
+    "exportedSymbols": {
+      "SharedStructs": [
+        1084
+      ]
+    },
+    "id": 1085,
+    "license": "UNLICENSED",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1073,
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".18"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "39:24:3"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "SharedStructs",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "id": 1084,
+        "linearizedBaseContracts": [
+          1084
+        ],
+        "name": "SharedStructs",
+        "nameLocation": "73:13:3",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "SharedStructs.Institution",
+            "id": 1078,
+            "members": [
+              {
+                "constant": false,
+                "id": 1075,
+                "mutability": "mutable",
+                "name": "code",
+                "nameLocation": "290:4:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1078,
+                "src": "282:12:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1074,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "282:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1077,
+                "mutability": "mutable",
+                "name": "name",
+                "nameLocation": "312:4:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1078,
+                "src": "304:12:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1076,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "304:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Institution",
+            "nameLocation": "260:11:3",
+            "nodeType": "StructDefinition",
+            "scope": 1084,
+            "src": "253:70:3",
+            "visibility": "public"
+          },
+          {
+            "canonicalName": "SharedStructs.InstitutionByCode",
+            "id": 1083,
+            "members": [
+              {
+                "constant": false,
+                "id": 1080,
+                "mutability": "mutable",
+                "name": "name",
+                "nameLocation": "548:4:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1083,
+                "src": "540:12:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1079,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "540:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1082,
+                "mutability": "mutable",
+                "name": "currency",
+                "nameLocation": "570:8:3",
+                "nodeType": "VariableDeclaration",
+                "scope": 1083,
+                "src": "562:16:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bytes32",
+                  "typeString": "bytes32"
+                },
+                "typeName": {
+                  "id": 1081,
+                  "name": "bytes32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "562:7:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "InstitutionByCode",
+            "nameLocation": "512:17:3",
+            "nodeType": "StructDefinition",
+            "scope": 1084,
+            "src": "505:80:3",
+            "visibility": "public"
+          }
+        ],
+        "scope": 1085,
+        "src": "65:522:3",
+        "usedErrors": []
+      }
+    ],
+    "src": "39:548:3"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.18+commit.f18bedfe.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "2.0.1",
+  "updatedAt": "2024-05-15T06:38:25.671Z"
+}

@@ -2,8 +2,17 @@ import readline from "readline";
 import dotenv from "dotenv";
 import { artifacts, ethers, network } from "hardhat";
 import { NETWORKS } from "./config";
+const TronWeb = require("tronweb");
 
 dotenv.config();
+
+const shastaConfig = NETWORKS[1155];
+const tronWeb = new TronWeb({
+  fullHost: shastaConfig.RPC_URL, // I am not sure tron has an other way to get it chainID, at least to the best of my search
+  headers: { "TRON-PRO-API-KEY": process.env.TRON_PRO_API_KEY },
+  privateKey: process.env.PRIVATE_KEY_SHASTA,
+});
+
 
 /**
  * Asserts that environment variables are set as expected
@@ -14,6 +23,18 @@ export const assertEnvironment = () => {
   }
   if (!process.env.TREASURY_ADDRESS) {
     console.error("Please set your TREASURY_ADDRESS in a .env file");
+  }
+};
+
+/**
+ * Asserts that environment variables are set as expected for Tron Network
+ */
+export const assertTronEnvironment = () => {
+  if (!process.env.TRON_PRO_API_KEY) {
+    console.error("Please set your TRON_PRO_API_KEY in a .env file");
+  }
+  if (!process.env.PRIVATE_KEY_SHASTA) {
+    console.error("Please set your PRIVATE_KEY_SHASTA in a .env file");
   }
 };
 
@@ -74,6 +95,26 @@ export async function getContracts(): Promise<any> {
 
   return {
     wallet,
+    gatewayInstance,
+  };
+}
+
+/**
+ * Retrieves the contract instances for TRON Network.
+ * 
+ * @returns An object containing the contract instances.
+ */
+export async function getTronContracts(): Promise<any> {
+  assertTronEnvironment();
+
+  const abi = require("../../build/contracts/Gateway.json").abi;
+
+  let gatewayInstance = await tronWeb.contract(
+    abi,
+    shastaConfig.GATEWAY_CONTRACT
+  );
+
+  return {
     gatewayInstance,
   };
 }

@@ -11,3 +11,7 @@ publicKey.txt
 cache
 # artifacts
 
+# Tron Package
+src/js/metacoin-config.js
+
+
