@@ -134,6 +134,19 @@ const NETWORKS = {
     GATEWAY_CONTRACT: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
     IMPERSONATE_ACCOUNT: "",
   },
+
+  /**
+   * @dev TRON Shasta
+   * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
+   */
+  12002: {
+    RPC_URL: `https://api.shasta.trongrid.io`,
+    SUPPORTED_TOKENS: {
+      USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    GATEWAY_CONTRACT: "TDJwpCwrWq6q1fU5jWxTZVaCJA1HJ4owXZ",
+  },
 };
 
 const CURRENCIES = [
@@ -145,7 +158,7 @@ const CURRENCIES = [
 ];
 
 const INSTITUTIONS = {
-  "NGN": [
+  NGN: [
     {
       code: ethers.utils.formatBytes32String("ABNGNGLA"),
       name: ethers.utils.formatBytes32String("ACCESS BANK"),
@@ -195,7 +208,7 @@ const INSTITUTIONS = {
       name: ethers.utils.formatBytes32String("HERITAGE BANK PLC"),
     },
     {
-      code: ethers.utils.formatBytes32String("PLNINGLA"), 
+      code: ethers.utils.formatBytes32String("PLNINGLA"),
       name: ethers.utils.formatBytes32String("KEYSTONE BANK"),
     },
     {
@@ -233,7 +246,7 @@ const INSTITUTIONS = {
     {
       code: ethers.utils.formatBytes32String("KDHLNGLA"),
       name: ethers.utils.formatBytes32String("FBNQUEST MERCHANT BANK"),
-    }, 
+    },
     {
       code: ethers.utils.formatBytes32String("FIRNNGLA"),
       name: ethers.utils.formatBytes32String("RAND MERCHANT BANK"),
@@ -265,8 +278,8 @@ const INSTITUTIONS = {
     {
       code: ethers.utils.formatBytes32String("SAHVNGPC"),
       name: ethers.utils.formatBytes32String("SAFE HAVEN MICROFINANCE BANK"),
-    }
-  ]
+    },
+  ],
 };
 
 export { NETWORKS, CURRENCIES, INSTITUTIONS };
