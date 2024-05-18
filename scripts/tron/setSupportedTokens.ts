@@ -27,20 +27,6 @@ async function main() {
       }
     }
   );
-
-  // await gatewayInstance
-  //   .settingManagerBool(
-
-  //   )
-  //   .send({
-  //     feeLimit: 100_000_000,
-  //     callValue: 0,
-  //     tokenValue: 100,
-  //     shouldPollResponse: true,
-  //   });
-  // });
-
-  // console.log(`✅ Set institutions for`);
 }
 
 main().catch((error) => {
