@@ -145,7 +145,7 @@ const NETWORKS = {
       USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
     },
     TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
-    GATEWAY_CONTRACT: "TDJwpCwrWq6q1fU5jWxTZVaCJA1HJ4owXZ",
+    GATEWAY_CONTRACT: "TAmw9Yq6axjkQV6vTH21qXJVEGwUnvVL6L",
   },
 };
 

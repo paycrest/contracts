@@ -75,14 +75,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		string calldata messageHash
 	) external whenNotPaused returns (bytes32 orderId) {
 		// checks that are required
-		_handler(
-			_token,
-			_amount,
-			_refundAddress,
-			_senderFeeRecipient,
-			_senderFee,
-			_institutionCode
-		);
+		_handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee);
 
 		// validate messageHash
 		require(bytes(messageHash).length != 0, 'InvalidMessageHash');
@@ -131,23 +124,17 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	 * @param _refundAddress The address to refund the tokens in case of cancellation.
 	 * @param _senderFeeRecipient The address of the recipient for the sender fee.
 	 * @param _senderFee The amount of the sender fee.
-	 * @param _institutionCode The code of the institution associated with the order.
 	 */
 	function _handler(
 		address _token,
 		uint256 _amount,
 		address _refundAddress,
 		address _senderFeeRecipient,
-		uint256 _senderFee,
-		bytes32 _institutionCode
+		uint256 _senderFee
 	) internal view {
 		require(_isTokenSupported[_token] == 1, 'TokenNotSupported');
 		require(_amount != 0, 'AmountIsZero');
 		require(_refundAddress != address(0), 'ThrowZeroAddress');
-		require(
-			supportedInstitutionsByCode[_institutionCode].name != bytes32(0),
-			'InvalidInstitutionCode'
-		);
 
 		if (_senderFee != 0) {
 			require(_senderFeeRecipient != address(0), 'InvalidSenderFeeRecipient');
