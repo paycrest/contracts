@@ -146,8 +146,6 @@ const NETWORKS = {
     },
     TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
     GATEWAY_CONTRACT: "TDJwpCwrWq6q1fU5jWxTZVaCJA1HJ4owXZ",
-    IMPERSONATE_ACCOUNT: "",
-    ADMIN_ADDRESS: "TAGu5dgdtAiP8iXpoohpKUPkE4SjbXY3of",
   },
 };
 

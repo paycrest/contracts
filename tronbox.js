@@ -1,4 +1,6 @@
 const port = process.env.HOST_PORT || 9090;
+import dotenv from "dotenv";
+dotenv.config();
 
 module.exports = {
   networks: {
@@ -17,8 +19,7 @@ module.exports = {
     //   network_id: "1",
     // },
     shasta: {
-      privateKey:
-        "3bf7d158422f1c59f1642c241ba9dbf5062e5242e7636d00e7b24a0b262e5dec",
+      privateKey: process.env.PRIVATE_KEY_SHASTA,
       userFeePercentage: 100,
       feeLimit: 2000 * 1e6,
       fullHost: "https://api.shasta.trongrid.io",
@@ -31,15 +32,6 @@ module.exports = {
     //   fullHost: "https://nile.trongrid.io",
     //   network_id: "3",
     // },
-    development: {
-      // For tronbox/tre docker image
-      privateKey:
-        "0000000000000000000000000000000000000000000000000000000000000001",
-      userFeePercentage: 0,
-      feeLimit: 1000 * 1e6,
-      fullHost: "http://127.0.0.1:" + port,
-      network_id: "9",
-    },
     compilers: {
       solc: {
         version: "0.8.18",
@@ -47,11 +39,5 @@ module.exports = {
     },
   },
   // solc compiler optimize
-  solc: {
-    //   optimizer: {
-    //     enabled: true,
-    //     runs: 200
-    //   },
-    //   evmVersion: 'istanbul'
-  },
+  solc: {},
 };
