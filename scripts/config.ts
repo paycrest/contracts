@@ -139,10 +139,10 @@ const NETWORKS = {
    * @dev TRON Shasta
    * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
    */
-  1155: {
+  12002: {
     RPC_URL: `https://api.shasta.trongrid.io`,
     SUPPORTED_TOKENS: {
-      "6TEST": "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
+      "USDT": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
     },
     TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
     GATEWAY_CONTRACT: "TDJwpCwrWq6q1fU5jWxTZVaCJA1HJ4owXZ",
