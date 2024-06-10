@@ -1,5 +1,5 @@
-const port = process.env.HOST_PORT || 9090;
-require('dotenv').config();
+const dotenv = require ("dotenv");
+dotenv.config();
 
 module.exports = {
   networks: {
@@ -18,7 +18,7 @@ module.exports = {
     //   network_id: "1",
     // },
     shasta: {
-      privateKey: process.env.PRIVATE_KEY_SHASTA,
+      privateKey: process.env.DEPLOYER_PRIVATE_KEY_TRON,
       userFeePercentage: 100,
       feeLimit: 2000 * 1e6,
       fullHost: "https://api.shasta.trongrid.io",

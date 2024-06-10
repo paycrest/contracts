@@ -158,7 +158,7 @@ const CURRENCIES = [
 ];
 
 const INSTITUTIONS = {
-  "NGN": [
+  NGN: [
     {
       code: ethers.utils.formatBytes32String("ABNGNGLA"),
       name: ethers.utils.formatBytes32String("ACCESS BANK"),
@@ -208,7 +208,7 @@ const INSTITUTIONS = {
       name: ethers.utils.formatBytes32String("HERITAGE BANK PLC"),
     },
     {
-      code: ethers.utils.formatBytes32String("PLNINGLA"), 
+      code: ethers.utils.formatBytes32String("PLNINGLA"),
       name: ethers.utils.formatBytes32String("KEYSTONE BANK"),
     },
     {
@@ -246,7 +246,7 @@ const INSTITUTIONS = {
     {
       code: ethers.utils.formatBytes32String("KDHLNGLA"),
       name: ethers.utils.formatBytes32String("FBNQUEST MERCHANT BANK"),
-    }, 
+    },
     {
       code: ethers.utils.formatBytes32String("FIRNNGLA"),
       name: ethers.utils.formatBytes32String("RAND MERCHANT BANK"),
@@ -278,8 +278,8 @@ const INSTITUTIONS = {
     {
       code: ethers.utils.formatBytes32String("SAHVNGPC"),
       name: ethers.utils.formatBytes32String("SAFE HAVEN MICROFINANCE BANK"),
-    }
-  ]
+    },
+  ],
 };
 
 export { NETWORKS, CURRENCIES, INSTITUTIONS };

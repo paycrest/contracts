@@ -29,10 +29,16 @@ const tronWeb = new TronWeb({
  */
 export const assertEnvironment = () => {
   if (!process.env.DEPLOYER_PRIVATE_KEY) {
-    console.error("Please set your DEPLOYER_PRIVATE_KEY in a .env file");
+    console.error("Please set DEPLOYER_PRIVATE_KEY in a .env file");
+    process.exit(1); // Kill the process if DEPLOYER_PRIVATE_KEY is not set
   }
   if (!process.env.TREASURY_ADDRESS) {
-    console.error("Please set your TREASURY_ADDRESS in a .env file");
+    console.error("Please set TREASURY_ADDRESS in a .env file");
+    process.exit(1); // Kill the process if TREASURY_ADDRESS is not set
+  }
+  if (!process.env.AGGREGATOR_ADDRESS) {
+    console.error("Please set AGGREGATOR_ADDRESS in a .env file");
+    process.exit(1); // Kill the process if AGGREGATOR_ADDRESS is not set
   }
 };
 
@@ -41,10 +47,20 @@ export const assertEnvironment = () => {
  */
 export const assertTronEnvironment = () => {
   if (!process.env.TRON_PRO_API_KEY) {
-    console.error("Please set your TRON_PRO_API_KEY in a .env file");
+    console.error("Please set TRON_PRO_API_KEY in a .env file");
+    process.exit(1); // Kill the process if TRON_PRO_API_KEY is not set
   }
-  if (!process.env.PRIVATE_KEY_SHASTA) {
-    console.error("Please set your PRIVATE_KEY_SHASTA in a .env file");
+  if (!process.env.DEPLOYER_PRIVATE_KEY_TRON) {
+    console.error("Please set DEPLOYER_PRIVATE_KEY_TRON in a .env file");
+    process.exit(1); // Kill the process if DEPLOYER_PRIVATE_KEY_TRON is not set
+  }
+  if (!process.env.TREASURY_ADDRESS_TRON) {
+    console.error("Please set TREASURY_ADDRESS_TRON in a .env file");
+    process.exit(1); // Kill the process if TREASURY_ADDRESS_TRON is not set
+  }
+  if (!process.env.AGGREGATOR_ADDRESS_TRON) {
+    console.error("Please set AGGREGATOR_ADDRESS_TRON in a .env file");
+    process.exit(1); // Kill the process if AGGREGATOR_ADDRESS_TRON is not set
   }
 };
 
