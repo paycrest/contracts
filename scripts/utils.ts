@@ -104,9 +104,10 @@ export async function getContracts(): Promise<any> {
   );
 
   return {
-    wallet,
-    gatewayInstance,
-  };
+		wallet,
+		gatewayInstance,
+		tronWeb,
+	};
 }
 
 /**
@@ -118,14 +119,14 @@ export async function getTronContracts(): Promise<any> {
   assertTronEnvironment();
   const Gateway = await artifacts.readArtifact("Gateway");
 
-  // const abi = require("../../build/contracts/Gateway.json").abi;
-
+  const gatewayContractAddress = shastaConfig.GATEWAY_CONTRACT;
   let gatewayInstance = await tronWeb.contract(
-    Gateway.abi,
-    shastaConfig.GATEWAY_CONTRACT
-  );
+		Gateway.abi,
+		gatewayContractAddress
+	);
 
   return {
-    gatewayInstance,
-  };
+		gatewayInstance,
+		gatewayContractAddress,
+	};
 }
