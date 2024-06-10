@@ -7,22 +7,23 @@ const MAX_BPS = BigNumber.from("100000");
 const FEE_BPS = BigNumber.from("500");
 
 const Errors = {
-  Ownable: {
-    onlyOwner: "Ownable: caller is not the owner",
-  },
+	Ownable: {
+		onlyOwner: "Ownable: caller is not the owner",
+	},
 
-  Gateway: {
-    OnlyAggregator: "OnlyAggregator",
-    TokenNotSupported: "TokenNotSupported",
-    AmountIsZero: "AmountIsZero",
-    ThrowZeroAddress: "ThrowZeroAddress",
-    InvalidSigner: "InvalidSigner",
-    Unsupported: "Unsupported",
-    OrderFulfilled: "OrderFulfilled",
-    OrderRefunded: "OrderRefunded",
-    UnableToProcessRewards: "UnableToProcessRewards",
-    InvalidInstitutionCode: "InvalidInstitutionCode",
-  }
+	Gateway: {
+		OnlyAggregator: "OnlyAggregator",
+		TokenNotSupported: "TokenNotSupported",
+		AmountIsZero: "AmountIsZero",
+		ThrowZeroAddress: "ThrowZeroAddress",
+		InvalidSigner: "InvalidSigner",
+		Unsupported: "Unsupported",
+		OrderFulfilled: "OrderFulfilled",
+		OrderRefunded: "OrderRefunded",
+		UnableToProcessRewards: "UnableToProcessRewards",
+		InvalidInstitutionCode: "InvalidInstitutionCode",
+		Allowance: "ERC20: insufficient allowance",
+	},
 };
 
 const Events = {

@@ -412,7 +412,7 @@ describe("Gateway create order", function () {
     );
   });
 
-  it("Should revert when creating order with invalid supported institutions", async function () {
+  it("Should revert when creating order with insufficient allowance", async function () {
     const ret = await setSupportedInstitutions(this.gateway, this.deployer);
     const fee = ethers.utils.formatBytes32String("fee");
 
@@ -448,19 +448,19 @@ describe("Gateway create order", function () {
     const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
 
     await expect(
-      this.gateway
-        .connect(this.sender)
-        .createOrder(
-          this.mockUSDT.address,
-          this.mintAmount,
-          invalidInstitutionCode,
-          rate,
-          this.sender.address,
-          this.senderFee,
-          this.alice.address,
-          messageHash.toString()
-        )
-    ).to.be.revertedWith(Errors.Gateway.InvalidInstitutionCode);
+			this.gateway
+				.connect(this.sender)
+				.createOrder(
+					this.mockUSDT.address,
+					this.mintAmount,
+					invalidInstitutionCode,
+					rate,
+					this.sender.address,
+					this.senderFee,
+					this.alice.address,
+					messageHash.toString()
+				)
+		).to.be.revertedWith(Errors.Gateway.Allowance);
 
     [
       this.seller,
