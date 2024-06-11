@@ -8,21 +8,10 @@ dotenv.config();
 
 const shastaConfig = NETWORKS[12002];
 const tronWeb = new TronWeb({
-  fullHost: shastaConfig.RPC_URL, // I am not sure tron has an other way to get it chainID, at least to the best of my search
-  headers: { "TRON-PRO-API-KEY": process.env.TRON_PRO_API_KEY },
-  privateKey: process.env.PRIVATE_KEY_SHASTA,
+	fullHost: shastaConfig.RPC_URL, // I am not sure tron has an other way to get it chainID, at least to the best of my search
+	headers: { "TRON-PRO-API-KEY": process.env.TRON_PRO_API_KEY },
+	privateKey: process.env.DEPLOYER_PRIVATE_KEY_TRON,
 });
-
-// const rpcProvider = "https://api.shasta.trongrid.io/jsonrpc";
-// const HttpProvider = TronWeb.providers.HttpProvider;
-// const fullNode = new HttpProvider(rpcProvider);
-// const solidityNode = new HttpProvider(rpcProvider);
-// const eventServer = new HttpProvider(rpcProvider);
-// const privateKey = process.env.PRIVATE_KEY_SHASTA;
-// const tronWeb = new TronWeb(fullNode, solidityNode, eventServer, privateKey);
-// tronWeb.setHeader({ "TRON-PRO-API-KEY": process.env.PRIVATE_KEY_SHASTA });
-
-
 
 /**
  * Asserts that environment variables are set as expected
@@ -134,13 +123,12 @@ export async function getContracts(): Promise<any> {
 export async function getTronContracts(): Promise<any> {
   assertTronEnvironment();
   const Gateway = await artifacts.readArtifact("Gateway");
-
+  
   const gatewayContractAddress = shastaConfig.GATEWAY_CONTRACT;
   let gatewayInstance = await tronWeb.contract(
-		Gateway.abi,
+    Gateway.abi,
 		gatewayContractAddress
-	);
-
+    );
   return {
 		gatewayInstance,
 		gatewayContractAddress,
