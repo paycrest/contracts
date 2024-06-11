@@ -3,8 +3,6 @@ pragma solidity ^0.8.18;
 
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import {SharedStructs} from '../libraries/SharedStructs.sol';
-
 /**
  * @title IGateway
  * @notice Interface for the Gateway contract.
@@ -20,7 +18,6 @@ interface IGateway {
 	 * @param amount The amount of the deposit.
 	 * @param orderId The ID of the order.
 	 * @param rate The rate at which the deposit is made.
-	 * @param institutionCode The code of the institution.
 	 * @param messageHash The hash of the message.
 	 */
 	event OrderCreated(
@@ -30,7 +27,6 @@ interface IGateway {
 		uint256 protocolFee,
 		bytes32 orderId,
 		uint256 rate,
-		bytes32 institutionCode,
 		string messageHash
 	);
 
@@ -119,7 +115,6 @@ interface IGateway {
 	 * - `_refundAddress` refund address must not be zero address.
 	 * @param _token The address of the token.
 	 * @param _amount The amount in the decimal of `_token` to be locked.
-	 * @param _institutionCode The institution code of the sender.
 	 * @param _rate The rate at which the sender intends to sell `_amount` of `_token`.
 	 * @param _senderFeeRecipient The address that will receive `_senderFee` in `_token`.
 	 * @param _senderFee The amount in the decimal of `_token` that will be paid to `_senderFeeRecipient`.
@@ -130,7 +125,6 @@ interface IGateway {
 	function createOrder(
 		address _token,
 		uint256 _amount,
-		bytes32 _institutionCode,
 		uint96 _rate,
 		address _senderFeeRecipient,
 		uint256 _senderFee,
@@ -183,22 +177,4 @@ interface IGateway {
 	 * @return max_bps The maximum basis points.
 	 */
 	function getFeeDetails() external view returns (uint64 protocolReward, uint256 max_bps);
-
-	/**
-	 * @notice Gets the details of a supported institution by code.
-	 * @param _code The institution code.
-	 * @return InstitutionByCode The institution details.
-	 */
-	function getSupportedInstitutionByCode(
-		bytes32 _code
-	) external view returns (SharedStructs.InstitutionByCode memory);
-
-	/**
-	 * @notice Gets the details of supported institutions by currency.
-	 * @param _currency The currency code.
-	 * @return Institutions An array of institutions.
-	 */
-	function getSupportedInstitutions(
-		bytes32 _currency
-	) external view returns (SharedStructs.Institution[] memory);
 }
