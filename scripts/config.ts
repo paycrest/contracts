@@ -79,6 +79,19 @@ const NETWORKS = {
     IMPERSONATE_ACCOUNT: "",
   },
 
+  /**
+   * @dev Tron Mainnet
+   * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
+   */
+  12001: {
+    RPC_URL: `https://api.trongrid.io`,
+    SUPPORTED_TOKENS: {
+      USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+    },
+    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+    GATEWAY_CONTRACT: "TAmw9Yq6axjkQV6vTH21qXJVEGwUnvVL6L",
+  },
+
   /////////////////////////////////
   // Testnets
   /////////////////////////////////
@@ -142,7 +155,7 @@ const NETWORKS = {
   12002: {
     RPC_URL: `https://api.shasta.trongrid.io`,
     SUPPORTED_TOKENS: {
-      USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+      USDT: "TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs",
     },
     TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
     GATEWAY_CONTRACT: "TAmw9Yq6axjkQV6vTH21qXJVEGwUnvVL6L",
