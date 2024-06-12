@@ -5,6 +5,7 @@ import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 
 import {GatewaySettingManager} from './GatewaySettingManager.sol';
 import {IGateway, IERC20} from './interfaces/IGateway.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title Gateway
@@ -88,7 +89,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
 
 		// update transaction
-		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
+		uint256 _protocolFee = (_amount * protocolFeePercent) / (MAX_BPS + protocolFeePercent);
 		order[orderId] = Order({
 			sender: msg.sender,
 			token: _token,

@@ -4,7 +4,7 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const ZERO_AMOUNT = BigNumber.from("0");
 const ZERO_ADDRESS = ethers.constants.AddressZero;
 const MAX_BPS = BigNumber.from("100000");
-const FEE_BPS = BigNumber.from("500");
+const FEE_BPS = BigNumber.from("100");
 
 const Errors = {
 	Ownable: {

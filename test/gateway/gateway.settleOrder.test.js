@@ -30,16 +30,16 @@ describe("Gateway settle order", function () {
 
 		({ gateway, mockUSDT } = await gatewayFixture());
 
-		this.mintAmount = ethers.utils.parseEther("1000100");
-		this.orderAmount = ethers.utils.parseEther("1000000");
-		this.protocolFee = ethers.utils.parseEther("5000");
-		this.senderFee = ethers.utils.parseEther("100");
+		this.mintAmount = ethers.utils.parseEther("27027000");
+		this.orderAmount = ethers.utils.parseEther("27027000");
+		this.protocolFee = ethers.utils.parseEther("27000");
+		this.senderFee = ethers.utils.parseEther("0");
 
-		this.liquidityProviderAmount = ethers.utils.parseEther("995000");
-		this.protocolFeeAmount = ethers.utils.parseEther("5000");
+		this.liquidityProviderAmount = ethers.utils.parseEther("27000000");
+		this.protocolFeeAmount = ethers.utils.parseEther("27000");
 
-		// charge 10% as protocol fee
-		const protocolFeePercent = BigNumber.from(10_000);
+		// charge 0.1% as protocol fee
+		const protocolFeePercent = BigNumber.from(100);
 
 		await expect(
 			gateway.connect(this.deployer).updateProtocolFee(protocolFeePercent)

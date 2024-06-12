@@ -36,10 +36,10 @@ describe("Gateway create order", function () {
 		this.mockUSDT = mockUSDT;
 		this.gateway = gateway;
 
-		this.mintAmount = ethers.utils.parseEther("1000100");
-		this.orderAmount = ethers.utils.parseEther("1000000");
-		this.protocolFee = ethers.utils.parseEther("5000");
-		this.senderFee = ethers.utils.parseEther("100");
+		this.mintAmount = ethers.utils.parseEther("27027000");
+		this.orderAmount = ethers.utils.parseEther("27027000");
+		this.protocolFee = ethers.utils.parseEther("27000");
+		this.senderFee = ethers.utils.parseEther("0");
 		await this.mockUSDT.connect(this.alice).mint(this.mintAmount);
 		await this.mockDAI.connect(this.alice).mint(this.mintAmount);
 		await this.mockUSDT
@@ -409,7 +409,7 @@ describe("Gateway create order", function () {
 
 		await this.mockUSDT
 			.connect(this.sender)
-			.approve(this.gateway.address, this.mintAmount);
+			.approve(this.gateway.address, this.protocolFee);
 		const rate = 750;
 		const data = [
 			{ bank_account: "09090990901" },
