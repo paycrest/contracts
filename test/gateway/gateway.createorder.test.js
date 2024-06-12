@@ -401,7 +401,6 @@ describe("Gateway create order", function () {
 	});
 
 	it("Should revert when creating order with insufficient allowance", async function () {
-		const ret = await getSupportedInstitutions();
 		const fee = ethers.utils.formatBytes32String("fee");
 
 		await this.gateway
