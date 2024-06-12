@@ -55,25 +55,29 @@ const config: HardhatUserConfig = {
     },
 
     // Testnets
+    arbitrumSepolia: {
+      url: `https://rpc.shield3.com/v3/0x66eee/${SHIELD3_API_KEY}/rpc`,
+      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+      chainId: 421614,
+      gasPrice: "auto",
+      saveDeployments: true,
+    },
     amoy: {
       url: `https://rpc.shield3.com/v3/0x13882/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
       chainId: 80002,
-      gasPrice: "auto",
       saveDeployments: true,
     },
     baseSepolia: {
       url: `https://rpc.shield3.com/v3/0x14a34/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
       chainId: 84532,
-      gasPrice: "auto",
       saveDeployments: true,
     },
     sepolia: {
       url: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
       accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
       chainId: 11155111,
-      gasPrice: "auto",
       saveDeployments: true,
     },
   },
@@ -100,8 +104,10 @@ const config: HardhatUserConfig = {
       "base": BASESCAN_API_KEY!,
       "baseSepolia": BASESCAN_API_KEY!,
       arbitrumOne: ARBISCAN_API_KEY!,
+      "arbitrumSepolia": ARBISCAN_API_KEY!,
       bsc: BSCSCAN_API_KEY!,
       polygon: POLYGONSCAN_API_KEY!,
+      "amoy": POLYGONSCAN_API_KEY!,
       mainnet: ETHERSCAN_API_KEY!,
       sepolia: ETHERSCAN_API_KEY!,
     },
@@ -121,7 +127,23 @@ const config: HardhatUserConfig = {
           apiURL: "https://api-sepolia.basescan.org/api",
           browserURL: "https://sepolia.basescan.org",
         },
-      }
+      },
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io",
+        },
+      },
+      {
+        network: "amoy",
+        chainId: 80002,
+        urls: {
+          apiURL: "https://api-amoy.polygonscan.com/api",
+          browserURL: "https://amoy.polygonscan.com",
+        },
+      },
     ],
   },
 };
