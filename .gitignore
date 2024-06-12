@@ -1,5 +1,6 @@
 node_modules
 .env
+.vscode
 coverage
 coverage.json
 typechain
@@ -10,4 +11,8 @@ publicKey.txt
 # Hardhat files
 cache
 # artifacts
+
+# Tron Package
+src/js/metacoin-config.js
+
 

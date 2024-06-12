@@ -8,27 +8,18 @@ pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol';
 
-import {SharedStructs} from './libraries/SharedStructs.sol';
-
 contract GatewaySettingManager is Ownable2StepUpgradeable {
 	uint256 internal MAX_BPS;
 	uint64 internal protocolFeePercent;
 	address internal treasuryAddress;
 	address internal _aggregatorAddress;
+	mapping(address => uint256) internal _isTokenSupported;
 
 	// this should decrease if more slots are needed on this contract to avoid collisions with base contract
 	uint256[50] private __gap;
 
-	mapping(address => uint256) internal _isTokenSupported;
-
-	mapping(bytes32 => SharedStructs.Institution[]) internal supportedInstitutions;
-	mapping(bytes32 => SharedStructs.InstitutionByCode) internal supportedInstitutionsByCode;
 
 	event SettingManagerBool(bytes32 indexed what, address indexed value, uint256 status);
-	event SupportedInstitutionsUpdated(
-		bytes32 indexed currency,
-		SharedStructs.Institution[] institutions
-	);
 	event ProtocolFeeUpdated(uint64 protocolFee);
 	event ProtocolAddressUpdated(bytes32 indexed what, address indexed treasuryAddress);
 	event SetFeeRecipient(address indexed treasuryAddress);
@@ -52,29 +43,6 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 			_isTokenSupported[value] = status;
 			emit SettingManagerBool(what, value, status);
 		}
-	}
-
-	/**
-	 * @dev Sets the supported institutions for a specific currency.
-	 * @param currency The currency for which the institutions are being set.
-	 * @param institutions The array of institutions to be set.
-	 */
-	function setSupportedInstitutions(
-		bytes32 currency,
-		SharedStructs.Institution[] memory institutions
-	) external onlyOwner {
-		delete supportedInstitutions[currency];
-		for (uint i; i < institutions.length; ) {
-			supportedInstitutions[currency].push(institutions[i]);
-			supportedInstitutionsByCode[institutions[i].code] = SharedStructs.InstitutionByCode({
-				name: institutions[i].name,
-				currency: currency
-			});
-			unchecked {
-				++i;
-			}
-		}
-		emit SupportedInstitutionsUpdated(currency, supportedInstitutions[currency]);
 	}
 
 	/**

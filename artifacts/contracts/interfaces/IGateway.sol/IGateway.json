@@ -44,12 +44,6 @@
         },
         {
           "indexed": false,
-          "internalType": "bytes32",
-          "name": "institutionCode",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
           "internalType": "string",
           "name": "messageHash",
           "type": "string"
@@ -138,11 +132,6 @@
           "internalType": "uint256",
           "name": "_amount",
           "type": "uint256"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "_institutionCode",
-          "type": "bytes32"
         },
         {
           "internalType": "uint96",
@@ -265,68 +254,6 @@
           "internalType": "struct IGateway.Order",
           "name": "",
           "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "_code",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getSupportedInstitutionByCode",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "name",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "currency",
-              "type": "bytes32"
-            }
-          ],
-          "internalType": "struct SharedStructs.InstitutionByCode",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "_currency",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getSupportedInstitutions",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "code",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "name",
-              "type": "bytes32"
-            }
-          ],
-          "internalType": "struct SharedStructs.Institution[]",
-          "name": "",
-          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",

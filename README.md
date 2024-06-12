@@ -29,8 +29,6 @@ npx hardhat run scripts/upgrade.ts --network <network>
 Update network settings, currencies, and supported institutions in `scripts/config.ts`
 
 ```bash
-npx hardhat run scripts/setSupportedInstitutions.ts --network <network>
-
 npx hardhat run scripts/setSupportedTokens.ts --network <network>
 
 npx hardhat run scripts/updateProtocolAddresses.ts --network <network>
