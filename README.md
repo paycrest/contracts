@@ -16,12 +16,18 @@ Deployment is done using Hardhat scripts
 npx hardhat run scripts/deploy.ts --network <network>
 
 npx hardhat verify --network <network> <contract_address>
+
+# for Tron network,
+tronbox migrate -f 1 --to 1 --network <network>
 ```
 
 #### Upgrade proxy contract
 
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
+
+# for Tron network,
+tronbox migrate -f 2 --to 2 --network <network>
 ```
 
 #### Owner configurations
@@ -34,6 +40,13 @@ npx hardhat run scripts/setSupportedTokens.ts --network <network>
 npx hardhat run scripts/updateProtocolAddresses.ts --network <network>
 
 npx hardhat run scripts/updateProtocolFee.ts --network <network>
+
+# for Tron network,
+npx hardhat run scripts/tron/setSupportedTokens.ts
+
+npx hardhat run scripts/tron/updateProtocolAddresses.ts
+
+npx hardhat run scripts/tron/updateProtocolFee.ts
 ```
 
 
@@ -68,6 +81,18 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 		<tr>
 			<td>Gateway Implementation</td>
 			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Tron Shasta</td>
+			<td>Gateway Proxy</td>
+			<td>TRpBoQ3mW8ePtJfbQq8FEcKNmCV5rioEL7</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>TFhQCQ3BUMTHRHy3hbitscQjzTjpHycdhZ</td>
 		</tr>
 	</tbody>
 </table>
