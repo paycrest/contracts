@@ -21,7 +21,6 @@ const Errors = {
 		OrderFulfilled: "OrderFulfilled",
 		OrderRefunded: "OrderRefunded",
 		UnableToProcessRewards: "UnableToProcessRewards",
-		InvalidInstitutionCode: "InvalidInstitutionCode",
 		Allowance: "ERC20: insufficient allowance",
 	},
 };
@@ -32,7 +31,6 @@ const Events = {
 		OrderSettled: "OrderSettled",
 		OrderRefunded: "OrderRefunded",
 		SettingManagerBool: "SettingManagerBool",
-		SupportedInstitutionsUpdated: "SupportedInstitutionsUpdated",
 		ProtocolFeeUpdated: "ProtocolFeeUpdated",
 		ProtocolAddressUpdated: "ProtocolAddressUpdated",
 	},

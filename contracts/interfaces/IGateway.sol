@@ -62,22 +62,6 @@ interface IGateway {
                                 STRUCTS
     ################################################################## */
 	/**
-	 * @dev Struct representing transaction metadata.
-	 * @param identifier The identifier of the transaction.
-	 * @param institution The institution of the transaction.
-	 * @param name The name of the transaction.
-	 * @param currency The currency of the transaction.
-	 * @param liquidityProviderID The ID of the liquidity provider.
-	 */
-	struct TransactionMetadata {
-		bytes8 identifier;
-		bytes8 institution;
-		bytes8 name;
-		bytes8 currency;
-		uint256 liquidityProviderID;
-	}
-
-	/**
 	 * @dev Struct representing an order.
 	 * @param sender The address of the sender.
 	 * @param token The address of the token.

@@ -73,13 +73,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		string calldata messageHash
 	) external whenNotPaused returns (bytes32 orderId) {
 		// checks that are required
-		_handler(
-			_token,
-			_amount,
-			_refundAddress,
-			_senderFeeRecipient,
-			_senderFee
-		);
+		_handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee);
 
 		// validate messageHash
 		require(bytes(messageHash).length != 0, 'InvalidMessageHash');

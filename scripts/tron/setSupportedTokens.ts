@@ -1,6 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { getTronContracts } from "../utils";
-import { CURRENCIES, INSTITUTIONS, NETWORKS } from "../config";
+import { NETWORKS } from "../config";
 import { ethers } from "ethers";
 
 async function main() {
