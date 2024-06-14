@@ -5,7 +5,6 @@ import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 
 import {GatewaySettingManager} from './GatewaySettingManager.sol';
 import {IGateway, IERC20} from './interfaces/IGateway.sol';
-import 'hardhat/console.sol';
 
 /**
  * @title Gateway
