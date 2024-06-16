@@ -2,18 +2,54 @@ import readline from "readline";
 import dotenv from "dotenv";
 import { artifacts, ethers, network } from "hardhat";
 import { NETWORKS } from "./config";
+const TronWeb = require("tronweb");
 
 dotenv.config();
+
+const shastaConfig = NETWORKS[12002];
+const tronWeb = new TronWeb({
+	fullHost: shastaConfig.RPC_URL, // I am not sure tron has an other way to get it chainID, at least to the best of my search
+	headers: { "TRON-PRO-API-KEY": process.env.TRON_PRO_API_KEY },
+	privateKey: process.env.DEPLOYER_PRIVATE_KEY_TRON,
+});
 
 /**
  * Asserts that environment variables are set as expected
  */
 export const assertEnvironment = () => {
   if (!process.env.DEPLOYER_PRIVATE_KEY) {
-    console.error("Please set your DEPLOYER_PRIVATE_KEY in a .env file");
+    console.error("Please set DEPLOYER_PRIVATE_KEY in a .env file");
+    process.exit(1); // Kill the process if DEPLOYER_PRIVATE_KEY is not set
   }
   if (!process.env.TREASURY_ADDRESS) {
-    console.error("Please set your TREASURY_ADDRESS in a .env file");
+    console.error("Please set TREASURY_ADDRESS in a .env file");
+    process.exit(1); // Kill the process if TREASURY_ADDRESS is not set
+  }
+  if (!process.env.AGGREGATOR_ADDRESS) {
+    console.error("Please set AGGREGATOR_ADDRESS in a .env file");
+    process.exit(1); // Kill the process if AGGREGATOR_ADDRESS is not set
+  }
+};
+
+/**
+ * Asserts that environment variables are set as expected for Tron Network
+ */
+export const assertTronEnvironment = () => {
+  if (!process.env.TRON_PRO_API_KEY) {
+    console.error("Please set TRON_PRO_API_KEY in a .env file");
+    process.exit(1); // Kill the process if TRON_PRO_API_KEY is not set
+  }
+  if (!process.env.DEPLOYER_PRIVATE_KEY_TRON) {
+    console.error("Please set DEPLOYER_PRIVATE_KEY_TRON in a .env file");
+    process.exit(1); // Kill the process if DEPLOYER_PRIVATE_KEY_TRON is not set
+  }
+  if (!process.env.TREASURY_ADDRESS_TRON) {
+    console.error("Please set TREASURY_ADDRESS_TRON in a .env file");
+    process.exit(1); // Kill the process if TREASURY_ADDRESS_TRON is not set
+  }
+  if (!process.env.AGGREGATOR_ADDRESS_TRON) {
+    console.error("Please set AGGREGATOR_ADDRESS_TRON in a .env file");
+    process.exit(1); // Kill the process if AGGREGATOR_ADDRESS_TRON is not set
   }
 };
 
@@ -73,7 +109,28 @@ export async function getContracts(): Promise<any> {
   );
 
   return {
-    wallet,
-    gatewayInstance,
-  };
+		wallet,
+		gatewayInstance,
+		tronWeb,
+	};
+}
+
+/**
+ * Retrieves the contract instances for TRON Network.
+ * 
+ * @returns An object containing the contract instances.
+ */
+export async function getTronContracts(): Promise<any> {
+  assertTronEnvironment();
+  const Gateway = await artifacts.readArtifact("Gateway");
+  
+  const gatewayContractAddress = shastaConfig.GATEWAY_CONTRACT;
+  let gatewayInstance = await tronWeb.contract(
+    Gateway.abi,
+		gatewayContractAddress
+    );
+  return {
+		gatewayInstance,
+		gatewayContractAddress,
+	};
 }

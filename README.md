@@ -16,26 +16,37 @@ Deployment is done using Hardhat scripts
 npx hardhat run scripts/deploy.ts --network <network>
 
 npx hardhat verify --network <network> <contract_address>
+
+# for Tron network,
+tronbox migrate -f 1 --to 1 --network <network>
 ```
 
 #### Upgrade proxy contract
 
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
+
+# for Tron network,
+tronbox migrate -f 2 --to 2 --network <network>
 ```
 
 #### Owner configurations
 
-Update network settings, currencies, and supported institutions in `scripts/config.ts`
+Update network settings in `scripts/config.ts`
 
 ```bash
-npx hardhat run scripts/setSupportedInstitutions.ts --network <network>
-
 npx hardhat run scripts/setSupportedTokens.ts --network <network>
 
-npx hardhat run scripts/updateProtocolAddress.ts --network <network>
+npx hardhat run scripts/updateProtocolAddresses.ts --network <network>
 
 npx hardhat run scripts/updateProtocolFee.ts --network <network>
+
+# for Tron network,
+npx hardhat run scripts/tron/setSupportedTokens.ts
+
+npx hardhat run scripts/tron/updateProtocolAddresses.ts
+
+npx hardhat run scripts/tron/updateProtocolFee.ts
 ```
 
 
@@ -53,11 +64,23 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 		<tr>
 			<td rowspan="2">Ethereum Sepolia</td>
 			<td>Gateway Proxy</td>
-			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
+			<td>0xCAD53Ff499155Cc2fAA2082A85716322906886c2</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+			<td>0x5E7eC39915F6CD48829d06648F6682765846602a</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Arbitrum Sepolia</td>
+			<td>Gateway Proxy</td>
+			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -65,11 +88,23 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 		<tr>
 			<td rowspan="2">Base Sepolia</td>
 			<td>Gateway Proxy</td>
-			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
+			<td>0x847dfdAa218F9137229CF8424378871A1DA8f625</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+			<td>0xCAD53Ff499155Cc2fAA2082A85716322906886c2</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Tron Shasta</td>
+			<td>Gateway Proxy</td>
+			<td>TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>TPddrcko4ceBWZpr7zPnbPbSnkLAMjBCCm</td>
 		</tr>
 	</tbody>
 </table>
@@ -98,13 +133,49 @@ npx hardhat run scripts/updateProtocolFee.ts --network <network>
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="2">Arbitrum, Polygon, Base, BNB Smart Chain</td>
+			<td rowspan="2">Polygon</td>
 			<td>Gateway Proxy</td>
-			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
+			<td>0xfB411Cc6385Af50A562aFCb441864E9d541CDA67</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+			<td>0xafbf71A72d30f81eb66baaF904ea537fD35dd106</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Base</td>
+			<td>Gateway Proxy</td>
+			<td>0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x847dfdAa218F9137229CF8424378871A1DA8f625</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">BNB Smart Chain</td>
+			<td>Gateway Proxy</td>
+			<td>0x1FA0EE7F9410F6fa49B7AD5Da72Cf01647090028</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Arbitrum One</td>
+			<td>Gateway Proxy</td>
+			<td>0xE8bc3B607CfE68F47000E3d200310D49041148Fc</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
 		</tr>
 	</tbody>
 </table>

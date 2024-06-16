@@ -5,7 +5,6 @@ import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
 
 import {GatewaySettingManager} from './GatewaySettingManager.sol';
 import {IGateway, IERC20} from './interfaces/IGateway.sol';
-import {SharedStructs} from './libraries/SharedStructs.sol';
 
 /**
  * @title Gateway
@@ -67,7 +66,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	function createOrder(
 		address _token,
 		uint256 _amount,
-		bytes32 _institutionCode,
 		uint96 _rate,
 		address _senderFeeRecipient,
 		uint256 _senderFee,
@@ -75,14 +73,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		string calldata messageHash
 	) external whenNotPaused returns (bytes32 orderId) {
 		// checks that are required
-		_handler(
-			_token,
-			_amount,
-			_refundAddress,
-			_senderFeeRecipient,
-			_senderFee,
-			_institutionCode
-		);
+		_handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee);
 
 		// validate messageHash
 		require(bytes(messageHash).length != 0, 'InvalidMessageHash');
@@ -97,7 +88,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
 
 		// update transaction
-		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
+		uint256 _protocolFee = (_amount * protocolFeePercent) / (MAX_BPS + protocolFeePercent);
 		order[orderId] = Order({
 			sender: msg.sender,
 			token: _token,
@@ -119,7 +110,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			_protocolFee,
 			orderId,
 			_rate,
-			_institutionCode,
 			messageHash
 		);
 	}
@@ -131,23 +121,17 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	 * @param _refundAddress The address to refund the tokens in case of cancellation.
 	 * @param _senderFeeRecipient The address of the recipient for the sender fee.
 	 * @param _senderFee The amount of the sender fee.
-	 * @param _institutionCode The code of the institution associated with the order.
 	 */
 	function _handler(
 		address _token,
 		uint256 _amount,
 		address _refundAddress,
 		address _senderFeeRecipient,
-		uint256 _senderFee,
-		bytes32 _institutionCode
+		uint256 _senderFee
 	) internal view {
 		require(_isTokenSupported[_token] == 1, 'TokenNotSupported');
 		require(_amount != 0, 'AmountIsZero');
 		require(_refundAddress != address(0), 'ThrowZeroAddress');
-		require(
-			supportedInstitutionsByCode[_institutionCode].name != bytes32(0),
-			'InvalidInstitutionCode'
-		);
 
 		if (_senderFee != 0) {
 			require(_senderFeeRecipient != address(0), 'InvalidSenderFeeRecipient');
@@ -250,20 +234,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	function isTokenSupported(address _token) external view returns (bool) {
 		if (_isTokenSupported[_token] == 1) return true;
 		return false;
-	}
-
-	/** @dev See {getSupportedInstitutionByCode-IGateway}. */
-	function getSupportedInstitutionByCode(
-		bytes32 _code
-	) external view returns (SharedStructs.InstitutionByCode memory) {
-		return supportedInstitutionsByCode[_code];
-	}
-
-	/** @dev See {getSupportedInstitutions-IGateway}. */
-	function getSupportedInstitutions(
-		bytes32 _currency
-	) external view returns (SharedStructs.Institution[] memory) {
-		return supportedInstitutions[_currency];
 	}
 
 	/** @dev See {getFeeDetails-IGateway}. */
