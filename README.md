@@ -133,13 +133,49 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="2">Arbitrum, Polygon, Base, BNB Smart Chain</td>
+			<td rowspan="2">Polygon</td>
 			<td>Gateway Proxy</td>
-			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
+			<td>0xfB411Cc6385Af50A562aFCb441864E9d541CDA67</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+			<td>0xafbf71A72d30f81eb66baaF904ea537fD35dd106</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Base</td>
+			<td>Gateway Proxy</td>
+			<td>0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x847dfdAa218F9137229CF8424378871A1DA8f625</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">BNB Smart Chain</td>
+			<td>Gateway Proxy</td>
+			<td>0x1FA0EE7F9410F6fa49B7AD5Da72Cf01647090028</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="2">Arbitrum One</td>
+			<td>Gateway Proxy</td>
+			<td>0xE8bc3B607CfE68F47000E3d200310D49041148Fc</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
 		</tr>
 	</tbody>
 </table>
