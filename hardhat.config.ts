@@ -11,141 +11,163 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-let { DEPLOYER_PRIVATE_KEY, SHIELD3_API_KEY, ETHERSCAN_API_KEY, BASESCAN_API_KEY, ARBISCAN_API_KEY, BSCSCAN_API_KEY, POLYGONSCAN_API_KEY } = process.env;
+let {
+	DEPLOYER_PRIVATE_KEY,
+	SHIELD3_API_KEY,
+	ETHERSCAN_API_KEY,
+	BASESCAN_API_KEY,
+	ARBISCAN_API_KEY,
+	BSCSCAN_API_KEY,
+	POLYGONSCAN_API_KEY,
+	OPTIMISM_API,
+} = process.env;
 
 const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
 
 const config: HardhatUserConfig = {
-  namedAccounts: {
-    deployer: {
-      default: 0, // here this will by default take the first account as deployer
-    },
-  },
-  networks: {
-    // Mainnets
-    arbitrumOne: {
-      url: `https://rpc.shield3.com/v3/0xa4b1/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 42161,
-      saveDeployments: true,
-    },
-    base: {
-      url: `https://rpc.shield3.com/v3/0x2105/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 8453,
-      saveDeployments: true,
-    },
-    bsc: {
-      url: `https://rpc.shield3.com/v3/0x38/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 56,
-      saveDeployments: true,
-    },
-    polygon: {
-      url: `https://rpc.shield3.com/v3/0x89/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 137,
-      saveDeployments: true,
-    },
-    mainnet: {
-      url: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 1,
-      saveDeployments: true,
-    },
+	namedAccounts: {
+		deployer: {
+			default: 0, // here this will by default take the first account as deployer
+		},
+	},
+	networks: {
+		// Mainnets
+		arbitrumOne: {
+			url: `https://rpc.shield3.com/v3/0xa4b1/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 42161,
+			saveDeployments: true,
+		},
+		base: {
+			url: `https://rpc.shield3.com/v3/0x2105/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 8453,
+			saveDeployments: true,
+		},
+		bsc: {
+			url: `https://rpc.shield3.com/v3/0x38/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 56,
+			saveDeployments: true,
+		},
+		polygon: {
+			url: `https://rpc.shield3.com/v3/0x89/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 137,
+			saveDeployments: true,
+		},
+		mainnet: {
+			url: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 1,
+			saveDeployments: true,
+		},
+		optimisticEthereum: {
+			url: `https://rpc.shield3.com/v3/0x0a/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 10,
+			saveDeployments: true,
+		},
+		scroll: {
+			url: "https://scroll.drpc.org", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 534352,
+			saveDeployments: true,
+		},
 
-    // Testnets
-    arbitrumSepolia: {
-      url: `https://rpc.shield3.com/v3/0x66eee/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 421614,
-      gasPrice: "auto",
-      saveDeployments: true,
-    },
-    amoy: {
-      url: `https://rpc.shield3.com/v3/0x13882/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 80002,
-      saveDeployments: true,
-    },
-    baseSepolia: {
-      url: `https://rpc.shield3.com/v3/0x14a34/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 84532,
-      saveDeployments: true,
-    },
-    sepolia: {
-      url: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
-      accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
-      chainId: 11155111,
-      saveDeployments: true,
-    },
-  },
-  solidity: {
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      },
-      viaIR: true,
-    },
+		// Testnets
+		arbitrumSepolia: {
+			url: `https://rpc.shield3.com/v3/0x66eee/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 421614,
+			gasPrice: "auto",
+			saveDeployments: true,
+		},
+		amoy: {
+			url: `https://rpc.shield3.com/v3/0x13882/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 80002,
+			saveDeployments: true,
+		},
+		baseSepolia: {
+			url: `https://rpc.shield3.com/v3/0x14a34/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 84532,
+			saveDeployments: true,
+		},
+		sepolia: {
+			url: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 11155111,
+			saveDeployments: true,
+		},
+	},
+	solidity: {
+		settings: {
+			optimizer: {
+				enabled: true,
+				runs: 200,
+			},
+			viaIR: true,
+		},
 
-    compilers: [
-      {
-        version: "0.8.18",
-      },
-      {
-        version: "0.8.9",
-      },
-    ],
-  },
-  etherscan: {
-    apiKey: {
-      "base": BASESCAN_API_KEY!,
-      "baseSepolia": BASESCAN_API_KEY!,
-      arbitrumOne: ARBISCAN_API_KEY!,
-      "arbitrumSepolia": ARBISCAN_API_KEY!,
-      bsc: BSCSCAN_API_KEY!,
-      polygon: POLYGONSCAN_API_KEY!,
-      "amoy": POLYGONSCAN_API_KEY!,
-      mainnet: ETHERSCAN_API_KEY!,
-      sepolia: ETHERSCAN_API_KEY!,
-    },
-    customChains: [
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.basescan.org/api",
-          browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "baseSepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org",
-        },
-      },
-      {
-        network: "arbitrumSepolia",
-        chainId: 421614,
-        urls: {
-          apiURL: "https://api-sepolia.arbiscan.io/api",
-          browserURL: "https://sepolia.arbiscan.io",
-        },
-      },
-      {
-        network: "amoy",
-        chainId: 80002,
-        urls: {
-          apiURL: "https://api-amoy.polygonscan.com/api",
-          browserURL: "https://amoy.polygonscan.com",
-        },
-      },
-    ],
-  },
+		compilers: [
+			{
+				version: "0.8.18",
+			},
+			{
+				version: "0.8.9",
+			},
+		],
+	},
+	etherscan: {
+		apiKey: {
+			base: BASESCAN_API_KEY!,
+			baseSepolia: BASESCAN_API_KEY!,
+			arbitrumOne: ARBISCAN_API_KEY!,
+			arbitrumSepolia: ARBISCAN_API_KEY!,
+			bsc: BSCSCAN_API_KEY!,
+			polygon: POLYGONSCAN_API_KEY!,
+			amoy: POLYGONSCAN_API_KEY!,
+			mainnet: ETHERSCAN_API_KEY!,
+			sepolia: ETHERSCAN_API_KEY!,
+			optimisticEthereum: OPTIMISM_API!,
+		},
+		customChains: [
+			{
+				network: "base",
+				chainId: 8453,
+				urls: {
+					apiURL: "https://api.basescan.org/api",
+					browserURL: "https://basescan.org",
+				},
+			},
+			{
+				network: "baseSepolia",
+				chainId: 84532,
+				urls: {
+					apiURL: "https://api-sepolia.basescan.org/api",
+					browserURL: "https://sepolia.basescan.org",
+				},
+			},
+			{
+				network: "arbitrumSepolia",
+				chainId: 421614,
+				urls: {
+					apiURL: "https://api-sepolia.arbiscan.io/api",
+					browserURL: "https://sepolia.arbiscan.io",
+				},
+			},
+			{
+				network: "amoy",
+				chainId: 80002,
+				urls: {
+					apiURL: "https://api-amoy.polygonscan.com/api",
+					browserURL: "https://amoy.polygonscan.com",
+				},
+			},
+		],
+	},
 };
 
 task("flat", "Flattens and prints contracts and their dependencies (Resolves licenses)")
