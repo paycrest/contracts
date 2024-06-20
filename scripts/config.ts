@@ -89,7 +89,7 @@ const NETWORKS = {
 			USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
 		},
 		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
-		GATEWAY_CONTRACT: "TAmw9Yq6axjkQV6vTH21qXJVEGwUnvVL6L",
+		GATEWAY_CONTRACT: "THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU",
 	},
 
 	/////////////////////////////////
@@ -152,7 +152,7 @@ const NETWORKS = {
 	},
 
 	/**
-	 * @dev TRON Shasta
+	 * @dev Tron Shasta
 	 * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
 	 */
 	12002: {
