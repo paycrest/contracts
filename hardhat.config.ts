@@ -20,6 +20,7 @@ let {
 	BSCSCAN_API_KEY,
 	POLYGONSCAN_API_KEY,
 	OPTIMISM_API,
+	SCROLL_API,
 } = process.env;
 
 const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
@@ -132,6 +133,7 @@ const config: HardhatUserConfig = {
 			mainnet: ETHERSCAN_API_KEY!,
 			sepolia: ETHERSCAN_API_KEY!,
 			optimisticEthereum: OPTIMISM_API!,
+			scroll: SCROLL_API!,
 		},
 		customChains: [
 			{
@@ -140,6 +142,14 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api.basescan.org/api",
 					browserURL: "https://basescan.org",
+				},
+			},
+			{
+				network: "scroll",
+				chainId: 534352,
+				urls: {
+					apiURL: "https://api.scrollscan.com/api",
+					browserURL: "https://scrollscan.com/",
 				},
 			},
 			{
