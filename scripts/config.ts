@@ -116,7 +116,7 @@ const NETWORKS = {
 			USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
 		},
 		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
-		GATEWAY_CONTRACT: "TAmw9Yq6axjkQV6vTH21qXJVEGwUnvVL6L",
+		GATEWAY_CONTRACT: "THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU",
 	},
 
 	/////////////////////////////////
@@ -157,6 +157,7 @@ const NETWORKS = {
 		RPC_URL: `https://rpc.shield3.com/v3/0x14a34/${SHIELD3_API_KEY}/rpc`,
 		SUPPORTED_TOKENS: {
 			USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      DAI: "0x7683022d84f726a96c4a6611cd31dbf5409c0ac9",
 		},
 		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
 		GATEWAY_CONTRACT: "0x847dfdAa218F9137229CF8424378871A1DA8f625",
@@ -170,6 +171,7 @@ const NETWORKS = {
 		RPC_URL: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
 		SUPPORTED_TOKENS: {
 			"6TEST": "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
+      DAI: "0x77Ab54631BfBAE40383c62044dC30B229c7df9f5",
 		},
 		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
 		GATEWAY_CONTRACT: "0xCAD53Ff499155Cc2fAA2082A85716322906886c2",
@@ -177,7 +179,7 @@ const NETWORKS = {
 	},
 
 	/**
-	 * @dev TRON Shasta
+	 * @dev Tron Shasta
 	 * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
 	 */
 	12002: {
