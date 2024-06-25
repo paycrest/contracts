@@ -30,16 +30,21 @@ describe("Gateway settle order", function () {
 
 		({ gateway, mockUSDT } = await gatewayFixture());
 
-		this.mintAmount = ethers.utils.parseEther("27027000");
-		this.orderAmount = ethers.utils.parseEther("27027000");
-		this.protocolFee = ethers.utils.parseEther("27000");
+		this.mintAmount = ethers.utils.parseEther("27000000");
+		this.orderAmount = ethers.utils.parseEther("27000000");
+		this.protocolFee = 0;
 		this.senderFee = ethers.utils.parseEther("0");
 
-		this.liquidityProviderAmount = ethers.utils.parseEther("27000000");
-		this.protocolFeeAmount = ethers.utils.parseEther("27000");
+		//
 
 		// charge 0.1% as protocol fee
 		const protocolFeePercent = BigNumber.from(100);
+
+		this.protocolFeeAmount = protocolFeePercent
+			.mul(this.orderAmount)
+			.div(100_000);
+
+		this.liquidityProviderAmount = this.orderAmount.sub(this.protocolFeeAmount);
 
 		await expect(
 			gateway.connect(this.deployer).updateProtocolFee(protocolFeePercent)
@@ -154,7 +159,7 @@ describe("Gateway settle order", function () {
 			.withArgs(
 				this.sender.address,
 				mockUSDT.address,
-				BigNumber.from(this.orderAmount).sub(this.protocolFee),
+				this.orderAmount,
 				this.protocolFee,
 				orderId,
 				rate,
@@ -263,8 +268,8 @@ describe("Gateway settle order", function () {
 			.withArgs(
 				this.sender.address,
 				mockUSDT.address,
-				BigNumber.from(this.orderAmount).sub(this.protocolFee),
-				this.protocolFee,
+				this.orderAmount,
+				0,
 				orderId,
 				rate,
 				messageHash.toString()
