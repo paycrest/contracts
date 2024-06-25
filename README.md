@@ -177,14 +177,17 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td>Gateway Implementation</td>
 			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
 		</tr>
+				<tr>
+			<td colspan="3"></td>
+		</tr>
 		<tr>
-			<td rowspan="2">Optimism Ethereum</td>
+			<td rowspan="2">Tron</td>
 			<td>Gateway Proxy</td>
-			<td>0x431b48b30485Bc9b153599b32b5DdC8e1003AfDD</td>
+			<td>THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x7bA90e38327A4B82D8BF6B481C1b2Ed14228E91A</td>
+			<td>TDhBvHbnF8nN7YctokpdZAVPcmBx2Jrn2d</td>
 		</tr>
 	</tbody>
 </table>
