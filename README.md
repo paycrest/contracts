@@ -177,17 +177,27 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td>Gateway Implementation</td>
 			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
 		</tr>
-				<tr>
-			<td colspan="3"></td>
-		</tr>
 		<tr>
-			<td rowspan="2">Tron</td>
+			<td rowspan="2">Optimism Ethereum</td>
 			<td>Gateway Proxy</td>
-			<td>THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU</td>
+			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+			<td>Gateway Admin</td>
+			<td>0xb9B5280AB99E48a9662D4740B1e1398abdf87b6D</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>TDhBvHbnF8nN7YctokpdZAVPcmBx2Jrn2d</td>
+			<td>0x7bA90e38327A4B82D8BF6B481C1b2Ed14228E91A</td>
+		</tr>
+		<tr>
+			<td rowspan="2">Scroll</td>
+			<td>Gateway Proxy</td>
+			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
+			<td>Gateway Admin</td>
+			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
 		</tr>
 	</tbody>
 </table>
