@@ -88,7 +88,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
 
 		// update transaction
-		uint256 _protocolFee = (_amount * protocolFeePercent) / (MAX_BPS + protocolFeePercent);
+		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
 		order[orderId] = Order({
 			sender: msg.sender,
 			token: _token,
@@ -99,7 +99,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			isRefunded: false,
 			refundAddress: _refundAddress,
 			currentBPS: uint64(MAX_BPS),
-			amount: _amount - _protocolFee
+			amount: _amount
 		});
 
 		// emit order created event
@@ -176,15 +176,18 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 				);
 			}
 
-			if (order[_orderId].protocolFee != 0) {
-				// transfer protocol fee
-				IERC20(token).transfer(treasuryAddress, order[_orderId].protocolFee);
-			}
 		}
 
 		// transfer to liquidity provider
 		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / MAX_BPS;
 		order[_orderId].amount -= liquidityProviderAmount;
+
+		uint256 protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
+		liquidityProviderAmount -= protocolFee;
+
+		// transfer protocol fee
+		IERC20(token).transfer(treasuryAddress, protocolFee);
+
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event

@@ -30,16 +30,18 @@ describe("Gateway settle order", function () {
 
 		({ gateway, mockUSDT } = await gatewayFixture());
 
-		this.mintAmount = ethers.utils.parseEther("27027000");
-		this.orderAmount = ethers.utils.parseEther("27027000");
-		this.protocolFee = ethers.utils.parseEther("27000");
+		this.mintAmount = ethers.utils.parseEther("27000000");
+		this.orderAmount = ethers.utils.parseEther("27000000");
 		this.senderFee = ethers.utils.parseEther("0");
-
-		this.liquidityProviderAmount = ethers.utils.parseEther("27000000");
-		this.protocolFeeAmount = ethers.utils.parseEther("27000");
-
+		
+		//
+		
 		// charge 0.1% as protocol fee
 		const protocolFeePercent = BigNumber.from(100);
+		
+		this.protocolFee = ethers.utils.parseEther("27000")
+
+		this.liquidityProviderAmount = this.orderAmount.sub(this.protocolFee);
 
 		await expect(
 			gateway.connect(this.deployer).updateProtocolFee(protocolFeePercent)
@@ -154,7 +156,7 @@ describe("Gateway settle order", function () {
 			.withArgs(
 				this.sender.address,
 				mockUSDT.address,
-				BigNumber.from(this.orderAmount).sub(this.protocolFee),
+				this.orderAmount,
 				this.protocolFee,
 				orderId,
 				rate,
@@ -182,9 +184,7 @@ describe("Gateway settle order", function () {
 		expect(this.isRefunded).to.eq(false);
 		expect(this.refundAddress).to.eq(this.alice.address);
 		expect(this.currentBPS).to.eq(MAX_BPS);
-		expect(this.amount).to.eq(
-			BigNumber.from(this.orderAmount).sub(this.protocolFee)
-		);
+		expect(this.amount).to.eq(BigNumber.from(this.orderAmount));
 
 		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
 
@@ -206,7 +206,7 @@ describe("Gateway settle order", function () {
 			this.liquidityProviderAmount
 		);
 		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
-			this.protocolFeeAmount
+			this.protocolFee
 		);
 		expect(await mockUSDT.balanceOf(gateway.address)).to.eq(ZERO_AMOUNT);
 	});
@@ -263,7 +263,7 @@ describe("Gateway settle order", function () {
 			.withArgs(
 				this.sender.address,
 				mockUSDT.address,
-				BigNumber.from(this.orderAmount).sub(this.protocolFee),
+				this.orderAmount,
 				this.protocolFee,
 				orderId,
 				rate,
@@ -292,7 +292,7 @@ describe("Gateway settle order", function () {
 		expect(this.refundAddress).to.eq(this.alice.address);
 		expect(this.currentBPS).to.eq(MAX_BPS);
 		expect(this.amount).to.eq(
-			BigNumber.from(this.orderAmount).sub(this.protocolFee)
+			BigNumber.from(this.orderAmount)
 		);
 
 		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
@@ -314,7 +314,7 @@ describe("Gateway settle order", function () {
 			this.liquidityProviderAmount
 		);
 		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
-			this.protocolFeeAmount
+			this.protocolFee
 		);
 
 		expect(await mockUSDT.balanceOf(gateway.address)).to.eq(ZERO_AMOUNT);

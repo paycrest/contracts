@@ -36,9 +36,11 @@ describe("Gateway create order", function () {
 		this.mockUSDT = mockUSDT;
 		this.gateway = gateway;
 
-		this.mintAmount = ethers.utils.parseEther("27027000");
-		this.orderAmount = ethers.utils.parseEther("27027000");
+		this.mintAmount = ethers.utils.parseEther("27000000");
+		this.orderAmount = ethers.utils.parseEther("27000000");
 		this.protocolFee = ethers.utils.parseEther("27000");
+
+
 		this.senderFee = ethers.utils.parseEther("0");
 		await this.mockUSDT.connect(this.alice).mint(this.mintAmount);
 		await this.mockDAI.connect(this.alice).mint(this.mintAmount);
@@ -126,7 +128,7 @@ describe("Gateway create order", function () {
 			.withArgs(
 				this.sender.address,
 				this.mockUSDT.address,
-				BigNumber.from(this.orderAmount).sub(this.protocolFee),
+				BigNumber.from(this.orderAmount),
 				this.protocolFee,
 				orderId,
 				rate,
@@ -159,7 +161,7 @@ describe("Gateway create order", function () {
 		expect(this.refundAddress).to.eq(this.alice.address);
 		expect(this.currentBPS).to.eq(MAX_BPS);
 		expect(this.amount).to.eq(
-			BigNumber.from(this.orderAmount).sub(this.protocolFee)
+			BigNumber.from(this.orderAmount)
 		);
 
 		expect(await this.mockUSDT.balanceOf(this.alice.address)).to.eq(
