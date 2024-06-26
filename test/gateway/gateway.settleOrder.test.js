@@ -43,12 +43,6 @@ describe("Gateway settle order", function () {
 
 		this.liquidityProviderAmount = this.orderAmount.sub(this.protocolFee);
 
-		this.protocolFeeAmount = protocolFeePercent
-			.mul(this.orderAmount)
-			.div(100_000);
-
-		this.liquidityProviderAmount = this.orderAmount.sub(this.protocolFeeAmount);
-
 		await expect(
 			gateway.connect(this.deployer).updateProtocolFee(protocolFeePercent)
 		)
@@ -162,7 +156,6 @@ describe("Gateway settle order", function () {
 			.withArgs(
 				this.sender.address,
 				mockUSDT.address,
-				this.orderAmount,
 				this.orderAmount,
 				this.protocolFee,
 				orderId,
