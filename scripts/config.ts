@@ -97,7 +97,7 @@ const NETWORKS = {
 	 * @dev Scroll Mainnet
 	 */
 	534352: {
-		RPC_URL: "https://scroll.drpc.org",
+		RPC_URL: `https://rpc.shield3.com/v3/0x82750/${SHIELD3_API_KEY}/rpc`,
 		SUPPORTED_TOKENS: {
 			USDC: "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4",
 		},
