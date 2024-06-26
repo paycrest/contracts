@@ -80,6 +80,33 @@ const NETWORKS = {
 	},
 
 	/**
+	 * @dev Optimism Mainnet
+	 */
+	10: {
+		RPC_URL: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
+		SUPPORTED_TOKENS: {
+			USDC: "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+			USDT: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
+		},
+		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+		GATEWAY_CONTRACT: "0xD293fCd3dBc025603911853d893A4724CF9f70a0",
+		IMPERSONATE_ACCOUNT: "",
+	},
+
+	/**
+	 * @dev Scroll Mainnet
+	 */
+	534352: {
+		RPC_URL: `https://rpc.shield3.com/v3/0x82750/${SHIELD3_API_KEY}/rpc`,
+		SUPPORTED_TOKENS: {
+			USDC: "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4",
+		},
+		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+		GATEWAY_CONTRACT: "0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338",
+		IMPERSONATE_ACCOUNT: "",
+	},
+
+	/**
 	 * @dev Tron Mainnet
 	 * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
 	 */
@@ -109,19 +136,19 @@ const NETWORKS = {
 		IMPERSONATE_ACCOUNT: "",
 	},
 
-  /**
-   * @dev Arbitrum Sepolia
-   */
-  421614: {
-    RPC_URL: `https://rpc.shield3.com/v3/0x66eee/${SHIELD3_API_KEY}/rpc`,
-    SUPPORTED_TOKENS: {
-      "6TEST": "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
-      USDC: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
-    },
-    TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
-    GATEWAY_CONTRACT: "0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A",
-    IMPERSONATE_ACCOUNT: "",
-  },
+	/**
+	 * @dev Arbitrum Sepolia
+	 */
+	421614: {
+		RPC_URL: `https://rpc.shield3.com/v3/0x66eee/${SHIELD3_API_KEY}/rpc`,
+		SUPPORTED_TOKENS: {
+			"6TEST": "0x3870419Ba2BBf0127060bCB37f69A1b1C090992B",
+			USDC: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+		},
+		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+		GATEWAY_CONTRACT: "0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A",
+		IMPERSONATE_ACCOUNT: "",
+	},
 
 	/**
 	 * @dev Base Sepolia
