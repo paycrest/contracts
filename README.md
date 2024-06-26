@@ -68,7 +68,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x5E7eC39915F6CD48829d06648F6682765846602a</td>
+			<td>0xafbf71A72d30f81eb66baaF904ea537fD35dd106</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -80,7 +80,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F</td>
+			<td>0xD01abCEEeacfC91d2eCE31422DFe531004A7D2e6</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -92,7 +92,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xCAD53Ff499155Cc2fAA2082A85716322906886c2</td>
+			<td>0xfB411Cc6385Af50A562aFCb441864E9d541CDA67</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
