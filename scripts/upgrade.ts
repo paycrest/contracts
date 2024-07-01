@@ -1,5 +1,6 @@
 import { ethers, upgrades, network } from "hardhat";
 import { NETWORKS } from "./config";
+import hre from "hardhat";
 
 const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
 
@@ -12,6 +13,10 @@ async function main() {
   );
 
   console.log("✅ Upgraded Gateway: ", contract.address);
+
+  await hre.run("verify:verify", {
+		address: contract.address,
+	});
 }
 
 main().catch((error) => {
