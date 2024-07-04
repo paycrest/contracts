@@ -29,6 +29,9 @@ npx hardhat run scripts/upgrade.ts --network <network>
 # upgrade across all EVM chains
 npx hardhat run scripts/upgrade.ts --network arbitrumOne && npx hardhat run scripts/upgrade.ts --network base && npx hardhat run scripts/upgrade.ts --network bsc && npx hardhat run scripts/upgrade.ts --network polygon && npx hardhat run scripts/upgrade.ts --network optimisticEthereum && npx hardhat run scripts/upgrade.ts --network scroll
 
+# upgrade across all EVM testnet chains
+npx hardhat run scripts/upgrade.ts --network arbitrumSepolia && npx hardhat run scripts/upgrade.ts --network amoy && npx hardhat run scripts/upgrade.ts --network baseSepolia && npx hardhat run scripts/upgrade.ts --network sepolia
+
 # for Tron network,
 tronbox migrate -f 2 --to 2 --network <network>
 ```
@@ -146,7 +149,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x904aDFcf6Fd29F556aA12a64B2072bA4C426A928</td>
+			<td>0x46D259eF5B3E704F968cA2E50DAa800b9e674634</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -158,7 +161,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xfB411Cc6385Af50A562aFCb441864E9d541CDA67</td>
+			<td>0x0a7aA9F8eab1665DD905288669447b66082E4B17</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -170,7 +173,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x0a7aA9F8eab1665DD905288669447b66082E4B17</td>
+			<td>0x3610bF11EBF9749ECd866ad96756C5eD65B237D5</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -182,7 +185,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x47afB97999801FD98CBD16Bb94F6efD2C779d242</td>
+			<td>0x647daC4807Eb82E67CE3bca930D6202190831B4a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -194,7 +197,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xB04c9622a583DEbe5fef8f5E594582490604D45c</td>
+			<td>0x847dfdAa218F9137229CF8424378871A1DA8f625</td>
 		</tr>
 		<tr>
 			<td>Gateway Admin</td>
