@@ -26,6 +26,15 @@ tronbox migrate -f 1 --to 1 --network <network>
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
 
+# upgrade accorss all EVM chains
+npx hardhat run scripts/upgrade.ts --network 
+arbitrumOne && npx hardhat run scripts/upgrade.ts --network 
+base && npx hardhat run scripts/upgrade.ts --network 
+bsc && npx hardhat run scripts/upgrade.ts --network 
+polygon && npx hardhat run scripts/upgrade.ts --network 
+optimisticEthereum && npx hardhat run scripts/upgrade.ts --network 
+scroll
+
 # for Tron network,
 tronbox migrate -f 2 --to 2 --network <network>
 ```
