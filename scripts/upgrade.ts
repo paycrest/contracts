@@ -1,5 +1,6 @@
 import { ethers, upgrades, network } from "hardhat";
 import { NETWORKS } from "./config";
+import hre from "hardhat";
 
 const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
 
@@ -17,6 +18,10 @@ async function main() {
 		const contract = await upgrades.upgradeProxy(proxyContractAddress, factory);
 
 		console.log("✅ Upgraded Gateway: ", contract.address);
+    
+    await hre.run("verify:verify", {
+      address: contract.address,
+    });
 	} catch (error) {
 		if (error instanceof Error) {
 			console.error("❌ Upgrade failed: ", error.message);

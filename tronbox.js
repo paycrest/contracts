@@ -13,7 +13,7 @@ module.exports = {
     shasta: {
       privateKey: process.env.DEPLOYER_PRIVATE_KEY_TRON,
       userFeePercentage: 100,
-      feeLimit: 1e9,
+      feeLimit: 2e9,
       fullHost: "https://api.shasta.trongrid.io",
       network_id: "2",
     },
