@@ -4,9 +4,9 @@ const ProxyAdmin = artifacts.require(
   );
 const Gateway = artifacts.require("Gateway");
 
-// const proxyContractAddress = "THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU"; 
+const proxyContractAddress = "THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU"; 
 // Shasta: 
-const proxyContractAddress = "TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ";
+// const proxyContractAddress = "TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ";
 
 module.exports = async function (deployer) {
   try {
