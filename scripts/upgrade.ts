@@ -10,7 +10,9 @@ async function main() {
 		const balance = await signer.getBalance(); // Get the balance of the signer's address
 
 		if (balance.eq(0)) {
-			throw new Error(`"Can't upgrade ${network.config.chainId} with 0 balance`);
+			throw new Error(
+				`"Can't upgrade ${network.config.chainId} with 0 balance`
+			);
 		}
 
 		const proxyContractAddress = networkConfig.GATEWAY_CONTRACT;
@@ -18,17 +20,17 @@ async function main() {
 		const contract = await upgrades.upgradeProxy(proxyContractAddress, factory);
 
 		console.log("✅ Upgraded Gateway: ", contract.address);
-    
-    await hre.run("verify:verify", {
-      address: contract.address,
-    });
+
+		await hre.run("verify:verify", {
+			address: contract.address,
+		});
 	} catch (error) {
 		if (error instanceof Error) {
 			console.error("❌ Upgrade failed: ", error.message);
 		} else {
 			console.error("❌ Upgrade failed: Unknown error occurred");
 		}
-		process.exitCode = 1;
+
 	}
 }
 
