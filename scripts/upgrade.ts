@@ -8,9 +8,8 @@ async function main() {
 		const [signer] = await ethers.getSigners(); // Get the signer (the account performing the upgrade)
 		const balance = await signer.getBalance(); // Get the balance of the signer's address
 
-		// Check if the balance is exactly 1 ETH
 		if (balance.eq(0)) {
-			throw new Error("Balance is exactly 1 ETH. Upgrade aborted.");
+			throw new Error(`"Can't upgrade ${network.config.chainId} with 0 balance`);
 		}
 
 		const proxyContractAddress = networkConfig.GATEWAY_CONTRACT;
