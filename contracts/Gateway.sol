@@ -19,6 +19,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	mapping(bytes32 => Order) private order;
 	mapping(address => uint256) private _nonce;
 	uint256[50] private __gap;
+	mapping(address => mapping(address => uint256)) private depositedBalances;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
@@ -39,6 +40,20 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	 */
 	modifier onlyAggregator() {
 		require(msg.sender == _aggregatorAddress, 'OnlyAggregator');
+		_;
+	}
+
+	/**
+	 * @dev Modifier that checks if the token is supported.
+	 * @param _token The address of the token to be checked.
+	 */
+	modifier isTokenApproved(address _token) {
+		require(_isTokenSupported[_token] == 1, 'TokenNotSupported');
+		_;
+	}
+
+	modifier isValidAmount(uint256 _amount) {
+		require(_amount != 0, 'AmountIsZero');
 		_;
 	}
 
@@ -128,9 +143,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		address _refundAddress,
 		address _senderFeeRecipient,
 		uint256 _senderFee
-	) internal view {
-		require(_isTokenSupported[_token] == 1, 'TokenNotSupported');
-		require(_amount != 0, 'AmountIsZero');
+	) internal isTokenApproved(_token) isValidAmount(_amount) view {
 		require(_refundAddress != address(0), 'ThrowZeroAddress');
 
 		if (_senderFee != 0) {
@@ -227,6 +240,15 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
+	/** @dev See {deposit-IGateway}. */
+	function deposit(address _token, uint256 _amount) external isTokenApproved(_token) isValidAmount(_amount) returns (bool) {
+		address sender = _msgSender();
+		IERC20(_token).transferFrom(sender, address(this), _amount);
+		depositedBalances[_token][sender] += _amount;
+		emit Deposit(sender, _token, _amount);
+		return true;
+	}
+
 	/* ##################################################################
                                 VIEW CALLS
     ################################################################## */
@@ -244,5 +266,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {getFeeDetails-IGateway}. */
 	function getFeeDetails() external view returns (uint64, uint256) {
 		return (protocolFeePercent, MAX_BPS);
+	}
+
+	/** @dev See {getProviderStakedBalance-IGateway}. */
+	function getProviderDepositBalance(address _token, address _provider) external view returns (uint256) {
+		return depositedBalances[_token][_provider];
 	}
 }
