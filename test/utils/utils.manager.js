@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
+const { expect } = require("chai");
 
 const ZERO_AMOUNT = BigNumber.from("0");
 const ZERO_ADDRESS = ethers.constants.AddressZero;
@@ -33,6 +34,7 @@ const Events = {
 		SettingManagerBool: "SettingManagerBool",
 		ProtocolFeeUpdated: "ProtocolFeeUpdated",
 		ProtocolAddressUpdated: "ProtocolAddressUpdated",
+		Deposit: "Deposit",
 	},
 };
 
@@ -66,9 +68,18 @@ async function getSupportedInstitutions() {
 	};
 }
 
-async function mockMintDeposit(gateway, account, usdc, amount) {
-	await usdc.connect(account).mint(amount);
-	await usdc.connect(account).approve(gateway.address, amount);
+async function mockMintDeposit(gateway, account, token, amount) {
+	await token.connect(account).mint(amount);
+	await token.connect(account).approve(gateway.address, amount);
+}
+
+async function assertBalance(mockUSDT, mockDAI, account, depositAmount) {
+	expect(await mockDAI.balanceOf(account)).to.eq(depositAmount);
+	expect(await mockUSDT.balanceOf(account)).to.eq(depositAmount);
+}
+
+async function assertDepositBalance(gateway, token, account, amount) {
+	expect(await gateway.getProviderDepositBalance(token, account)).to.eq(amount);
 }
 
 module.exports = {
@@ -80,5 +91,7 @@ module.exports = {
 	Events,
 	deployContract,
 	mockMintDeposit,
+	assertBalance,
+	assertDepositBalance,
 	getSupportedInstitutions,
 };
