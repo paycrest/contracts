@@ -58,6 +58,14 @@ interface IGateway {
 	 */
 	event SenderFeeTransferred(address indexed sender, uint256 indexed amount);
 
+	/**
+	 * @dev Emitted when a deposit is made by a provider.
+	 * @param sender The address of the sender.
+	 * @param token The address of the deposited token.
+	 * @param amount The amount of the deposit.
+	 */
+	event Deposit(address indexed sender, address indexed token, uint256 indexed amount);
+
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
@@ -142,6 +150,30 @@ interface IGateway {
 	function refund(uint256 _fee, bytes32 _orderId) external returns (bool);
 
 	/**
+	 * @notice Allow Provider to deposit assets.
+	 * @dev Reqirements:
+	 * - The amount must be greater than minimum.
+	 * - The asset must be supported.
+	 * - The provider must approve Gateway contract on `_token` of at least `_amount` before function call
+	 * @param _token The address of the asset.
+	 * @param _amount The amount to be deposited.
+	 * @return bool the deposit is successful.
+	 */
+	function deposit(address _token, uint256 _amount) external returns (bool);
+
+	/**
+	 * @notice Escrowed assets from provider to the sender.
+	 * @param _orderId The ID of the transaction.
+	 * @param _signature The signature of the provider.
+	 * @param _provider The address of the provider.
+	 * @param _senderAddress The address of the sender.
+	 * @param _token The address of the asset.
+	 * @param _amount The amount to be transferred.
+	 * @return bool the withdrawal is successful.
+	 */
+
+
+	/**
 	 * @notice Checks if a token is supported by Gateway.
 	 * @param _token The address of the token to check.
 	 * @return bool the token is supported.
@@ -161,4 +193,12 @@ interface IGateway {
 	 * @return max_bps The maximum basis points.
 	 */
 	function getFeeDetails() external view returns (uint64 protocolReward, uint256 max_bps);
+
+	/**
+	 * @notice Gets provider staked balance.
+	 * @param _provider The address of the provider.
+	 * @param _asset The address of the asset.
+	 * @return uint256 The staked balance of the provider.
+	 */
+	function getProviderDepositBalance(address _asset, address _provider) external view returns (uint256);
 }
