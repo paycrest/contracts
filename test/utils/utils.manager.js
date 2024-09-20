@@ -79,7 +79,7 @@ async function assertBalance(mockUSDT, mockDAI, account, depositAmount) {
 }
 
 async function assertDepositBalance(gateway, token, account, amount) {
-	expect(await gateway.getProviderDepositBalance(token, account)).to.eq(amount);
+	expect(await gateway.getBalance(token, account)).to.eq(amount);
 }
 
 module.exports = {
