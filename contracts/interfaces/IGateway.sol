@@ -162,18 +162,6 @@ interface IGateway {
 	function deposit(address _token, uint256 _amount) external returns (bool);
 
 	/**
-	 * @notice Escrowed assets from provider to the sender.
-	 * @param _orderId The ID of the transaction.
-	 * @param _signature The signature of the provider.
-	 * @param _provider The address of the provider.
-	 * @param _senderAddress The address of the sender.
-	 * @param _token The address of the asset.
-	 * @param _amount The amount to be transferred.
-	 * @return bool the withdrawal is successful.
-	 */
-
-
-	/**
 	 * @notice Checks if a token is supported by Gateway.
 	 * @param _token The address of the token to check.
 	 * @return bool the token is supported.
