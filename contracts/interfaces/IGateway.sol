@@ -151,7 +151,7 @@ interface IGateway {
 
 	/**
 	 * @notice Allow Provider to deposit assets.
-	 * @dev Reqirements:
+	 * @dev Requirements:
 	 * - The amount must be greater than minimum.
 	 * - The asset must be supported.
 	 * - The provider must approve Gateway contract on `_token` of at least `_amount` before function call
@@ -198,7 +198,7 @@ interface IGateway {
 	 * @notice Gets provider staked balance.
 	 * @param _provider The address of the provider.
 	 * @param _asset The address of the asset.
-	 * @return uint256 The staked balance of the provider.
+	 * @return uint256 The provider's balance.
 	 */
-	function getProviderDepositBalance(address _asset, address _provider) external view returns (uint256);
+	function getBalance(address _asset, address _provider) external view returns (uint256);
 }

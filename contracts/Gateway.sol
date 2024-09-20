@@ -19,7 +19,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	mapping(bytes32 => Order) private order;
 	mapping(address => uint256) private _nonce;
 	uint256[50] private __gap;
-	mapping(address => mapping(address => uint256)) private depositedBalances;
+	mapping(address => mapping(address => uint256)) private balance;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
@@ -242,7 +242,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	function deposit(address _token, uint256 _amount) external isTokenApproved(_token) isValidAmount(_amount) returns (bool) {
 		address sender = _msgSender();
 		IERC20(_token).transferFrom(sender, address(this), _amount);
-		depositedBalances[_token][sender] += _amount;
+		balance[_token][sender] += _amount;
 		emit Deposit(sender, _token, _amount);
 		return true;
 	}
@@ -266,8 +266,8 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return (protocolFeePercent, MAX_BPS);
 	}
 
-	/** @dev See {getProviderStakedBalance-IGateway}. */
-	function getProviderDepositBalance(address _token, address _provider) external view returns (uint256) {
-		return depositedBalances[_token][_provider];
+	/** @dev See {getBalance-IGateway}. */
+	function getBalance(address _token, address _provider) external view returns (uint256) {
+		return balance[_token][_provider];
 	}
 }
