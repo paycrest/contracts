@@ -35,6 +35,7 @@ const Events = {
 		ProtocolFeeUpdated: "ProtocolFeeUpdated",
 		ProtocolAddressUpdated: "ProtocolAddressUpdated",
 		Deposit: "Deposit",
+		Escrow: "Escrow",
 	},
 };
 
