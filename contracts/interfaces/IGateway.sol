@@ -12,7 +12,7 @@ interface IGateway {
                                 EVENTS
     ################################################################## */
 	/**
-	 * @dev Emitted when a deposit is made.
+	 * @notice Emitted when an order is created.
 	 * @param sender The address of the sender.
 	 * @param token The address of the deposited token.
 	 * @param amount The amount of the deposit.
@@ -31,7 +31,7 @@ interface IGateway {
 	);
 
 	/**
-	 * @dev Emitted when an aggregator settles a transaction.
+	 * @notice Emitted when an aggregator settles a transaction.
 	 * @param splitOrderId The ID of the split order.
 	 * @param orderId The ID of the order.
 	 * @param liquidityProvider The address of the liquidity provider.
@@ -45,21 +45,21 @@ interface IGateway {
 	);
 
 	/**
-	 * @dev Emitted when an aggregator refunds a transaction.
+	 * @notice Emitted when an aggregator refunds a transaction.
 	 * @param fee The fee deducted from the refund amount.
 	 * @param orderId The ID of the order.
 	 */
 	event OrderRefunded(uint256 fee, bytes32 indexed orderId);
 
 	/**
-	 * @dev Emitted when the sender's fee is transferred.
+	 * @notice Emitted when the sender's fee is transferred.
 	 * @param sender The address of the sender.
 	 * @param amount The amount of the fee transferred.
 	 */
 	event SenderFeeTransferred(address indexed sender, uint256 indexed amount);
 
 	/**
-	 * @dev Emitted when a deposit is made by a provider.
+	 * @notice Emitted when a deposit is made by a provider.
 	 * @param sender The address of the sender.
 	 * @param token The address of the deposited token.
 	 * @param amount The amount of the deposit.
@@ -70,7 +70,7 @@ interface IGateway {
                                 STRUCTS
     ################################################################## */
 	/**
-	 * @dev Struct representing an order.
+	 * @notice Struct representing an order.
 	 * @param sender The address of the sender.
 	 * @param token The address of the token.
 	 * @param senderFeeRecipient The address of the sender fee recipient.
@@ -125,12 +125,12 @@ interface IGateway {
 	) external returns (bytes32 _orderId);
 
 	/**
-	 * @notice Settles a transaction and distributes rewards accordingly.
+	 * @notice Settles a transaction and distributes fees accordingly.
 	 * @param _splitOrderId The ID of the split order.
 	 * @param _orderId The ID of the transaction.
 	 * @param _liquidityProvider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
-	 * @return bool the settlement is successful.
+	 * @return bool The settlement is successful.
 	 */
 	function settle(
 		bytes32 _splitOrderId,
@@ -140,7 +140,7 @@ interface IGateway {
 	) external returns (bool);
 
 	/**
-	 * @notice Refunds to the specified refundable address.
+	 * @notice Refunds to the specified refund address.
 	 * @dev Requirements:
 	 * - Only aggregators can call this function.
 	 * @param _fee The amount to be deducted from the amount to be refunded.
@@ -150,14 +150,14 @@ interface IGateway {
 	function refund(uint256 _fee, bytes32 _orderId) external returns (bool);
 
 	/**
-	 * @notice Allow Provider to deposit assets.
+	 * @notice Allow a provider to deposit an asset into Gateway.
 	 * @dev Requirements:
 	 * - The amount must be greater than minimum.
 	 * - The asset must be supported.
 	 * - The provider must approve Gateway contract on `_token` of at least `_amount` before function call
 	 * @param _token The address of the asset.
 	 * @param _amount The amount to be deposited.
-	 * @return bool the deposit is successful.
+	 * @return bool The deposit is successful.
 	 */
 	function deposit(address _token, uint256 _amount) external returns (bool);
 
@@ -183,7 +183,7 @@ interface IGateway {
 	function getFeeDetails() external view returns (uint64 protocolReward, uint256 max_bps);
 
 	/**
-	 * @notice Gets provider staked balance.
+	 * @notice Gets the balance of a provider.
 	 * @param _provider The address of the provider.
 	 * @param _asset The address of the asset.
 	 * @return uint256 The provider's balance.
