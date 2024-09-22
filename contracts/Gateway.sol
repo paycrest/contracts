@@ -52,6 +52,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		_;
 	}
 
+	/**
+	 * @dev Modifier that checks if the deposit amount is valid.
+	 * @param _amount The amount to be checked.
+	 */
 	modifier isValidAmount(uint256 _amount) {
 		require(_amount != 0, 'AmountIsZero');
 		_;
