@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 import {GatewaySettingManager} from './GatewaySettingManager.sol';
 import {IGateway, IERC20} from './interfaces/IGateway.sol';
@@ -11,6 +12,7 @@ import {IGateway, IERC20} from './interfaces/IGateway.sol';
  * @notice This contract serves as a gateway for creating orders and managing settlements.
  */
 contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
+	using ECDSA for bytes32;
 	struct fee {
 		uint256 protocolFee;
 		uint256 liquidityProviderAmount;
@@ -20,6 +22,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	mapping(address => uint256) private _nonce;
 	uint256[50] private __gap;
 	mapping(address => mapping(address => uint256)) private balance;
+	mapping(bytes32 => bool) private processedOrders;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
@@ -253,6 +256,48 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
+	/** @dev See {deposit-IGateway}. */
+    function escrow(
+        bytes32 _orderId,
+        bytes memory _signature,
+        address _provider,
+        address _senderAddress,
+        address _token,
+        uint256 _amount
+    ) external onlyAggregator isValidAmount(_amount) {
+        require(!processedOrders[_orderId], "Order already processed");
+		require(_provider != address(0), "Invalid provider address");
+		require(_senderAddress != address(0), "Invalid sender address");
+
+        // Verify signature
+        bytes32 messageHash = keccak256(abi.encodePacked(_orderId, _provider, _senderAddress, _token, _amount));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+        address recoveredAddress = ethSignedMessageHash.recover(_signature);
+        require(recoveredAddress == _provider, "Invalid signature");
+		// update transaction
+		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
+		// uint256 sumAmount = _amount + _protocolFee;
+        // Check provider's balance,
+		// Note: There is no need for checks for token supported as the balance will be 0 if the token is not supported
+        require(balance[_token][_provider] >= _amount + _protocolFee, "Insufficient balance");
+
+        // Mark order as processed
+        processedOrders[_orderId] = true;
+
+        // Update balances
+        balance[_token][_provider] -= (_amount + _protocolFee);
+
+		// transfer to sender
+		IERC20(_token).transfer(_senderAddress, _amount);
+		if (_protocolFee != 0) {
+			// transfer protocol fee
+			IERC20(_token).transfer(treasuryAddress, _protocolFee);
+		}
+
+        // Emit event
+        emit Escrow(_provider, _senderAddress, _amount, _token, _orderId);
+    }
+
 	/* ##################################################################
                                 VIEW CALLS
     ################################################################## */
@@ -275,5 +320,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {getBalance-IGateway}. */
 	function getBalance(address _token, address _provider) external view returns (uint256) {
 		return balance[_token][_provider];
+	}
+
+	/** See {isOrderProcessed-IGateway} */
+	function isOrderProcessed(bytes32 _orderId) external view returns (bool) {
+		return processedOrders[_orderId];
 	}
 }

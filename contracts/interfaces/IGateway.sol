@@ -66,6 +66,15 @@ interface IGateway {
 	 */
 	event Deposit(address indexed sender, address indexed token, uint256 indexed amount);
 
+	/**
+	 * @dev Emitted when an escrow is made by a provider.
+	 * @param provider The address of the provider.
+	 * @param senderAddress The address of the sender.
+	 * @param amount The address of the deposited token.
+	 * @param token The amount of the deposit.
+	 * @param orderId The ID of the order.
+	 */
+	event Escrow(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
@@ -161,6 +170,25 @@ interface IGateway {
 	 */
 	function deposit(address _token, uint256 _amount) external returns (bool);
 
+	
+	/**
+	 * @notice Escrowed assets from provider to the sender.
+	 * @param _orderId The ID of the transaction.
+	 * @param _signature The signature of the provider.
+	 * @param _provider The address of the provider.
+	 * @param _senderAddress The address of the sender.
+	 * @param _token The address of the asset.
+	 * @param _amount The amount to be transferred.
+	 */
+	function escrow(
+        bytes32 _orderId,
+        bytes memory _signature,
+        address _provider,
+        address _senderAddress,
+        address _token,
+        uint256 _amount
+    ) external;
+
 	/**
 	 * @notice Checks if a token is supported by Gateway.
 	 * @param _token The address of the token to check.
@@ -189,4 +217,11 @@ interface IGateway {
 	 * @return uint256 The provider's balance.
 	 */
 	function getBalance(address _asset, address _provider) external view returns (uint256);
+
+	/**
+	 * @notice Gets order processed status.
+	 * @param _orderId The ID of the order.
+	 * @return bool The order processed status.
+	 */
+	function isOrderProcessed(bytes32 _orderId) external view returns (bool);
 }
