@@ -31,13 +31,13 @@ interface IGateway {
 	);
 
 	/**
-	 * @notice Emitted when an aggregator settles a transaction.
+	 * @notice Emitted when an aggregator settles an off-ramp transaction.
 	 * @param splitOrderId The ID of the split order.
 	 * @param orderId The ID of the order.
 	 * @param liquidityProvider The address of the liquidity provider.
 	 * @param settlePercent The percentage at which the transaction is settled.
 	 */
-	event OrderSettled(
+	event OfframpOrderSettlement(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
@@ -67,14 +67,14 @@ interface IGateway {
 	event Deposit(address indexed sender, address indexed token, uint256 indexed amount);
 
 	/**
-	 * @dev Emitted when an escrow is made by a provider.
+	 * @dev Emitted when an off-ramp settlement is made.
 	 * @param provider The address of the provider.
 	 * @param senderAddress The address of the sender.
 	 * @param amount The address of the deposited token.
 	 * @param token The amount of the deposit.
 	 * @param orderId The ID of the order.
 	 */
-	event Escrow(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
+	event OnrampOrderSettlement(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
@@ -137,14 +137,14 @@ interface IGateway {
 	 * @notice Settles a transaction and distributes fees accordingly.
 	 * @param _splitOrderId The ID of the split order.
 	 * @param _orderId The ID of the transaction.
-	 * @param _liquidityProvider The address of the liquidity provider.
+	 * @param _provider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
 	 * @return bool The settlement is successful.
 	 */
-	function settle(
+	function settleOrder(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
-		address _liquidityProvider,
+		address _provider,
 		uint64 _settlePercent
 	) external returns (bool);
 
@@ -156,7 +156,7 @@ interface IGateway {
 	 * @param _orderId The ID of the transaction.
 	 * @return bool the refund is successful.
 	 */
-	function refund(uint256 _fee, bytes32 _orderId) external returns (bool);
+	function refundOrder(uint256 _fee, bytes32 _orderId) external returns (bool);
 
 	/**
 	 * @notice Allow a provider to deposit an asset into Gateway.
@@ -172,7 +172,7 @@ interface IGateway {
 
 	
 	/**
-	 * @notice Escrowed assets from provider to the sender.
+	 * @notice Allow aggregator to settle an order.
 	 * @param _orderId The ID of the transaction.
 	 * @param _signature The signature of the provider.
 	 * @param _provider The address of the provider.
@@ -180,7 +180,7 @@ interface IGateway {
 	 * @param _token The address of the asset.
 	 * @param _amount The amount to be transferred.
 	 */
-	function escrow(
+	function settleOrder(
         bytes32 _orderId,
         bytes memory _signature,
         address _provider,

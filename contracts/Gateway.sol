@@ -161,11 +161,11 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/* ##################################################################
                                 AGGREGATOR FUNCTIONS
     ################################################################## */
-	/** @dev See {settle-IGateway}. */
-	function settle(
+	/** @dev See {settleOrder-IGateway}. */
+	function settleOrder(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
-		address _liquidityProvider,
+		address _provider,
 		uint64 _settlePercent
 	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
@@ -208,16 +208,16 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// transfer protocol fee
 		IERC20(token).transfer(treasuryAddress, protocolFee);
 
-		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
+		IERC20(token).transfer(_provider, liquidityProviderAmount);
 
 		// emit settled event
-		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
+		emit OfframpOrderSettlement(_splitOrderId, _orderId, _provider, _settlePercent);
 
 		return true;
 	}
 
 	/** @dev See {refund-IGateway}. */
-	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
+	function refundOrder(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
@@ -256,27 +256,26 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {deposit-IGateway}. */
-    function escrow(
+	/** @dev See {settleOrder-IGateway}. */
+    function settleOrder(
         bytes32 _orderId,
         bytes memory _signature,
         address _provider,
-        address _senderAddress,
+        address _sender,
         address _token,
         uint256 _amount
     ) external onlyAggregator isValidAmount(_amount) {
         require(!processedOrders[_orderId], "Order already processed");
 		require(_provider != address(0), "Invalid provider address");
-		require(_senderAddress != address(0), "Invalid sender address");
+		require(_sender != address(0), "Invalid sender address");
 
         // Verify signature
-        bytes32 messageHash = keccak256(abi.encodePacked(_orderId, _provider, _senderAddress, _token, _amount));
+        bytes32 messageHash = keccak256(abi.encodePacked(_orderId, _provider, _sender, _token, _amount));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         address recoveredAddress = ethSignedMessageHash.recover(_signature);
         require(recoveredAddress == _provider, "Invalid signature");
 		// update transaction
 		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
-		// uint256 sumAmount = _amount + _protocolFee;
         // Check provider's balance,
 		// Note: There is no need for checks for token supported as the balance will be 0 if the token is not supported
         require(balance[_token][_provider] >= _amount + _protocolFee, "Insufficient balance");
@@ -288,14 +287,14 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
         balance[_token][_provider] -= (_amount + _protocolFee);
 
 		// transfer to sender
-		IERC20(_token).transfer(_senderAddress, _amount);
+		IERC20(_token).transfer(_sender, _amount);
 		if (_protocolFee > 0) {
 			// transfer protocol fee
 			IERC20(_token).transfer(treasuryAddress, _protocolFee);
 		}
 
         // Emit event
-        emit Escrow(_provider, _senderAddress, _amount, _token, _orderId);
+        emit OnrampOrderSettlement(_provider, _sender, _amount, _token, _orderId);
     }
 
 	/* ##################################################################

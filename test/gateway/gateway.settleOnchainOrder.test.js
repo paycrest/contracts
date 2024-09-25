@@ -11,7 +11,7 @@ const {
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
-describe("Gateway Escrow", function () {
+describe("Gateway Onramp Order settlement", function () {
 	beforeEach(async function () {
 		[
 			this.deployer,
@@ -89,7 +89,7 @@ describe("Gateway Escrow", function () {
 		).to.emit(gateway, Events.Gateway.ProtocolAddressUpdated);
 	});
 
-	it("Should escrow assets from provider to sender", async function () {
+	it("Should settle onramp assets from provider to sender", async function () {
 		const orderId = ethers.utils.formatBytes32String("order1");
 		const amount = ethers.utils.parseEther("1000");
 
@@ -142,10 +142,9 @@ describe("Gateway Escrow", function () {
 			this.alice.address,
 			this.depositAmount
 		);
-
-		// Perform the escrow
+		// Perform the settling order
 		await expect(
-			this.gateway.connect(this.aggregator).escrow(
+			this.gateway.connect(this.aggregator).settleOrder(
 				orderId,
 				signature,
 				this.alice.address, // Provider
@@ -154,7 +153,7 @@ describe("Gateway Escrow", function () {
 				amount
 			)
 		)
-			.to.emit(this.gateway, Events.Gateway.Escrow)
+			.to.emit(this.gateway, Events.Gateway.OnrampOrderSettlement)
 			.withArgs(
 				this.alice.address,
 				this.bob.address,
@@ -207,10 +206,10 @@ describe("Gateway Escrow", function () {
 			ethers.utils.arrayify(messageHash)
 		);
 
-		// Perform the escrow
+		// Perform the settling
 		await this.gateway
 			.connect(this.aggregator)
-			.escrow(
+			.settleOrder(
 				orderId,
 				signature,
 				this.alice.address,
@@ -219,11 +218,11 @@ describe("Gateway Escrow", function () {
 				amount
 			);
 
-		// Try to perform the escrow again
+		// Try to perform the settling again
 		await expect(
 			this.gateway
 				.connect(this.aggregator)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					this.alice.address,
@@ -255,11 +254,11 @@ describe("Gateway Escrow", function () {
 			ethers.utils.arrayify(messageHash)
 		);
 
-		// Try to perform the escrow
+		// Try to perform the settling with the invalid signature
 		await expect(
 			this.gateway
 				.connect(this.aggregator)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					this.alice.address,
@@ -291,11 +290,11 @@ describe("Gateway Escrow", function () {
 			ethers.utils.arrayify(messageHash)
 		);
 
-		// Try to perform the escrow
+		// Try to perform the settling with insufficient balance
 		await expect(
 			this.gateway
 				.connect(this.aggregator)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					this.alice.address,
@@ -323,7 +322,7 @@ describe("Gateway Escrow", function () {
 		await expect(
 			this.gateway
 				.connect(this.aggregator)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					zeroAddress,
@@ -351,7 +350,7 @@ describe("Gateway Escrow", function () {
 		await expect(
 			this.gateway
 				.connect(this.aggregator)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					this.alice.address,
@@ -412,11 +411,11 @@ describe("Gateway Escrow", function () {
 			this.alice.address
 		);
 
-		// Perform the escrow
+		// Perform the settling order
 		await expect(
 			this.gateway
 				.connect(this.aggregator)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					this.alice.address,
@@ -424,7 +423,7 @@ describe("Gateway Escrow", function () {
 					this.mockUSDT.address,
 					amount
 				)
-		).to.emit(this.gateway, "Escrow");
+		).to.emit(this.gateway, "OnrampOrderSettlement");
 		const feeDetails = await this.gateway.getFeeDetails();
 		// Calculate expected fee
 		const expectedFee = amount.mul(feeDetails[0]).div(feeDetails[1]);
@@ -454,7 +453,7 @@ describe("Gateway Escrow", function () {
 		);
 	});
 
-	it("Should revert when a non-aggregator calls escrow", async function () {
+	it("Should revert when a non-aggregator calls settle onramp order", async function () {
 		const orderId = ethers.utils.formatBytes32String("nonAggregatorOrder");
 		const amount = ethers.utils.parseEther("1");
 
@@ -480,7 +479,7 @@ describe("Gateway Escrow", function () {
 		await expect(
 			this.gateway
 				.connect(this.alice)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					this.alice.address,
@@ -513,7 +512,7 @@ describe("Gateway Escrow", function () {
 		await expect(
 			this.gateway
 				.connect(this.aggregator)
-				.escrow(
+				.settleOrder(
 					orderId,
 					signature,
 					this.alice.address,

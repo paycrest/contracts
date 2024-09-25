@@ -29,13 +29,13 @@ const Errors = {
 const Events = {
 	Gateway: {
 		OrderCreated: "OrderCreated",
-		OrderSettled: "OrderSettled",
+		OfframpOrderSettlement: "OfframpOrderSettlement",
 		OrderRefunded: "OrderRefunded",
 		SettingManagerBool: "SettingManagerBool",
 		ProtocolFeeUpdated: "ProtocolFeeUpdated",
 		ProtocolAddressUpdated: "ProtocolAddressUpdated",
 		Deposit: "Deposit",
-		Escrow: "Escrow",
+		OnrampOrderSettlement: "OnrampOrderSettlement",
 	},
 };
 
