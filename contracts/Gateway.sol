@@ -182,7 +182,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			// update the transaction to be fulfilled
 			order[_orderId].isFulfilled = true;
 
-			if (order[_orderId].senderFee != 0) {
+			if (order[_orderId].senderFee > 0) {
 				// transfer sender fee
 				IERC20(order[_orderId].token).transfer(
 					order[_orderId].senderFeeRecipient,
@@ -289,7 +289,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// transfer to sender
 		IERC20(_token).transfer(_senderAddress, _amount);
-		if (_protocolFee != 0) {
+		if (_protocolFee > 0) {
 			// transfer protocol fee
 			IERC20(_token).transfer(treasuryAddress, _protocolFee);
 		}
