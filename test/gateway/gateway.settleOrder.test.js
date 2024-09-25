@@ -13,7 +13,7 @@ const {
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
-describe("Gateway settle order", function () {
+describe("Gateway offramp order", function () {
 	beforeEach(async function () {
 		[
 			this.deployer,
@@ -197,9 +197,9 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settleOrder(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.OfframpOrderSettlement)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
@@ -305,9 +305,9 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settleOrder(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.OfframpOrderSettlement)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
