@@ -79,7 +79,7 @@ interface IGateway {
                                 STRUCTS
     ################################################################## */
 	/**
-	 * @notice Struct representing an order.
+	 * @notice Struct representing an off-ramp order.
 	 * @param sender The address of the sender.
 	 * @param token The address of the token.
 	 * @param senderFeeRecipient The address of the sender fee recipient.
@@ -91,7 +91,7 @@ interface IGateway {
 	 * @param currentBPS The current basis points.
 	 * @param amount The amount of the order.
 	 */
-	struct Order {
+	struct OffRampOrder {
 		address sender;
 		address token;
 		address senderFeeRecipient;
@@ -201,7 +201,7 @@ interface IGateway {
 	 * @param _orderId The ID of the order.
 	 * @return Order The order details.
 	 */
-	function getOrderInfo(bytes32 _orderId) external view returns (Order memory);
+	function getOrderInfo(bytes32 _orderId) external view returns (OffRampOrder memory);
 
 	/**
 	 * @notice Gets the fee details of Gateway.
