@@ -104,7 +104,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// emit order created event
 		emit OrderCreated(
-			order[orderId].sender,
+			_refundAddress,
 			_token,
 			order[orderId].amount,
 			_protocolFee,
@@ -203,8 +203,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
 		require(order[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
 
-		// transfer refund fee to the treasury
-		IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
+		if (order[_orderId].protocolFee > 0) {
+			// transfer protocol fee
+			IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
+		}
 
 		// reset state values
 		order[_orderId].isRefunded = true;
