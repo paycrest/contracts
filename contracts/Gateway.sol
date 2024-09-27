@@ -18,7 +18,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint256 liquidityProviderAmount;
 	}
 
-	mapping(bytes32 => Order) private order;
+	mapping(bytes32 => OffRampOrder) private offRampOrder;
 	mapping(address => uint256) private _nonce;
 	uint256[50] private __gap;
 	mapping(address => mapping(address => uint256)) private balance;
@@ -111,7 +111,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// update transaction
 		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
-		order[orderId] = Order({
+		offRampOrder[orderId] = OffRampOrder({
 			sender: msg.sender,
 			token: _token,
 			senderFeeRecipient: _senderFeeRecipient,
@@ -126,7 +126,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// emit order created event
 		emit OrderCreated(
-			order[orderId].sender,
+			OffRampOrder[orderId].sender,
 			_token,
 			order[orderId].amount,
 			_protocolFee,
