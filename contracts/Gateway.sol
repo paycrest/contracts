@@ -217,7 +217,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {refund-IGateway}. */
+	/** @dev See {refundOrder-IGateway}. */
 	function refundOrder(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!offRampOrder[_orderId].isFulfilled, 'OrderFulfilled');
@@ -257,7 +257,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {settleOnRampOrder-IGateway}. */
+	/** @dev See {settleOrder-IGateway}. */
     function settleOrder(
         bytes32 _orderId,
         bytes memory _signature,
@@ -275,9 +275,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         address recoveredAddress = ethSignedMessageHash.recover(_signature);
         require(recoveredAddress == _provider, "Invalid signature");
-		// update transaction
 		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
-        // Check provider's balance,
 		// Note: There is no need for checks for token supported as the balance will be 0 if the token is not supported
         require(balance[_token][_provider] >= _amount + _protocolFee, "Insufficient balance");
 
@@ -286,8 +284,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
         // Update balances
         balance[_token][_provider] -= (_amount + _protocolFee);
-		
-		// Update OnRampOrder state
+
 		onRampOrder[_orderId] = OnRampOrder({
 			amount: _amount,
 			provider: _provider,
@@ -300,11 +297,9 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// transfer to sender
 		IERC20(_token).transfer(_sender, _amount);
 		if (_protocolFee > 0) {
-			// transfer protocol fee
 			IERC20(_token).transfer(treasuryAddress, _protocolFee);
 		}
 
-        // Emit event
         emit OnrampOrderSettlement(_provider, _sender, _amount, _token, _orderId);
     }
 
