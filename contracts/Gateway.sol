@@ -302,6 +302,19 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
         emit OrderSettledIn(_provider, _sender, _amount, _token, _orderId);
     }
+	/** @dev See {withdraw-IGateway} */
+	function withdraw(bytes memory _signature, address provider, address recipient, address _token, uint256 _amount) external isValidAmount(_amount) onlyAggregator returns (bool) {
+		bytes32 messageHash = keccak256(abi.encodePacked(provider, recipient, _token, _amount));
+		bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+		address signer = ethSignedMessageHash.recover(_signature);
+		require(signer == provider, 'InvalidSignature');
+
+		require(balance[_token][provider] >= _amount, 'InsufficientBalance');
+		balance[_token][provider] -= _amount;
+		IERC20(_token).transfer(recipient, _amount);
+		emit Withdraw(provider, recipient, _token, _amount);
+		return true;
+	}
 
 	/* ##################################################################
                                 VIEW CALLS
