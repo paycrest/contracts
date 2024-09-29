@@ -104,6 +104,22 @@ interface IGateway {
 		uint256 amount;
 	}
 
+	/**
+	 * @notice Struct representing onramp order.
+	 * @param amount  The amount of the order.
+	 * @param provider  The address of the provider.
+	 * @param sender  The address of the sender. 
+	 * @param token The address of the token. 
+	 * @param orderid The ID of the order.
+	 */
+	struct OnRampOrder {
+		uint256 amount;
+		address provider;
+		address sender;
+		address token;
+		bytes32 orderId;
+	}
+
 	/* ##################################################################
                                 EXTERNAL CALLS
     ################################################################## */
@@ -134,7 +150,7 @@ interface IGateway {
 	) external returns (bytes32 _orderId);
 
 	/**
-	 * @notice Settles a transaction and distributes fees accordingly.
+	 * @notice Settles an offramp transaction and distributes fees accordingly.
 	 * @param _splitOrderId The ID of the split order.
 	 * @param _orderId The ID of the transaction.
 	 * @param _provider The address of the liquidity provider.
@@ -172,7 +188,7 @@ interface IGateway {
 
 	
 	/**
-	 * @notice Allow aggregator to settle an order.
+	 * @notice Allow aggregator to settle an onramp order.
 	 * @param _orderId The ID of the transaction.
 	 * @param _signature The signature of the provider.
 	 * @param _provider The address of the provider.
@@ -197,11 +213,18 @@ interface IGateway {
 	function isTokenSupported(address _token) external view returns (bool);
 
 	/**
-	 * @notice Gets the details of an order.
+	 * @notice Gets the details of an off ramp order.
 	 * @param _orderId The ID of the order.
 	 * @return Order The order details.
 	 */
-	function getOrderInfo(bytes32 _orderId) external view returns (OffRampOrder memory);
+	function getOffRampOrderInfo(bytes32 _orderId) external view returns (OffRampOrder memory);
+
+	/**
+	 * @notice Gets the details of an on ramp order.
+	 * @param _orderId The ID of the order.
+	 * @return Order The order details.
+	 */
+	function getOnRampOrderInfo(bytes32 _orderId) external view returns (OnRampOrder memory);
 
 	/**
 	 * @notice Gets the fee details of Gateway.

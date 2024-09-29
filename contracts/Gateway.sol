@@ -19,10 +19,11 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	}
 
 	mapping(bytes32 => OffRampOrder) private offRampOrder;
+	mapping(bytes32 => OnRampOrder) private onRampOrder;
 	mapping(address => uint256) private _nonce;
-	uint256[50] private __gap;
 	mapping(address => mapping(address => uint256)) private balance;
 	mapping(bytes32 => bool) private processedOrders;
+	uint256[50] private __gap;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
@@ -126,9 +127,9 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// emit order created event
 		emit OrderCreated(
-			OffRampOrder[orderId].sender,
+			offRampOrder[orderId].sender,
 			_token,
-			order[orderId].amount,
+			offRampOrder[orderId].amount,
 			_protocolFee,
 			orderId,
 			_rate,
@@ -169,38 +170,38 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint64 _settlePercent
 	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
-		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
-		require(!order[_orderId].isRefunded, 'OrderRefunded');
+		require(!offRampOrder[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!offRampOrder[_orderId].isRefunded, 'OrderRefunded');
 
 		// load the token into memory
-		address token = order[_orderId].token;
+		address token = offRampOrder[_orderId].token;
 
 		// subtract sum of amount based on the input _settlePercent
-		order[_orderId].currentBPS -= _settlePercent;
+		offRampOrder[_orderId].currentBPS -= _settlePercent;
 
-		if (order[_orderId].currentBPS == 0) {
+		if (offRampOrder[_orderId].currentBPS == 0) {
 			// update the transaction to be fulfilled
-			order[_orderId].isFulfilled = true;
+			offRampOrder[_orderId].isFulfilled = true;
 
-			if (order[_orderId].senderFee > 0) {
+			if (offRampOrder[_orderId].senderFee > 0) {
 				// transfer sender fee
-				IERC20(order[_orderId].token).transfer(
-					order[_orderId].senderFeeRecipient,
-					order[_orderId].senderFee
+				IERC20(offRampOrder[_orderId].token).transfer(
+					offRampOrder[_orderId].senderFeeRecipient,
+					offRampOrder[_orderId].senderFee
 				);
 
 				// emit event
 				emit SenderFeeTransferred(
-					order[_orderId].senderFeeRecipient,
-					order[_orderId].senderFee
+					offRampOrder[_orderId].senderFeeRecipient,
+					offRampOrder[_orderId].senderFee
 				);
 			}
 
 		}
 
 		// transfer to liquidity provider
-		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / MAX_BPS;
-		order[_orderId].amount -= liquidityProviderAmount;
+		uint256 liquidityProviderAmount = (offRampOrder[_orderId].amount * _settlePercent) / MAX_BPS;
+		offRampOrder[_orderId].amount -= liquidityProviderAmount;
 
 		uint256 protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
 		liquidityProviderAmount -= protocolFee;
@@ -219,26 +220,26 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {refund-IGateway}. */
 	function refundOrder(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
-		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
-		require(!order[_orderId].isRefunded, 'OrderRefunded');
-		require(order[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
+		require(!offRampOrder[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!offRampOrder[_orderId].isRefunded, 'OrderRefunded');
+		require(offRampOrder[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
 
 		if (_fee > 0) {
 			// transfer refund fee to the treasury
-			IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
+			IERC20(offRampOrder[_orderId].token).transfer(treasuryAddress, _fee);
 		}
 
 		// reset state values
-		order[_orderId].isRefunded = true;
-		order[_orderId].currentBPS = 0;
+		offRampOrder[_orderId].isRefunded = true;
+		offRampOrder[_orderId].currentBPS = 0;
 
 		// deduct fee from order amount
-		uint256 refundAmount = order[_orderId].amount - _fee;
+		uint256 refundAmount = offRampOrder[_orderId].amount - _fee;
 
 		// transfer refund amount and sender fee to the refund address
-		IERC20(order[_orderId].token).transfer(
-			order[_orderId].refundAddress,
-			refundAmount + order[_orderId].senderFee
+		IERC20(offRampOrder[_orderId].token).transfer(
+			offRampOrder[_orderId].refundAddress,
+			refundAmount + offRampOrder[_orderId].senderFee
 		);
 
 		// emit refunded event
@@ -256,7 +257,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {settleOrder-IGateway}. */
+	/** @dev See {settleOnRampOrder-IGateway}. */
     function settleOrder(
         bytes32 _orderId,
         bytes memory _signature,
@@ -285,6 +286,16 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
         // Update balances
         balance[_token][_provider] -= (_amount + _protocolFee);
+		
+		// Update OnRampOrder state
+		onRampOrder[_orderId] = OnRampOrder({
+			amount: _amount,
+			provider: _provider,
+			sender: _sender,
+			token: _token,
+			orderId: _orderId
+		});
+
 
 		// transfer to sender
 		IERC20(_token).transfer(_sender, _amount);
@@ -300,9 +311,14 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/* ##################################################################
                                 VIEW CALLS
     ################################################################## */
-	/** @dev See {getOrderInfo-IGateway}. */
-	function getOrderInfo(bytes32 _orderId) external view returns (Order memory) {
-		return order[_orderId];
+	/** @dev See {getOffRampOrderInfo-IGateway}. */
+	function getOffRampOrderInfo(bytes32 _orderId) external view returns (OffRampOrder memory) {
+		return offRampOrder[_orderId];
+	}
+
+	/** @dev See {getOnRampOrderInfo-IGateway}. */
+	function getOnRampOrderInfo(bytes32 _orderId) external view returns (OnRampOrder memory) {
+		return onRampOrder[_orderId];
 	}
 
 	/** @dev See {isTokenSupported-IGateway}. */
