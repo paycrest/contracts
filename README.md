@@ -80,6 +80,18 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
+			<td rowspan="2">Polygon Amoy</td>
+			<td>Gateway Proxy</td>
+			<td>0xCAD53Ff499155Cc2fAA2082A85716322906886c2</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
 			<td rowspan="2">Arbitrum Sepolia</td>
 			<td>Gateway Proxy</td>
 			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
