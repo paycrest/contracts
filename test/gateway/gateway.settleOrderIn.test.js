@@ -144,7 +144,7 @@ describe("Gateway Onramp Order settlement", function () {
 		);
 		// Perform the settling order
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -153,7 +153,7 @@ describe("Gateway Onramp Order settlement", function () {
 				amount
 			)
 		)
-			.to.emit(this.gateway, Events.Gateway.OnrampOrderSettlement)
+			.to.emit(this.gateway, Events.Gateway.OrderSettledIn)
 			.withArgs(
 				this.alice.address,
 				this.bob.address,
@@ -170,12 +170,12 @@ describe("Gateway Onramp Order settlement", function () {
 			this.depositAmount.sub(amount)
 		);
 
-		const getOnRampOrderInfo = await this.gateway.getOnRampOrderInfo(orderId);
-		expect(getOnRampOrderInfo.amount).to.eq(amount);
-		expect(getOnRampOrderInfo.sender).to.eq(this.bob.address);
-		expect(getOnRampOrderInfo.provider).to.eq(this.alice.address);
-		expect(getOnRampOrderInfo.token).to.eq(this.mockUSDT.address);
-		expect(getOnRampOrderInfo.orderId).to.eq(orderId);
+		const getOrderInfoIn = await this.gateway.getOrderInfoIn(orderId);
+		expect(getOrderInfoIn.amount).to.eq(amount);
+		expect(getOrderInfoIn.sender).to.eq(this.bob.address);
+		expect(getOrderInfoIn.provider).to.eq(this.alice.address);
+		expect(getOrderInfoIn.token).to.eq(this.mockUSDT.address);
+		expect(getOrderInfoIn.orderId).to.eq(orderId);
 
 		await assertBalance(this.mockUSDT, this.mockUSDT, this.bob.address, amount);
 	});
@@ -214,7 +214,7 @@ describe("Gateway Onramp Order settlement", function () {
 		);
 
 		// Perform the settling
-		await this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+		await this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -225,7 +225,7 @@ describe("Gateway Onramp Order settlement", function () {
 
 		// Try to perform the settling again
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -259,7 +259,7 @@ describe("Gateway Onramp Order settlement", function () {
 
 		// Try to perform the settling with the invalid signature
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -293,7 +293,7 @@ describe("Gateway Onramp Order settlement", function () {
 
 		// Try to perform the settling with insufficient balance
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -319,7 +319,7 @@ describe("Gateway Onramp Order settlement", function () {
 		);
 
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				zeroAddress,
@@ -345,7 +345,7 @@ describe("Gateway Onramp Order settlement", function () {
 		);
 
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -408,7 +408,7 @@ describe("Gateway Onramp Order settlement", function () {
 
 		// Perform the settling order
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -416,7 +416,7 @@ describe("Gateway Onramp Order settlement", function () {
 				this.mockUSDT.address,
 				amount
 			)
-		).to.emit(this.gateway, "OnrampOrderSettlement");
+		).to.emit(this.gateway, "OrderSettledIn");
 		const feeDetails = await this.gateway.getFeeDetails();
 		// Calculate expected fee
 		const expectedFee = amount.mul(feeDetails[0]).div(feeDetails[1]);
@@ -470,7 +470,7 @@ describe("Gateway Onramp Order settlement", function () {
 		);
 
 		await expect(
-			this.gateway.connect(this.alice)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.alice).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
@@ -501,7 +501,7 @@ describe("Gateway Onramp Order settlement", function () {
 		);
 
 		await expect(
-			this.gateway.connect(this.aggregator)["settleOrder(bytes32,bytes,address,address,address,uint256)"](
+			this.gateway.connect(this.aggregator).settleOrderIn(
 				orderId,
 				signature,
 				this.alice.address,
