@@ -174,7 +174,7 @@ describe("Gateway offramp order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await gateway.getOffRampOrderInfo(orderId);
+		] = await gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(this.sender.address);
 		expect(this.token).to.eq(mockUSDT.address);
@@ -196,13 +196,13 @@ describe("Gateway offramp order", function () {
 
 		expect(
 			await gateway
-				.connect(this.aggregator)["settleOrder(bytes32,bytes32,address,uint64)"](
+				.connect(this.aggregator)["settleOrderOut(bytes32,bytes32,address,uint64)"](
 					orderId,
 					orderId,
 					this.liquidityProvider.address,
 					MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OfframpOrderSettlement)
+			.to.emit(gateway, Events.Gateway.OrderSettledOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
@@ -284,7 +284,7 @@ describe("Gateway offramp order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await gateway.getOffRampOrderInfo(orderId);
+		] = await gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(this.sender.address);
 		expect(this.token).to.eq(mockUSDT.address);
@@ -307,13 +307,13 @@ describe("Gateway offramp order", function () {
 		// =================== Create Order ===================
 		expect(
 			await gateway
-				.connect(this.aggregator)["settleOrder(bytes32,bytes32,address,uint64)"](
+				.connect(this.aggregator)["settleOrderOut(bytes32,bytes32,address,uint64)"](
 					orderId,
 					orderId,
 					this.liquidityProvider.address,
 					MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OfframpOrderSettlement)
+			.to.emit(gateway, Events.Gateway.OrderSettledOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(

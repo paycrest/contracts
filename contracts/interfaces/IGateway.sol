@@ -31,13 +31,13 @@ interface IGateway {
 	);
 
 	/**
-	 * @notice Emitted when an aggregator settles an off-ramp transaction.
+	 * @notice Emitted when an order is settled out.
 	 * @param splitOrderId The ID of the split order.
 	 * @param orderId The ID of the order.
 	 * @param liquidityProvider The address of the liquidity provider.
 	 * @param settlePercent The percentage at which the transaction is settled.
 	 */
-	event OfframpOrderSettled(
+	event OrderSettledOut(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
@@ -67,19 +67,19 @@ interface IGateway {
 	event Deposit(address indexed sender, address indexed token, uint256 indexed amount);
 
 	/**
-	 * @dev Emitted when an off-ramp settlement is made.
+	 * @dev Emitted when an order is settled in.
 	 * @param provider The address of the provider.
 	 * @param senderAddress The address of the sender.
 	 * @param amount The address of the deposited token.
 	 * @param token The amount of the deposit.
 	 * @param orderId The ID of the order.
 	 */
-	event OnrampOrderSettled(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
+	event OrderSettledIn(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
 	/**
-	 * @notice Struct representing an off-ramp order.
+	 * @notice Struct representing an order out.
 	 * @param sender The address of the sender.
 	 * @param token The address of the token.
 	 * @param senderFeeRecipient The address of the sender fee recipient.
@@ -91,7 +91,7 @@ interface IGateway {
 	 * @param currentBPS The current basis points.
 	 * @param amount The amount of the order.
 	 */
-	struct OffRampOrder {
+	struct OrderOut {
 		address sender;
 		address token;
 		address senderFeeRecipient;
@@ -105,14 +105,14 @@ interface IGateway {
 	}
 
 	/**
-	 * @notice Struct representing onramp order.
+	 * @notice Struct representing an order settled in.
 	 * @param amount  The amount of the order.
 	 * @param provider  The address of the provider.
 	 * @param sender  The address of the sender. 
 	 * @param token The address of the token. 
 	 * @param orderid The ID of the order.
 	 */
-	struct OnRampOrder {
+	struct OrderIn {
 		uint256 amount;
 		address provider;
 		address sender;
@@ -150,14 +150,14 @@ interface IGateway {
 	) external returns (bytes32 _orderId);
 
 	/**
-	 * @notice Settles an offramp transaction and distributes fees accordingly.
+	 * @notice Settles an order out transaction and distributes fees accordingly.
 	 * @param _splitOrderId The ID of the split order.
 	 * @param _orderId The ID of the transaction.
 	 * @param _provider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
 	 * @return bool The settlement is successful.
 	 */
-	function settleOrder(
+	function settleOrderOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _provider,
@@ -188,7 +188,7 @@ interface IGateway {
 
 	
 	/**
-	 * @notice Allow aggregator to settle an onramp order.
+	 * @notice Allow aggregator to settle an order coming in.
 	 * @param _orderId The ID of the transaction.
 	 * @param _signature The signature of the provider.
 	 * @param _provider The address of the provider.
@@ -196,7 +196,7 @@ interface IGateway {
 	 * @param _token The address of the asset.
 	 * @param _amount The amount to be transferred.
 	 */
-	function settleOrder(
+	function settleOrderIn(
         bytes32 _orderId,
         bytes memory _signature,
         address _provider,
@@ -217,14 +217,14 @@ interface IGateway {
 	 * @param _orderId The ID of the order.
 	 * @return Order The order details.
 	 */
-	function getOffRampOrderInfo(bytes32 _orderId) external view returns (OffRampOrder memory);
+	function getOrderInfoOut(bytes32 _orderId) external view returns (OrderOut memory);
 
 	/**
 	 * @notice Gets the details of an on ramp order.
 	 * @param _orderId The ID of the order.
 	 * @return Order The order details.
 	 */
-	function getOnRampOrderInfo(bytes32 _orderId) external view returns (OnRampOrder memory);
+	function getOrderInfoIn(bytes32 _orderId) external view returns (OrderIn memory);
 
 	/**
 	 * @notice Gets the fee details of Gateway.
