@@ -89,8 +89,8 @@ describe("Gateway Provider withdraw", function () {
     it("Should withdraw successfully with valid signature", async function () {
         const amount = ethers.utils.parseEther("1000");
         const messageHash = ethers.utils.solidityKeccak256(
-            ["address", "address", "address", "uint256"],
-            [this.alice.address, this.bob.address, this.mockUSDT.address, amount]
+            ["address", "address", "uint256", "address",],
+            [this.alice.address, this.bob.address, amount, this.mockUSDT.address]
         );
         const signature = await this.alice.signMessage(ethers.utils.arrayify(messageHash));
 
@@ -123,10 +123,10 @@ describe("Gateway Provider withdraw", function () {
         await expect(
             this.gateway
                 .connect(this.aggregator)
-                .withdraw(signature, this.alice.address, this.bob.address, this.mockUSDT.address, amount)
+                .withdrawFrom(this.alice.address, this.bob.address, amount, this.mockUSDT.address, signature)
         )
-            .to.emit(this.gateway, Events.Gateway.Withdraw)
-            .withArgs(this.alice.address, this.bob.address, this.mockUSDT.address, amount);
+            .to.emit(this.gateway, Events.Gateway.Withdrawn)
+            .withArgs(this.alice.address, this.bob.address, amount, this.mockUSDT.address);
 
         await assertDepositBalance(
             this.gateway,
@@ -140,7 +140,7 @@ describe("Gateway Provider withdraw", function () {
     it("Should fail with invalid signature", async function () {
         const amount = ethers.utils.parseEther("1000");
         const messageHash = ethers.utils.solidityKeccak256(
-            ["address", "address", "address", "uint256"],
+            ["address", "address", "uint256", "address"],
             [this.alice.address, this.bob.address, this.mockUSDT.address, amount]
         );
         const ethSignedMessageHash = ethers.utils.hashMessage(messageHash);
@@ -161,22 +161,22 @@ describe("Gateway Provider withdraw", function () {
         await expect(
             this.gateway
                 .connect(this.aggregator)
-                .withdraw(invalidSignature, this.alice.address, this.bob.address, this.mockUSDT.address, amount)
+                .withdrawFrom( this.alice.address, this.bob.address, amount, this.mockUSDT.address, invalidSignature)
         ).to.be.revertedWith("InvalidSignature");
     });
 
     it("Should fail with insufficient balance", async function () {
         const amount = ethers.utils.parseEther("1000");
         const messageHash = ethers.utils.solidityKeccak256(
-            ["address", "address", "address", "uint256"],
-            [this.alice.address, this.bob.address, this.mockUSDT.address, amount]
+            ["address", "address", "uint256", "address"],
+            [this.alice.address, this.bob.address, amount, this.mockUSDT.address]
         );
         const signature = await this.alice.signMessage(ethers.utils.arrayify(messageHash));
 
         await expect(
             this.gateway
                 .connect(this.aggregator)
-                .withdraw(signature, this.alice.address, this.bob.address, this.mockUSDT.address, amount)
+                .withdrawFrom(this.alice.address, this.bob.address, amount, this.mockUSDT.address, signature)
         ).to.be.revertedWith("InsufficientBalance");
     });
 
@@ -192,7 +192,7 @@ describe("Gateway Provider withdraw", function () {
         await expect(
             this.gateway
                 .connect(this.alice)
-                .withdraw(signature, this.alice.address, this.bob.address, this.mockUSDT.address, amount)
+                .withdrawFrom(this.alice.address, this.bob.address, amount, this.mockUSDT.address, signature)
         ).to.be.revertedWith("OnlyAggregator");
     });
 });
