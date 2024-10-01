@@ -57,8 +57,9 @@ async function deployGateway(): Promise<any> {
 
 
 async function main() {
-  const response = await waitForInput("\nDo you want to deploy a new Gateway proxy? y/N\n");
-  if (response !== "y") {
+  const response = await waitForInput("\nDo you want to deploy a new Gateway proxy? y\n");
+  const responseStr = response as string; // Cast response to string
+  if (responseStr.toLowerCase() !== "y") {
     await deployGateway();
   } else {
     await deployGatewayProxy();
