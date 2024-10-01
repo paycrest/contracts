@@ -255,7 +255,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {withdraw-IGateway} */
+	/** @dev See {withdrawFrom-IGateway} */
 	function withdrawFrom(address provider, address recipient, uint256 _amount, address _token, bytes memory _signature) external isValidAmount(_amount) onlyAggregator returns (bool) {
 		bytes32 messageHash = keccak256(abi.encodePacked(provider, recipient, _amount, _token));
 		bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
