@@ -61,7 +61,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	 * @param _amount The amount to be checked.
 	 */
 	modifier isValidAmount(uint256 _amount) {
-		require(_amount != 0, 'AmountIsZero');
+		require(_amount > 0, 'AmountIsZero');
 		_;
 	}
 
@@ -99,7 +99,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		_handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee);
 
 		// validate messageHash
-		require(bytes(messageHash).length != 0, 'InvalidMessageHash');
+		require(bytes(messageHash).length > 0, 'InvalidMessageHash');
 
 		// transfer token from msg.sender to contract
 		IERC20(_token).transferFrom(msg.sender, address(this), _amount + _senderFee);
@@ -154,7 +154,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	) internal isTokenApproved(_token) isValidAmount(_amount) view {
 		require(_refundAddress != address(0), 'ThrowZeroAddress');
 
-		if (_senderFee != 0) {
+		if (_senderFee > 0) {
 			require(_senderFeeRecipient != address(0), 'InvalidSenderFeeRecipient');
 		}
 	}
@@ -212,7 +212,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		IERC20(token).transfer(_provider, liquidityProviderAmount);
 
 		// emit settled event
-		emit OfframpOrderSettlement(_splitOrderId, _orderId, _provider, _settlePercent);
+		emit OfframpOrderSettled(_splitOrderId, _orderId, _provider, _settlePercent);
 
 		return true;
 	}
@@ -300,7 +300,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			IERC20(_token).transfer(treasuryAddress, _protocolFee);
 		}
 
-        emit OnrampOrderSettlement(_provider, _sender, _amount, _token, _orderId);
+        emit OnrampOrderSettled(_provider, _sender, _amount, _token, _orderId);
     }
 
 	/* ##################################################################

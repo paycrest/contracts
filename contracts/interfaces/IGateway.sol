@@ -37,7 +37,7 @@ interface IGateway {
 	 * @param liquidityProvider The address of the liquidity provider.
 	 * @param settlePercent The percentage at which the transaction is settled.
 	 */
-	event OfframpOrderSettlement(
+	event OfframpOrderSettled(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
@@ -74,7 +74,7 @@ interface IGateway {
 	 * @param token The amount of the deposit.
 	 * @param orderId The ID of the order.
 	 */
-	event OnrampOrderSettlement(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
+	event OnrampOrderSettled(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
