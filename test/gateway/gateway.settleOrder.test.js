@@ -154,7 +154,7 @@ describe("Gateway settle order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
 			.withArgs(
-				this.sender.address,
+				this.alice.address,
 				mockUSDT.address,
 				this.orderAmount,
 				this.protocolFee,
@@ -261,7 +261,7 @@ describe("Gateway settle order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
 			.withArgs(
-				this.sender.address,
+				this.alice.address,
 				mockUSDT.address,
 				this.orderAmount,
 				this.protocolFee,
