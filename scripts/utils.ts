@@ -2,6 +2,8 @@ import readline from "readline";
 import dotenv from "dotenv";
 import { artifacts, ethers, network } from "hardhat";
 import { NETWORKS } from "./config";
+import { promises as fs } from 'fs';
+import * as path from 'path';
 const TronWeb = require("tronweb");
 
 dotenv.config();
@@ -83,6 +85,47 @@ export async function confirmContinue(params: any) {
   if (response !== "y")
     throw new Error("Aborting script: User chose to exit script");
   console.log("\n");
+}
+
+
+export async function updateConfigFile(chainId: number, implementationAddress: string): Promise<void> {
+  try {
+    const configFilePath = path.join(__dirname, 'config.ts');
+    // Read the existing config file
+    let configContent = await fs.readFile(configFilePath, 'utf-8');
+
+    // Create a regex to match the network object for the specific chainId
+    const networkRegex = new RegExp(`(${chainId}:\\s*{[\\s\\S]*?)(},?)`, 'g');
+
+    if (networkRegex.test(configContent)) {
+      configContent = configContent.replace(networkRegex, (match) => {
+        const lines = match.split('\n');
+        const updatedLines = lines.map(line => {
+          if (line.trim().startsWith('IMPLEMENTATION:')) {
+            return line.replace(/IMPLEMENTATION:.*/, `IMPLEMENTATION: "${implementationAddress}",`);
+          }
+          return line;
+        });
+
+        if (!updatedLines.some(line => line.trim().startsWith('IMPLEMENTATION:'))) {
+          // If IMPLEMENTATION doesn't exist, add it before the closing brace
+          updatedLines.splice(-1, 0, `\t\tIMPLEMENTATION: "${implementationAddress}",`);
+        }
+
+        return updatedLines.join('\n');
+      });
+    } else {
+      console.error(`Network configuration for chainId ${chainId} not found in config file.`);
+      return;
+    }
+
+    // Write the updated content back to the file
+    await fs.writeFile(configFilePath, configContent, 'utf-8');
+
+    console.log(`Updated config.ts with chainId: ${chainId} and implementation address: ${implementationAddress}`);
+  } catch (error) {
+    console.error('Error updating config file:', error);
+  }
 }
 
 

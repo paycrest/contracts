@@ -1,5 +1,5 @@
 import { ethers, upgrades, network } from "hardhat";
-import { confirmContinue, assertEnvironment } from "./utils";
+import { confirmContinue, assertEnvironment, waitForInput, updateConfigFile } from "./utils";
 import hre from "hardhat";
 
 assertEnvironment();
@@ -19,10 +19,10 @@ async function deployGatewayProxy(): Promise<any> {
   
   console.log("✅ Deployed Gateway: ", tx.transactionHash);
 
-  // const implementationAddress = await contract.implementation();
-
+  if (network.config.chainId !== undefined) {
+    await updateConfigFile(network.config.chainId, contract.address);
+  }
   console.log(`Proxy Contract Address: ${contract.address}`);
-  // console.log("Implementation Contract Address:", implementationAddress);
 
   return tx;
 }
@@ -46,16 +46,23 @@ async function deployGateway(): Promise<any> {
 		address: contract.address,
 	});
 
+  if (network.config.chainId !== undefined) {
+    await updateConfigFile(network.config.chainId, contract.address);
+  }
+
   console.log(`Proxy Contract Address: ${contract.address}`);
-  // console.log("Implementation Contract Address:", implementationAddress);
 
   return tx;
 }
 
 
 async function main() {
-  // Deploy Gateway
-  await deployGateway();
+  const response = await waitForInput("\nDo you want to deploy a new Gateway proxy? y/N\n");
+  if (response !== "y") {
+    await deployGateway();
+  } else {
+    await deployGatewayProxy();
+  }
 }
 
 main().catch((error) => {
