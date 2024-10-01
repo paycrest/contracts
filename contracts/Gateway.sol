@@ -18,8 +18,8 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint256 liquidityProviderAmount;
 	}
 
-	mapping(bytes32 => OrderOut) private orderSettledOut;
-	mapping(bytes32 => OrderIn) private orderSettledIn;
+	mapping(bytes32 => OrderOut) private orderOut;
+	mapping(bytes32 => OrderIn) private orderIn;
 	mapping(address => uint256) private _nonce;
 	mapping(address => mapping(address => uint256)) private balance;
 	mapping(bytes32 => bool) private processedOrders;
@@ -112,7 +112,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// update transaction
 		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
-		orderSettledOut[orderId] = OrderOut({
+		orderOut[orderId] = OrderOut({
 			sender: msg.sender,
 			token: _token,
 			senderFeeRecipient: _senderFeeRecipient,
@@ -129,7 +129,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		emit OrderCreated(
 			_refundAddress,
 			_token,
-			orderSettledOut[orderId].amount,
+			orderOut[orderId].amount,
 			_protocolFee,
 			orderId,
 			_rate,
@@ -170,38 +170,38 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint64 _settlePercent
 	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
-		require(!orderSettledOut[_orderId].isFulfilled, 'OrderFulfilled');
-		require(!orderSettledOut[_orderId].isRefunded, 'OrderRefunded');
+		require(!orderOut[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!orderOut[_orderId].isRefunded, 'OrderRefunded');
 
 		// load the token into memory
-		address token = orderSettledOut[_orderId].token;
+		address token = orderOut[_orderId].token;
 
 		// subtract sum of amount based on the input _settlePercent
-		orderSettledOut[_orderId].currentBPS -= _settlePercent;
+		orderOut[_orderId].currentBPS -= _settlePercent;
 
-		if (orderSettledOut[_orderId].currentBPS == 0) {
+		if (orderOut[_orderId].currentBPS == 0) {
 			// update the transaction to be fulfilled
-			orderSettledOut[_orderId].isFulfilled = true;
+			orderOut[_orderId].isFulfilled = true;
 
-			if (orderSettledOut[_orderId].senderFee > 0) {
+			if (orderOut[_orderId].senderFee > 0) {
 				// transfer sender fee
-				IERC20(orderSettledOut[_orderId].token).transfer(
-					orderSettledOut[_orderId].senderFeeRecipient,
-					orderSettledOut[_orderId].senderFee
+				IERC20(orderOut[_orderId].token).transfer(
+					orderOut[_orderId].senderFeeRecipient,
+					orderOut[_orderId].senderFee
 				);
 
 				// emit event
 				emit SenderFeeTransferred(
-					orderSettledOut[_orderId].senderFeeRecipient,
-					orderSettledOut[_orderId].senderFee
+					orderOut[_orderId].senderFeeRecipient,
+					orderOut[_orderId].senderFee
 				);
 			}
 
 		}
 
 		// transfer to liquidity provider
-		uint256 liquidityProviderAmount = (orderSettledOut[_orderId].amount * _settlePercent) / MAX_BPS;
-		orderSettledOut[_orderId].amount -= liquidityProviderAmount;
+		uint256 liquidityProviderAmount = (orderOut[_orderId].amount * _settlePercent) / MAX_BPS;
+		orderOut[_orderId].amount -= liquidityProviderAmount;
 
 		uint256 protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
 		liquidityProviderAmount -= protocolFee;
@@ -220,26 +220,26 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {refundOrder-IGateway}. */
 	function refundOrder(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
-		require(!orderSettledOut[_orderId].isFulfilled, 'OrderFulfilled');
-		require(!orderSettledOut[_orderId].isRefunded, 'OrderRefunded');
-		require(orderSettledOut[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
+		require(!orderOut[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!orderOut[_orderId].isRefunded, 'OrderRefunded');
+		require(orderOut[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
 
 		if (_fee > 0) {
 			// transfer refund fee to the treasury
-			IERC20(orderSettledOut[_orderId].token).transfer(treasuryAddress, _fee);
+			IERC20(orderOut[_orderId].token).transfer(treasuryAddress, _fee);
 		}
 
 		// reset state values
-		orderSettledOut[_orderId].isRefunded = true;
-		orderSettledOut[_orderId].currentBPS = 0;
+		orderOut[_orderId].isRefunded = true;
+		orderOut[_orderId].currentBPS = 0;
 
 		// deduct fee from order amount
-		uint256 refundAmount = orderSettledOut[_orderId].amount - _fee;
+		uint256 refundAmount = orderOut[_orderId].amount - _fee;
 
 		// transfer refund amount and sender fee to the refund address
-		IERC20(orderSettledOut[_orderId].token).transfer(
-			orderSettledOut[_orderId].refundAddress,
-			refundAmount + orderSettledOut[_orderId].senderFee
+		IERC20(orderOut[_orderId].token).transfer(
+			orderOut[_orderId].refundAddress,
+			refundAmount + orderOut[_orderId].senderFee
 		);
 
 		// emit refunded event
@@ -257,7 +257,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {settleOrder-IGateway}. */
+	/** @dev See {settledOrderIn-IGateway}. */
     function settleOrderIn(
         bytes32 _orderId,
         bytes memory _signature,
@@ -285,7 +285,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
         // Update balances
         balance[_token][_provider] -= (_amount + _protocolFee);
 
-		orderSettledIn[_orderId] = OrderIn({
+		orderIn[_orderId] = OrderIn({
 			amount: _amount,
 			provider: _provider,
 			sender: _sender,
@@ -308,12 +308,12 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
     ################################################################## */
 	/** @dev See {getOrderInfoOut-IGateway}. */
 	function getOrderInfoOut(bytes32 _orderId) external view returns (OrderOut memory) {
-		return orderSettledOut[_orderId];
+		return orderOut[_orderId];
 	}
 
 	/** @dev See {getOrderInfoIn-IGateway}. */
 	function getOrderInfoIn(bytes32 _orderId) external view returns (OrderIn memory) {
-		return orderSettledIn[_orderId];
+		return orderIn[_orderId];
 	}
 
 	/** @dev See {isTokenSupported-IGateway}. */
