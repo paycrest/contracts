@@ -146,7 +146,7 @@ describe("Gateway create order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await this.gateway.getOrderInfo(orderId);
+		] = await this.gateway.getOrderInfoOut(orderId);
 		// expect sender balance to increase by sender fee
 		expect(await this.mockUSDT.balanceOf(this.sender.address)).to.eq(
 			ZERO_AMOUNT
@@ -237,7 +237,7 @@ describe("Gateway create order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await this.gateway.getOrderInfo(orderId);
+		] = await this.gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(ZERO_ADDRESS);
 		expect(this.token).to.eq(ZERO_ADDRESS);
@@ -312,7 +312,7 @@ describe("Gateway create order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await this.gateway.getOrderInfo(orderId);
+		] = await this.gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(ZERO_ADDRESS);
 		expect(this.token).to.eq(ZERO_ADDRESS);
@@ -387,7 +387,7 @@ describe("Gateway create order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await this.gateway.getOrderInfo(orderId);
+		] = await this.gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(ZERO_ADDRESS);
 		expect(this.token).to.eq(ZERO_ADDRESS);
@@ -461,7 +461,7 @@ describe("Gateway create order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await this.gateway.getOrderInfo(orderId);
+		] = await this.gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(ZERO_ADDRESS);
 		expect(this.token).to.eq(ZERO_ADDRESS);

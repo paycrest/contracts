@@ -31,13 +31,13 @@ interface IGateway {
 	);
 
 	/**
-	 * @notice Emitted when an aggregator settles a transaction.
+	 * @notice Emitted when an order is settled out.
 	 * @param splitOrderId The ID of the split order.
 	 * @param orderId The ID of the order.
 	 * @param liquidityProvider The address of the liquidity provider.
 	 * @param settlePercent The percentage at which the transaction is settled.
 	 */
-	event OrderSettled(
+	event OrderSettledOut(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
@@ -66,11 +66,20 @@ interface IGateway {
 	 */
 	event Deposit(address indexed sender, address indexed token, uint256 indexed amount);
 
+	/**
+	 * @dev Emitted when an order is settled in.
+	 * @param provider The address of the provider.
+	 * @param senderAddress The address of the sender.
+	 * @param amount The address of the deposited token.
+	 * @param token The amount of the deposit.
+	 * @param orderId The ID of the order.
+	 */
+	event OrderSettledIn(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
 	/**
-	 * @notice Struct representing an order.
+	 * @notice Struct representing an order out.
 	 * @param sender The address of the sender.
 	 * @param token The address of the token.
 	 * @param senderFeeRecipient The address of the sender fee recipient.
@@ -82,7 +91,7 @@ interface IGateway {
 	 * @param currentBPS The current basis points.
 	 * @param amount The amount of the order.
 	 */
-	struct Order {
+	struct OrderOut {
 		address sender;
 		address token;
 		address senderFeeRecipient;
@@ -93,6 +102,22 @@ interface IGateway {
 		address refundAddress;
 		uint96 currentBPS;
 		uint256 amount;
+	}
+
+	/**
+	 * @notice Struct representing an order settled in.
+	 * @param amount  The amount of the order.
+	 * @param provider  The address of the provider.
+	 * @param sender  The address of the sender. 
+	 * @param token The address of the token. 
+	 * @param orderid The ID of the order.
+	 */
+	struct OrderIn {
+		uint256 amount;
+		address provider;
+		address sender;
+		address token;
+		bytes32 orderId;
 	}
 
 	/* ##################################################################
@@ -125,17 +150,17 @@ interface IGateway {
 	) external returns (bytes32 _orderId);
 
 	/**
-	 * @notice Settles a transaction and distributes fees accordingly.
+	 * @notice Settles an order out transaction and distributes fees accordingly.
 	 * @param _splitOrderId The ID of the split order.
 	 * @param _orderId The ID of the transaction.
-	 * @param _liquidityProvider The address of the liquidity provider.
+	 * @param _provider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
 	 * @return bool The settlement is successful.
 	 */
-	function settle(
+	function settleOrderOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
-		address _liquidityProvider,
+		address _provider,
 		uint64 _settlePercent
 	) external returns (bool);
 
@@ -147,7 +172,7 @@ interface IGateway {
 	 * @param _orderId The ID of the transaction.
 	 * @return bool the refund is successful.
 	 */
-	function refund(uint256 _fee, bytes32 _orderId) external returns (bool);
+	function refundOrder(uint256 _fee, bytes32 _orderId) external returns (bool);
 
 	/**
 	 * @notice Allow a provider to deposit an asset into Gateway.
@@ -161,6 +186,25 @@ interface IGateway {
 	 */
 	function deposit(address _token, uint256 _amount) external returns (bool);
 
+	
+	/**
+	 * @notice Allow aggregator to settle an order coming in.
+	 * @param _orderId The ID of the transaction.
+	 * @param _signature The signature of the provider.
+	 * @param _provider The address of the provider.
+	 * @param _senderAddress The address of the sender.
+	 * @param _token The address of the asset.
+	 * @param _amount The amount to be transferred.
+	 */
+	function settleOrderIn(
+        bytes32 _orderId,
+        bytes memory _signature,
+        address _provider,
+        address _senderAddress,
+        address _token,
+        uint256 _amount
+    ) external;
+
 	/**
 	 * @notice Checks if a token is supported by Gateway.
 	 * @param _token The address of the token to check.
@@ -169,11 +213,18 @@ interface IGateway {
 	function isTokenSupported(address _token) external view returns (bool);
 
 	/**
-	 * @notice Gets the details of an order.
+	 * @notice Gets the details of an off ramp order.
 	 * @param _orderId The ID of the order.
 	 * @return Order The order details.
 	 */
-	function getOrderInfo(bytes32 _orderId) external view returns (Order memory);
+	function getOrderInfoOut(bytes32 _orderId) external view returns (OrderOut memory);
+
+	/**
+	 * @notice Gets the details of an on ramp order.
+	 * @param _orderId The ID of the order.
+	 * @return Order The order details.
+	 */
+	function getOrderInfoIn(bytes32 _orderId) external view returns (OrderIn memory);
 
 	/**
 	 * @notice Gets the fee details of Gateway.
@@ -189,4 +240,11 @@ interface IGateway {
 	 * @return uint256 The provider's balance.
 	 */
 	function getBalance(address _asset, address _provider) external view returns (uint256);
+
+	/**
+	 * @notice Gets order processed status.
+	 * @param _orderId The ID of the order.
+	 * @return bool The order processed status.
+	 */
+	function isOrderProcessed(bytes32 _orderId) external view returns (bool);
 }

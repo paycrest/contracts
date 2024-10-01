@@ -13,7 +13,7 @@ const {
 } = require("../utils/utils.manager.js");
 const { expect } = require("chai");
 
-describe("Gateway settle order", function () {
+describe("Gateway offramp order", function () {
 	beforeEach(async function () {
 		[
 			this.deployer,
@@ -174,7 +174,7 @@ describe("Gateway settle order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await gateway.getOrderInfo(orderId);
+		] = await gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(this.sender.address);
 		expect(this.token).to.eq(mockUSDT.address);
@@ -196,10 +196,13 @@ describe("Gateway settle order", function () {
 
 		expect(
 			await gateway
-				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.connect(this.aggregator)["settleOrderOut(bytes32,bytes32,address,uint64)"](
+					orderId,
+					orderId,
+					this.liquidityProvider.address,
+					MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.OrderSettledOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
@@ -281,7 +284,7 @@ describe("Gateway settle order", function () {
 			this.refundAddress,
 			this.currentBPS,
 			this.amount,
-		] = await gateway.getOrderInfo(orderId);
+		] = await gateway.getOrderInfoOut(orderId);
 
 		expect(this.seller).to.eq(this.sender.address);
 		expect(this.token).to.eq(mockUSDT.address);
@@ -304,10 +307,13 @@ describe("Gateway settle order", function () {
 		// =================== Create Order ===================
 		expect(
 			await gateway
-				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.connect(this.aggregator)["settleOrderOut(bytes32,bytes32,address,uint64)"](
+					orderId,
+					orderId,
+					this.liquidityProvider.address,
+					MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.OrderSettledOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
