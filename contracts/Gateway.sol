@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 import {GatewaySettingManager} from './GatewaySettingManager.sol';
 import {IGateway, IERC20} from './interfaces/IGateway.sol';
@@ -11,6 +12,7 @@ import {IGateway, IERC20} from './interfaces/IGateway.sol';
  * @notice This contract serves as a gateway for creating orders and managing settlements.
  */
 contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
+	using ECDSA for bytes32;
 	struct fee {
 		uint256 protocolFee;
 		uint256 liquidityProviderAmount;
@@ -250,6 +252,20 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		IERC20(_token).transferFrom(sender, address(this), _amount);
 		balance[_token][sender] += _amount;
 		emit Deposit(sender, _token, _amount);
+		return true;
+	}
+
+	/** @dev See {withdrawFrom-IGateway} */
+	function withdrawFrom(address provider, address recipient, uint256 _amount, address _token, bytes memory _signature) external isValidAmount(_amount) onlyAggregator returns (bool) {
+		bytes32 messageHash = keccak256(abi.encodePacked(provider, recipient, _amount, _token));
+		bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+		address signer = ethSignedMessageHash.recover(_signature);
+		require(signer == provider, 'InvalidSignature');
+
+		require(balance[_token][provider] >= _amount, 'InsufficientBalance');
+		balance[_token][provider] -= _amount;
+		IERC20(_token).transfer(recipient, _amount);
+		emit Withdrawn(provider, recipient, _amount, _token);
 		return true;
 	}
 

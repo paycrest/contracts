@@ -66,6 +66,15 @@ interface IGateway {
 	 */
 	event Deposit(address indexed sender, address indexed token, uint256 indexed amount);
 
+	/**
+	 * @notice Emitted when a withdrawal is made by a provider.
+	 * @param provider The address of the provider.
+	 * @param sender The address of the sender.
+	 * @param amount The amount of the withdrawal.
+	 * @param token The address of the withdrawn token.
+	 */
+	event Withdrawn(address indexed provider, address indexed sender, uint256 amount, address indexed token);
+
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
@@ -160,6 +169,19 @@ interface IGateway {
 	 * @return bool The deposit is successful.
 	 */
 	function deposit(address _token, uint256 _amount) external returns (bool);
+
+	/**
+	 * @notice Withdraws an asset from Gateway.
+	 * @dev Requirements:
+	 * - The provider must have enough balance.
+	 * @param _provider The address of the provider.
+	 * @param _recipient The address of the recipient.
+	 * @param _amount The amount to be withdrawn.
+	 * @param _token The address of the asset.
+	 * @param _signature The signature of the provider.
+	 * @return bool The withdrawal is successful.
+	 */
+	function withdrawFrom(address _provider, address _recipient, uint256 _amount, address _token, bytes memory _signature) external returns (bool);
 
 	/**
 	 * @notice Checks if a token is supported by Gateway.
