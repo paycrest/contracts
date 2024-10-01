@@ -101,15 +101,15 @@ export async function updateConfigFile(chainId: number, implementationAddress: s
       configContent = configContent.replace(networkRegex, (match) => {
         const lines = match.split('\n');
         const updatedLines = lines.map(line => {
-          if (line.trim().startsWith('IMPLEMENTATION:')) {
-            return line.replace(/IMPLEMENTATION:.*/, `IMPLEMENTATION: "${implementationAddress}",`);
+          if (line.trim().startsWith('GATEWAY_IMPLEMENTATION:')) {
+            return line.replace(/IMPLEMENTATION:.*/, `GATEWAY_IMPLEMENTATION: "${implementationAddress}",`);
           }
           return line;
         });
 
-        if (!updatedLines.some(line => line.trim().startsWith('IMPLEMENTATION:'))) {
+        if (!updatedLines.some(line => line.trim().startsWith('GATEWAY_IMPLEMENTATION:'))) {
           // If IMPLEMENTATION doesn't exist, add it before the closing brace
-          updatedLines.splice(-1, 0, `\t\tIMPLEMENTATION: "${implementationAddress}",`);
+          updatedLines.splice(-1, 0, `\t\GATEWAY_IMPLEMENTATION: "${implementationAddress}",`);
         }
 
         return updatedLines.join('\n');
