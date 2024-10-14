@@ -154,7 +154,7 @@ describe("Gateway offramp order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
 			.withArgs(
-				this.sender.address,
+				this.alice.address,
 				mockUSDT.address,
 				this.orderAmount,
 				this.protocolFee,
@@ -264,7 +264,7 @@ describe("Gateway offramp order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
 			.withArgs(
-				this.sender.address,
+				this.alice.address,
 				mockUSDT.address,
 				this.orderAmount,
 				this.protocolFee,
