@@ -75,6 +75,8 @@ interface IGateway {
 	 * @param orderId The ID of the order.
 	 */
 	event OrderSettledIn(address indexed provider, address indexed senderAddress, uint256 indexed amount, address token, bytes32 orderId);
+
+	/**
 	 * @notice Emitted when a withdrawal is made by a provider.
 	 * @param provider The address of the provider.
 	 * @param sender The address of the sender.
