@@ -23,6 +23,31 @@
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
+        }
+      ],
+      "name": "Deposit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
         },
         {
           "indexed": false,
@@ -75,6 +100,43 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "senderAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "OrderSettledIn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": false,
           "internalType": "bytes32",
           "name": "splitOrderId",
@@ -99,7 +161,7 @@
           "type": "uint96"
         }
       ],
-      "name": "OrderSettled",
+      "name": "OrderSettledOut",
       "type": "event"
     },
     {
@@ -119,6 +181,37 @@
         }
       ],
       "name": "SenderFeeTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "Withdrawn",
       "type": "event"
     },
     {
@@ -171,6 +264,54 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "deposit",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_asset",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_provider",
+          "type": "address"
+        }
+      ],
+      "name": "getBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "getFeeDetails",
       "outputs": [
@@ -196,7 +337,53 @@
           "type": "bytes32"
         }
       ],
-      "name": "getOrderInfo",
+      "name": "getOrderInfoIn",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "provider",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "orderId",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct IGateway.OrderIn",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getOrderInfoOut",
       "outputs": [
         {
           "components": [
@@ -251,9 +438,28 @@
               "type": "uint256"
             }
           ],
-          "internalType": "struct IGateway.Order",
+          "internalType": "struct IGateway.OrderOut",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "isOrderProcessed",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -291,7 +497,7 @@
           "type": "bytes32"
         }
       ],
-      "name": "refund",
+      "name": "refundOrder",
       "outputs": [
         {
           "internalType": "bool",
@@ -299,6 +505,44 @@
           "type": "bool"
         }
       ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_signature",
+          "type": "bytes"
+        },
+        {
+          "internalType": "address",
+          "name": "_provider",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_senderAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "settleOrderIn",
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -316,7 +560,7 @@
         },
         {
           "internalType": "address",
-          "name": "_liquidityProvider",
+          "name": "_provider",
           "type": "address"
         },
         {
@@ -325,7 +569,46 @@
           "type": "uint64"
         }
       ],
-      "name": "settle",
+      "name": "settleOrderOut",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_provider",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "withdrawFrom",
       "outputs": [
         {
           "internalType": "bool",
