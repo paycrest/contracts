@@ -106,11 +106,11 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		<tr>
 			<td rowspan="2">Base Sepolia</td>
 			<td>Gateway Proxy</td>
-			<td>0x847dfdAa218F9137229CF8424378871A1DA8f625</td>
+			<td>0xc8D160c23FcA7CD6E386Cc5Bc50BEe88a84F7E1b</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
+			<td>0xd28da2E11FCd2A9F44D5a4952430CE8b4f3Ee05f</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
