@@ -18,6 +18,9 @@ async function deployGatewayProxy(): Promise<any> {
   const tx = await contract.deployTransaction.wait();
   
   console.log("✅ Deployed Gateway: ", tx.transactionHash);
+  await hre.run("verify:verify", {
+		address: contract.address,
+	});
 
   if (network.config.chainId !== undefined) {
     await updateConfigFile(network.config.chainId, contract.address);
