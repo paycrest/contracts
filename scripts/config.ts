@@ -106,6 +106,19 @@ const NETWORKS = {
 	},
 
 	/**
+	 * @dev Celo Mainnet
+	 */
+	42220: {
+		RPC_URL: `https://forno.celo.org`,
+		SUPPORTED_TOKENS: {
+			USDC: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+		},
+		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+		GATEWAY_CONTRACT: "0x8FD1f78d88Dd008E557273b5Cd517487C2A9A7de",
+		IMPERSONATE_ACCOUNT: "",
+	},
+
+	/**
 	 * @dev Tron Mainnet
 	 * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
 	 */

@@ -21,6 +21,7 @@ let {
 	POLYGONSCAN_API_KEY,
 	OPTIMISM_API,
 	SCROLL_API,
+	CELO_API,
 } = process.env;
 
 const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
@@ -73,6 +74,12 @@ const config: HardhatUserConfig = {
 			url: "https://scroll.drpc.org", // @note this is a public rpc
 			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
 			chainId: 534352,
+			saveDeployments: true,
+		},
+		celo: {
+			url: "https://forno.celo.org", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 42220,
 			saveDeployments: true,
 		},
 
@@ -134,6 +141,7 @@ const config: HardhatUserConfig = {
 			sepolia: ETHERSCAN_API_KEY!,
 			optimisticEthereum: OPTIMISM_API!,
 			scroll: SCROLL_API!,
+			celo: CELO_API!,
 		},
 		customChains: [
 			{
@@ -174,6 +182,14 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api-amoy.polygonscan.com/api",
 					browserURL: "https://amoy.polygonscan.com",
+				},
+			},
+			{
+				network: "celo",
+				chainId: 42220,
+				urls: {
+					apiURL: "https://api.celoscan.io/api",
+					browserURL: "https://celoscan.io/",
 				},
 			},
 		],
