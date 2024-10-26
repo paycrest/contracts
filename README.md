@@ -235,6 +235,22 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
+			<td rowspan="3">Celo</td>
+			<td>Gateway Proxy</td>
+			<td>0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x8508c1C9f29BD1e73B5A9bD8FB87720927c681FA</td>
+		</tr>
+		<tr>
+			<td>Gateway Admin</td>
+			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
 			<td rowspan="3">Tron</td>
 			<td>Gateway Proxy</td>
 			<td>THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU</td>
