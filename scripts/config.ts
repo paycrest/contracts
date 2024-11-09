@@ -130,6 +130,18 @@ const NETWORKS = {
 		GATEWAY_CONTRACT: "0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b",
 		IMPERSONATE_ACCOUNT: "",
 	},
+	/**
+	 * @dev AssetChain Mainnet
+	 */
+	42420: {
+		RPC_URL: `https://mainnet-rpc.assetchain.org`,
+		SUPPORTED_TOKENS: {
+			USDC: "0x2B7C1342Cc64add10B2a79C8f9767d2667DE64B2",
+		},
+		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+		GATEWAY_CONTRACT: "",
+		IMPERSONATE_ACCOUNT: "",
+	},
 
 	/////////////////////////////////
 	// Testnets
@@ -202,6 +214,19 @@ const NETWORKS = {
 		},
 		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
 		GATEWAY_CONTRACT: "TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ",
+	},
+	/**
+	 * @dev AssetChain Testnet
+	 */
+	42421: {
+		GATEWAY_IMPLEMENTATION: "0x9519D63fbF9717Fa3419846eBA92B01Cd1d1D131",
+		RPC_URL: `https://enugu-rpc.assetchain.org/`,
+		SUPPORTED_TOKENS: {
+			USDC: "0x04f868C5b3F0A100a207c7e9312946cC2c48a7a3",
+		},
+		TREASURY_FEE_PERCENT: 100, // in BPS i.e 0.1%
+		GATEWAY_CONTRACT: "0xBe6dE889795677736919A7880324A71Dc7dFa162",
+		IMPERSONATE_ACCOUNT: "",
 	},
 };
 

@@ -82,6 +82,12 @@ const config: HardhatUserConfig = {
 			chainId: 42220,
 			saveDeployments: true,
 		},
+		assetChain: {
+			url: "https://mainnet-rpc.assetchain.org", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 42420,
+			saveDeployments: true,
+		},
 
 		// Testnets
 		arbitrumSepolia: {
@@ -107,6 +113,12 @@ const config: HardhatUserConfig = {
 			url: `https://rpc.shield3.com/v3/0xaa36a7/${SHIELD3_API_KEY}/rpc`,
 			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
 			chainId: 11155111,
+			saveDeployments: true,
+		},
+		assetchain_test: {
+			url: "https://enugu-rpc.assetchain.org/", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 42421,
 			saveDeployments: true,
 		},
 	},
@@ -190,6 +202,14 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api.celoscan.io/api",
 					browserURL: "https://celoscan.io/",
+				},
+			},
+			{
+				network: "assetchain_test",
+				chainId: 42421,
+				urls: {
+					apiURL: "https://scan-testnet.assetchain.org/api",
+					browserURL: "https://scan-testnet.assetchain.org/",
 				},
 			},
 		],

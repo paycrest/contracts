@@ -116,6 +116,18 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
+			<td rowspan="2">Asset Chain Testnet</td>
+			<td>Gateway Proxy</td>
+			<td>0xBe6dE889795677736919A7880324A71Dc7dFa162</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x9519D63fbF9717Fa3419846eBA92B01Cd1d1D131</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
 			<td rowspan="3">Tron Shasta</td>
 			<td>Gateway Proxy</td>
 			<td>TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ</td>
