@@ -104,7 +104,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// emit order created event
 		emit OrderCreated(
-			order[orderId].sender,
+			_refundAddress,
 			_token,
 			order[orderId].amount,
 			_protocolFee,
@@ -213,7 +213,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		order[_orderId].currentBPS = 0;
 
 		// deduct fee from order amount
-		uint256 refundAmount = order[_orderId].amount + order[_orderId].protocolFee - _fee;
+		uint256 refundAmount = order[_orderId].amount - _fee;
 
 		// transfer refund amount and sender fee to the refund address
 		IERC20(order[_orderId].token).transfer(

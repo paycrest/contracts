@@ -26,6 +26,12 @@ tronbox migrate -f 1 --to 1 --network <network>
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
 
+# upgrade across all EVM chains
+npx hardhat run scripts/upgrade.ts --network arbitrumOne && npx hardhat run scripts/upgrade.ts --network base && npx hardhat run scripts/upgrade.ts --network bsc && npx hardhat run scripts/upgrade.ts --network polygon && npx hardhat run scripts/upgrade.ts --network optimisticEthereum && npx hardhat run scripts/upgrade.ts --network scroll
+
+# upgrade across all EVM testnet chains
+npx hardhat run scripts/upgrade.ts --network arbitrumSepolia && npx hardhat run scripts/upgrade.ts --network amoy && npx hardhat run scripts/upgrade.ts --network baseSepolia && npx hardhat run scripts/upgrade.ts --network sepolia
+
 # for Tron network,
 tronbox migrate -f 2 --to 2 --network <network>
 ```
@@ -74,13 +80,25 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
+			<td rowspan="2">Polygon Amoy</td>
+			<td>Gateway Proxy</td>
+			<td>0xCAD53Ff499155Cc2fAA2082A85716322906886c2</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
 			<td rowspan="2">Arbitrum Sepolia</td>
 			<td>Gateway Proxy</td>
 			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD01abCEEeacfC91d2eCE31422DFe531004A7D2e6</td>
+			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -92,19 +110,23 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xfB411Cc6385Af50A562aFCb441864E9d541CDA67</td>
+			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="2">Tron Shasta</td>
+			<td rowspan="3">Tron Shasta</td>
 			<td>Gateway Proxy</td>
 			<td>TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>TPddrcko4ceBWZpr7zPnbPbSnkLAMjBCCm</td>
+			<td>TSGr6Ri7NZ7FxN1gCiWkn8cPA2qtF6ctdF</td>
+		</tr>
+		<tr>
+			<td>Gateway Admin</td>
+			<td>TNcogTDoWxpuv77WtsiNTRhqjRbZmmDLTR</td>
 		</tr>
 	</tbody>
 </table>
@@ -139,7 +161,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xafbf71A72d30f81eb66baaF904ea537fD35dd106</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -151,7 +173,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x847dfdAa218F9137229CF8424378871A1DA8f625</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -163,7 +185,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -175,29 +197,55 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
+			<td>0x8fd1f78d88dd008e557273b5cd517487c2a9a7de</td>
 		</tr>
 		<tr>
-			<td rowspan="2">Optimism Ethereum</td>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Optimism Ethereum</td>
 			<td>Gateway Proxy</td>
 			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
+		</tr>
+		<tr>
 			<td>Gateway Admin</td>
 			<td>0xb9B5280AB99E48a9662D4740B1e1398abdf87b6D</td>
 		</tr>
 		<tr>
-			<td>Gateway Implementation</td>
-			<td>0x7bA90e38327A4B82D8BF6B481C1b2Ed14228E91A</td>
+			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="2">Scroll</td>
+			<td rowspan="3">Scroll</td>
 			<td>Gateway Proxy</td>
 			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+		</tr>
+		<tr>
 			<td>Gateway Admin</td>
 			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
 		</tr>
 		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Tron</td>
+			<td>Gateway Proxy</td>
+			<td>THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU</td>
+		</tr>
+		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+			<td>TDhBvHbnF8nN7YctokpdZAVPcmBx2Jrn2d</td>
+		</tr>
+		<tr>
+			<td>Gateway Admin</td>
+			<td>TLw6AW9khfwLVq5gq9uV71wTVZEPxKjoiZ</td>
 		</tr>
 	</tbody>
 </table>
