@@ -80,13 +80,25 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
+			<td rowspan="2">Polygon Amoy</td>
+			<td>Gateway Proxy</td>
+			<td>0xCAD53Ff499155Cc2fAA2082A85716322906886c2</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
 			<td rowspan="2">Arbitrum Sepolia</td>
 			<td>Gateway Proxy</td>
 			<td>0x87B321fc77A0fDD0ca1fEe7Ab791131157B9841A</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD01abCEEeacfC91d2eCE31422DFe531004A7D2e6</td>
+			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -98,7 +110,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xfB411Cc6385Af50A562aFCb441864E9d541CDA67</td>
+			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -185,7 +197,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x647daC4807Eb82E67CE3bca930D6202190831B4a</td>
+			<td>0x8fd1f78d88dd008e557273b5cd517487c2a9a7de</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -197,7 +209,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x847dfdAa218F9137229CF8424378871A1DA8f625</td>
+			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
 		</tr>
 		<tr>
 			<td>Gateway Admin</td>
@@ -213,7 +225,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x5E7eC39915F6CD48829d06648F6682765846602a</td>
+			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
 		</tr>
 		<tr>
 			<td>Gateway Admin</td>
