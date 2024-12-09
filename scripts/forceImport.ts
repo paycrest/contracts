@@ -4,7 +4,7 @@ import { ethers, upgrades } from "hardhat";
 async function main() {
   // Define the address of the existing implementation contract
   const existingContractAddress: string =
-		"0x5E7eC39915F6CD48829d06648F6682765846602a";
+		"0xd28da2E11FCd2A9F44D5a4952430CE8b4f3Ee05f";
 
   // Define the implementation contract factory
   const deployedImplementation = await ethers.getContractFactory("Gateway");

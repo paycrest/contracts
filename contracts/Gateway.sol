@@ -203,8 +203,8 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
 		require(order[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
 
-		if (order[_orderId].protocolFee > 0) {
-			// transfer protocol fee
+		if (_fee > 0) {
+			// transfer refund fee to the treasury
 			IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
 		}
 
