@@ -116,6 +116,18 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
+			<td rowspan="2">Asset Chain Testnet</td>
+			<td>Gateway Proxy</td>
+			<td>0xBe6dE889795677736919A7880324A71Dc7dFa162</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x9519D63fbF9717Fa3419846eBA92B01Cd1d1D131</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
 			<td rowspan="3">Tron Shasta</td>
 			<td>Gateway Proxy</td>
 			<td>TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ</td>
@@ -230,6 +242,31 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		<tr>
 			<td>Gateway Admin</td>
 			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+			<td rowspan="3">Celo</td>
+			<td>Gateway Proxy</td>
+			<td>0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x8508c1C9f29BD1e73B5A9bD8FB87720927c681FA</td>
+		</tr>
+		<tr>
+			<td>Gateway Admin</td>
+			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
+		</tr>
+		<tr>
+			<td rowspan="2">Asset Chain</td>
+			<td>Gateway Proxy</td>
+			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
