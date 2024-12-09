@@ -185,7 +185,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+			<td>0xd28da2E11FCd2A9F44D5a4952430CE8b4f3Ee05f</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
