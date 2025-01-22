@@ -16,17 +16,7 @@ assignees: ''
 > **THEN** Then we expect a particular result
 
 **Tech Details**
->Technical changes that will happen include UI changes, styling updates, integration requirements
-* **UI State Changes:**
-    >  Changes to the frontend interface
-* **Styling Updates:**
-    >  CSS changes for the application
-* **Integration Requirements:**
-    >  Changes to the logic parts of the application or protocol 
-
-
-**Design Link**
->* Link to the figma design file 
+>* Add the technical details of the feature
 
 **Notes/Assumptions**
 >* Notes or assumption that has to remain constant. 
