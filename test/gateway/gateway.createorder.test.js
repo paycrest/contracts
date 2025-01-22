@@ -126,7 +126,7 @@ describe("Gateway create order", function () {
 		)
 			.to.emit(this.gateway, Events.Gateway.OrderCreated)
 			.withArgs(
-				this.alice.address,
+				this.sender.address,
 				this.mockUSDT.address,
 				BigNumber.from(this.orderAmount),
 				this.protocolFee,

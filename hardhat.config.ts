@@ -109,6 +109,12 @@ const config: HardhatUserConfig = {
 			chainId: 11155111,
 			saveDeployments: true,
 		},
+		assetchain_test: {
+			url: "https://enugu-rpc.assetchain.org/", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 42421,
+			saveDeployments: true,
+		},
 	},
 	solidity: {
 		settings: {

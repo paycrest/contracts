@@ -6,6 +6,8 @@
 
 Paycrest contracts are multi-chain EVM-based smart contracts that facilitate the on-chain lifecycle of a payment order. They empower a sender to create a payment order, enable a liquidity provider to receive cryptocurrency in escrow, and much more.
 
+![](https://lh7-rt.googleusercontent.com/docsz/AD_4nXd9vDhbrwj3ikJ9ghsVPc4qaZ7_RmgzNn3CjbW2jvAWepYYBmIat8Mtidid8OCBzuP7Sr-_zab6gjjpM6tSJm3p00akfR9xhkkzckDoZOhO9jiqgnO0EkZRyH4QoxgGAXRelCSNxQ?key=xfQ-CdRhtjGdAX7gL41tK8t-)
+
 ## Deployment
 
 Deployment is done using Hardhat scripts
@@ -116,6 +118,18 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
+			<td rowspan="2">Asset Chain Testnet</td>
+			<td>Gateway Proxy</td>
+			<td>0xBe6dE889795677736919A7880324A71Dc7dFa162</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x9519D63fbF9717Fa3419846eBA92B01Cd1d1D131</td>
+		</tr>
+		<tr>
+			<td colspan="3"></td>
+		</tr>
+		<tr>
 			<td rowspan="3">Tron Shasta</td>
 			<td>Gateway Proxy</td>
 			<td>TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ</td>
@@ -173,7 +187,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+			<td>0xd28da2E11FCd2A9F44D5a4952430CE8b4f3Ee05f</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -286,6 +300,20 @@ $ git commit -m "test: Add test suite for feature x"
 ```
 
 Further details on `conventional commits` can be found [here](https://www.conventionalcommits.org/en/v1.0.0/)
+
+## Contributing
+
+We welcome contributions to the Paycrest gateway contract! To get started, follow these steps:
+
+**Important:** Before you begin contributing, please ensure you've read and understood these important documents:
+
+- [Contribution Guide](https://paycrest.notion.site/Contribution-Guide-1602482d45a2809a8930e6ad565c906a) - Critical information about development process, standards, and guidelines.
+
+- [Code of Conduct](https://paycrest.notion.site/Contributor-Code-of-Conduct-1602482d45a2806bab75fd314b381f4c) - Our community standards and expectations.
+
+Our team will review your pull request and work with you to get it merged into the main branch of the repository.
+
+If you encounter any issues or have questions, feel free to open an issue on the repository or leave a message in our [developer community on Telegram](https://t.me/+Stx-wLOdj49iNDM0)
 
 ## Contributors ✨
 
