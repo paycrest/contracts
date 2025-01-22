@@ -5,8 +5,6 @@ By submitting a PR to this repository, you agree to the terms within the [Paycre
 > Describe the purpose of this PR along with any background information and the impacts of the proposed change. For the benefit of the community, please do not assume prior context.
 >
 > Provide details that support your chosen implementation, including: breaking changes, alternatives considered, changes to the API, contracts etc.
->
-> If the UI is being changed, please provide screenshots.
 
 
 ### References

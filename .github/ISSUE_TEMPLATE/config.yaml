@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: "General Support" 
-    url: "mailto:engineering@paycrest.io" 
-    about: "For general inquiries, visit our support page." 
+  - name: "Paycrest Dev Community"
+    url: "https://t.me/+Stx-wLOdj49iNDM0"
+    about: "Please ask and answer questions here."
+  - name: "Paycrest Security Bug Bounty"
+    url: "engineering@paycrest.io"
+    about: "Please report security vulnerabilities here."
