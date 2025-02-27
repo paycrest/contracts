@@ -57,7 +57,6 @@ const config: HardhatUserConfig = {
 			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
 			chainId: 137,
 			saveDeployments: true,
-			gasPrice: 25000000000,
 		},
 		mainnet: {
 			url: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
