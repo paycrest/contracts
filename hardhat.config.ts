@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
+import { ethers } from "hardhat";
 import { task, types } from "hardhat/config";
 import type { HardhatUserConfig } from "hardhat/types";
 
@@ -57,7 +58,7 @@ const config: HardhatUserConfig = {
 			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
 			chainId: 137,
 			saveDeployments: true,
-			gasPrice: 25000000000,
+			gasPrice: Number(ethers.utils.parseUnits("100", "gwei")),
 		},
 		mainnet: {
 			url: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
