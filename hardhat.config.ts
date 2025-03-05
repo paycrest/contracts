@@ -89,6 +89,12 @@ const config: HardhatUserConfig = {
 			chainId: 42420,
 			saveDeployments: true,
 		},
+		lisk: {
+			url: "https://rpc.api.lisk.com", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			chainId: 1135,
+			saveDeployments: true,
+		},
 
 		// Testnets
 		arbitrumSepolia: {
@@ -155,6 +161,8 @@ const config: HardhatUserConfig = {
 			optimisticEthereum: OPTIMISM_API!,
 			scroll: SCROLL_API!,
 			celo: CELO_API!,
+			lisk: "Paycrest", // @note https://docs.blockscout.com/devs/verification/hardhat-verification-plugin#config-file-and-unsupported-networks
+			assetChain: "Paycrest",
 		},
 		customChains: [
 			{
@@ -171,6 +179,22 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api.scrollscan.com/api",
 					browserURL: "https://scrollscan.com/",
+				},
+			},
+			{
+				network: "lisk",
+				chainId: 1135,
+				urls: {
+					apiURL: "https://blockscout.lisk.com/api",
+					browserURL: "https://blockscout.lisk.com/",
+				},
+			},
+			{
+				network: "assetChain",
+				chainId: 42421,
+				urls: {
+					apiURL: "https://scan.assetchain.org/api",
+					browserURL: "https://scan.assetchain.org/",
 				},
 			},
 			{
@@ -203,14 +227,6 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api.celoscan.io/api",
 					browserURL: "https://celoscan.io/",
-				},
-			},
-			{
-				network: "assetchain_test",
-				chainId: 42421,
-				urls: {
-					apiURL: "https://scan-testnet.assetchain.org/api",
-					browserURL: "https://scan-testnet.assetchain.org/",
 				},
 			},
 		],
