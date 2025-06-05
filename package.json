@@ -6,15 +6,15 @@
   "repository": "https://github.com/paycrest/contracts",
   "scripts": {
     "test": "npx hardhat test",
-    "ownership": "npx hardhat test test/paycrest/paycrest.ownable.test.js",
-    "settleOrder": "npx hardhat test test/paycrest/paycrest.settleOrder.test.js",
-    "createOrder": "npx hardhat test test/paycrest/paycrest.createorder.test.js",
+    "ownership": "npx hardhat test test/gateway/gateway.ownable.test.js",
+    "settleOrder": "npx hardhat test test/gateway/gateway.settleOrder.test.js",
+    "createOrder": "npx hardhat test test/gateway/gateway.createorder.test.js",
     "compile": "npx hardhat compile",
     "lint:sol": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
     "lint:sol:fix": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --write"
   },
   "keywords": [],
-  "author": "https://onahprosperity.github.io/",
+  "author": "https://onahprosper.github.io/",
   "license": "MIT",
   "devDependencies": {
     "@daochild/tronweb-typescript": "^1.1.2",
