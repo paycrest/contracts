@@ -18,7 +18,7 @@ describe("Gateway settle order", function () {
 		[
 			this.deployer,
 			this.treasuryAddress,
-			this.primaryValidator,
+			this.recipient,
 			this.aggregator,
 			this.alice,
 			this.bob,
@@ -48,15 +48,6 @@ describe("Gateway settle order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.ProtocolFeeUpdated)
 			.withArgs(protocolFeePercent);
-
-		await mockUSDT.connect(this.alice).mint(this.mintAmount);
-
-		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(this.mintAmount);
-		await mockUSDT
-			.connect(this.alice)
-			.transfer(this.sender.address, this.mintAmount);
-
-		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
 
 		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
 			ZERO_AMOUNT
@@ -104,16 +95,12 @@ describe("Gateway settle order", function () {
 			.withArgs(token, mockUSDT.address, BigNumber.from(1));
 	});
 
-	it("Should be able to create order by the sender and settled by the liquidity aggregator", async function () {
+	it("Should be able to process settlement order to the recipient while taking protocol fees", async function () {
 		const ret = await getSupportedInstitutions();
 
-		await mockUSDT
-			.connect(this.sender)
-			.approve(gateway.address, this.mintAmount);
+        const mintAmountWithFee = this.mintAmount.add(this.protocolFee);
 
-		expect(
-			await mockUSDT.allowance(this.sender.address, gateway.address)
-		).to.equal(this.mintAmount);
+		await mockUSDT.connect(this.liquidityProvider).mint(mintAmountWithFee);
 
 		const rate = 750;
 		const data = [
@@ -131,7 +118,7 @@ describe("Gateway settle order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		const argOrderID = [this.sender.address, 1];
+		const argOrderID = [this.recipient.address, 1];
 
 		const encoded = ethers.utils.defaultAbiCoder.encode(
 			["address", "uint256"],
@@ -139,71 +126,62 @@ describe("Gateway settle order", function () {
 		);
 		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
 
+        await mockUSDT.connect(this.liquidityProvider).transfer(gateway.address, mintAmountWithFee);
+
 		await expect(
 			gateway
-				.connect(this.sender)
-				.createOrder(
+				.connect(this.aggregator)
+				.settleIn(
+                    orderId,
 					mockUSDT.address,
 					this.orderAmount,
-					rate,
 					this.sender.address,
 					this.senderFee,
-					this.alice.address,
+                    this.liquidityProvider.address,
+                    this.protocolFee,
+					this.recipient.address,
+					rate,
 					messageHash.toString()
 				)
 		)
-			.to.emit(gateway, Events.Gateway.OrderCreated)
+			.to.emit(gateway, Events.Gateway.SettleIn)
 			.withArgs(
-				this.alice.address,
-				mockUSDT.address,
-				this.orderAmount,
-				this.protocolFee,
 				orderId,
-				rate,
-				messageHash.toString()
+                this.orderAmount,
+                this.recipient.address,
+                mockUSDT.address,
+                this.sender.address,
+                this.liquidityProvider.address,
+                rate,
+                messageHash.toString()
 			);
-
-		[
-			this.seller,
-			this.token,
-			this.senderRecipient,
-			this.senderFee,
-			this.protocolFee,
-			this.isFulfilled,
-			this.isRefunded,
-			this.refundAddress,
-			this.currentBPS,
-			this.amount,
-		] = await gateway.getOrderInfo(orderId);
-
-		expect(this.seller).to.eq(this.sender.address);
+        [
+            this.seller,
+            this.token,
+            this.senderRecipient,
+            this.senderFee,
+            this.protocolFee,
+            this.isFulfilled,
+            this.isRefunded,
+            this.refundAddress,
+            this.currentBPS,
+            this.amount,
+        ] = await gateway.getOrderInfo(orderId);
+            
+		expect(this.seller).to.eq(this.recipient.address);
 		expect(this.token).to.eq(mockUSDT.address);
 		expect(this.senderRecipient).to.eq(this.sender.address);
 		expect(this.senderFee).to.eq(this.senderFee);
-		expect(this.isFulfilled).to.eq(false);
+		expect(this.isFulfilled).to.eq(true);
 		expect(this.isRefunded).to.eq(false);
-		expect(this.refundAddress).to.eq(this.alice.address);
-		expect(this.currentBPS).to.eq(MAX_BPS);
 		expect(this.amount).to.eq(BigNumber.from(this.orderAmount));
 
-		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
+		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(ZERO_AMOUNT);
 
-		expect(
-			await mockUSDT.allowance(this.alice.address, gateway.address)
-		).to.equal(ZERO_AMOUNT);
+        expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(this.senderFee);
 
-		// =================== Create Order ===================
-
-		expect(
-			await gateway
-				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
-		)
-			.to.emit(gateway, Events.Gateway.SettleOut)
-			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
-
-		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
-			this.liquidityProviderAmount
+		expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(
+			this.orderAmount
 		);
 		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
 			this.protocolFee
@@ -211,16 +189,12 @@ describe("Gateway settle order", function () {
 		expect(await mockUSDT.balanceOf(gateway.address)).to.eq(ZERO_AMOUNT);
 	});
 
-	it("Should revert when trying to settle an already fulfilled order", async function () {
+	it("Should be able to process settlement order to the recipient while taking sender fees, and protocol fees", async function () {
 		const ret = await getSupportedInstitutions();
 
-		await mockUSDT
-			.connect(this.sender)
-			.approve(gateway.address, this.mintAmount);
+        const mintAmountWithFee = this.mintAmount.add(this.protocolFee);
 
-		expect(
-			await mockUSDT.allowance(this.sender.address, gateway.address)
-		).to.equal(this.mintAmount);
+		await mockUSDT.connect(this.liquidityProvider).mint(mintAmountWithFee);
 
 		const rate = 750;
 		const data = [
@@ -238,7 +212,7 @@ describe("Gateway settle order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		const argOrderID = [this.sender.address, 1];
+		const argOrderID = [this.recipient.address, 1];
 
 		const encoded = ethers.utils.defaultAbiCoder.encode(
 			["address", "uint256"],
@@ -246,77 +220,68 @@ describe("Gateway settle order", function () {
 		);
 		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
 
+        await mockUSDT.connect(this.liquidityProvider).transfer(gateway.address, mintAmountWithFee);
+
+        const senderFee = ethers.utils.parseEther("1000");
+
 		await expect(
 			gateway
-				.connect(this.sender)
-				.createOrder(
+				.connect(this.aggregator)
+				.settleIn(
+                    orderId,
 					mockUSDT.address,
 					this.orderAmount,
-					rate,
 					this.sender.address,
-					this.senderFee,
-					this.alice.address,
+					senderFee,
+                    this.liquidityProvider.address,
+                    this.protocolFee,
+					this.recipient.address,
+					rate,
 					messageHash.toString()
 				)
 		)
-			.to.emit(gateway, Events.Gateway.OrderCreated)
+			.to.emit(gateway, Events.Gateway.SettleIn)
 			.withArgs(
-				this.alice.address,
-				mockUSDT.address,
-				this.orderAmount,
-				this.protocolFee,
 				orderId,
-				rate,
-				messageHash.toString()
+                this.orderAmount,
+                this.recipient.address,
+                mockUSDT.address,
+                this.sender.address,
+                this.liquidityProvider.address,
+                rate,
+                messageHash.toString()
 			);
-
-		[
-			this.seller,
-			this.token,
-			this.senderRecipient,
-			this.senderFee,
-			this.protocolFee,
-			this.isFulfilled,
-			this.isRefunded,
-			this.refundAddress,
-			this.currentBPS,
-			this.amount,
-		] = await gateway.getOrderInfo(orderId);
-
-		expect(this.seller).to.eq(this.sender.address);
+        [
+            this.seller,
+            this.token,
+            this.senderRecipient,
+            this.senderFee,
+            this.protocolFee,
+            this.isFulfilled,
+            this.isRefunded,
+            this.refundAddress,
+            this.currentBPS,
+            this.amount,
+        ] = await gateway.getOrderInfo(orderId);
+            
+		expect(this.seller).to.eq(this.recipient.address);
 		expect(this.token).to.eq(mockUSDT.address);
 		expect(this.senderRecipient).to.eq(this.sender.address);
-		expect(this.senderFee).to.eq(this.senderFee);
-		expect(this.isFulfilled).to.eq(false);
+		expect(this.senderFee).to.eq(senderFee);
+		expect(this.isFulfilled).to.eq(true);
 		expect(this.isRefunded).to.eq(false);
-		expect(this.refundAddress).to.eq(this.alice.address);
-		expect(this.currentBPS).to.eq(MAX_BPS);
-		expect(this.amount).to.eq(
-			BigNumber.from(this.orderAmount)
-		);
+		expect(this.amount).to.eq(this.orderAmount.sub(senderFee));
 
-		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(ZERO_AMOUNT);
+		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(ZERO_AMOUNT);
 
-		expect(
-			await mockUSDT.allowance(this.alice.address, gateway.address)
-		).to.equal(ZERO_AMOUNT);
+        expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(senderFee);
 
-		// =================== Create Order ===================
-		expect(
-			await gateway
-				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
-		)
-			.to.emit(gateway, Events.Gateway.SettleOut)
-			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
-
-		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
-			this.liquidityProviderAmount
+		expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(
+			this.orderAmount.sub(senderFee)
 		);
 		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
 			this.protocolFee
 		);
-
 		expect(await mockUSDT.balanceOf(gateway.address)).to.eq(ZERO_AMOUNT);
 	});
 });
