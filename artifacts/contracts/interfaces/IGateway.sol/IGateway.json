@@ -75,31 +75,19 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
-          "internalType": "bytes32",
-          "name": "splitOrderId",
-          "type": "bytes32"
-        },
-        {
-          "indexed": true,
-          "internalType": "bytes32",
-          "name": "orderId",
-          "type": "bytes32"
-        },
-        {
           "indexed": true,
           "internalType": "address",
-          "name": "liquidityProvider",
+          "name": "sender",
           "type": "address"
         },
         {
-          "indexed": false,
-          "internalType": "uint96",
-          "name": "settlePercent",
-          "type": "uint96"
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
         }
       ],
-      "name": "OrderSettled",
+      "name": "SenderFeeTransferred",
       "type": "event"
     },
     {
@@ -154,26 +142,38 @@
           "type": "string"
         }
       ],
-      "name": "ProcessSettlement",
+      "name": "SettleIn",
       "type": "event"
     },
     {
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
-          "internalType": "address",
-          "name": "sender",
-          "type": "address"
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "splitOrderId",
+          "type": "bytes32"
         },
         {
           "indexed": true,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "liquidityProvider",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint96",
+          "name": "settlePercent",
+          "type": "uint96"
         }
       ],
-      "name": "SenderFeeTransferred",
+      "name": "SettleOut",
       "type": "event"
     },
     {
@@ -336,6 +336,30 @@
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "_fee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "refund",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes32",
           "name": "_orderId",
           "type": "bytes32"
@@ -386,31 +410,7 @@
           "type": "string"
         }
       ],
-      "name": "processSettlement",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_fee",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "_orderId",
-          "type": "bytes32"
-        }
-      ],
-      "name": "refund",
+      "name": "settleIn",
       "outputs": [
         {
           "internalType": "bool",
@@ -444,7 +444,7 @@
           "type": "uint64"
         }
       ],
-      "name": "settle",
+      "name": "settleOut",
       "outputs": [
         {
           "internalType": "bool",

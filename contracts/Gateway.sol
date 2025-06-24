@@ -142,7 +142,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
                                 AGGREGATOR FUNCTIONS
     ################################################################## */
 	/** @dev See {settle-IGateway}. */
-	function settle(
+	function settleOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
@@ -191,7 +191,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event
-		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
+		emit SettleOut(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
 
 		return true;
 	}
@@ -228,7 +228,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	}
 
 	/** @dev See {processSettlement-IGateway}. */
-	function processSettlement(
+	function settleIn(
         bytes32 _orderId,
         address _token,
         uint256 _amount,
@@ -276,7 +276,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		order[_orderId].amount = processedAmount;
 
 		// emit settlement event
-		emit ProcessSettlement(
+		emit SettleIn(
 			_orderId,
 			_amount,
 			_recipient,

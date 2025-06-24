@@ -131,7 +131,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.processSettlement(
+				.settleIn(
                     orderId,
 					mockUSDT.address,
 					this.orderAmount,
@@ -144,7 +144,7 @@ describe("Gateway settle order", function () {
 					messageHash.toString()
 				)
 		)
-			.to.emit(gateway, Events.Gateway.ProcessSettlement)
+			.to.emit(gateway, Events.Gateway.SettleIn)
 			.withArgs(
 				orderId,
                 this.orderAmount,
@@ -227,7 +227,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.processSettlement(
+				.settleIn(
                     orderId,
 					mockUSDT.address,
 					this.orderAmount,
@@ -240,7 +240,7 @@ describe("Gateway settle order", function () {
 					messageHash.toString()
 				)
 		)
-			.to.emit(gateway, Events.Gateway.ProcessSettlement)
+			.to.emit(gateway, Events.Gateway.SettleIn)
 			.withArgs(
 				orderId,
                 this.orderAmount,

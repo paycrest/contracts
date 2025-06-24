@@ -37,7 +37,7 @@ interface IGateway {
      * @param liquidityProvider The address of the liquidity provider.
      * @param settlePercent The percentage at which the transaction is settled.
      */
-    event OrderSettled(
+    event SettleOut(
         bytes32 splitOrderId,
         bytes32 indexed orderId,
         address indexed liquidityProvider,
@@ -54,7 +54,7 @@ interface IGateway {
     /**
      * @dev Emitted when an onramp order is successfully processed
      */
-    event ProcessSettlement(
+    event SettleIn(
         bytes32 indexed orderId,
         uint256 indexed amount,
         address indexed recipient,
@@ -138,7 +138,7 @@ interface IGateway {
      * @param _settlePercent The rate at which the transaction is settled.
      * @return bool the settlement is successful.
      */
-    function settle(
+    function settleOut(
         bytes32 _splitOrderId,
         bytes32 _orderId,
         address _liquidityProvider,
@@ -170,7 +170,7 @@ interface IGateway {
      * @param _messageHash Hash of the message associated with the order
      * @return success Boolean indicating if the operation was successful
      */
-    function processSettlement(
+    function settleIn(
         bytes32 _orderId,
         address _token,
         uint256 _amount,
