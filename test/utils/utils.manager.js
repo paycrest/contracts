@@ -33,6 +33,7 @@ const Events = {
 		SettingManagerBool: "SettingManagerBool",
 		ProtocolFeeUpdated: "ProtocolFeeUpdated",
 		ProtocolAddressUpdated: "ProtocolAddressUpdated",
+		ProcessSettlement: "ProcessSettlement",
 	},
 };
 

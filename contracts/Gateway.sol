@@ -186,7 +186,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		liquidityProviderAmount -= protocolFee;
 
 		// transfer protocol fee
-		IERC20(token).transfer(treasuryAddress, protocolFee);
+		if (protocolFee > 0) IERC20(token).transfer(treasuryAddress, protocolFee);
 
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
@@ -223,6 +223,69 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// emit refunded event
 		emit OrderRefunded(_fee, _orderId);
+
+		return true;
+	}
+
+	/** @dev See {processSettlement-IGateway}. */
+	function processSettlement(
+        bytes32 _orderId,
+        address _token,
+        uint256 _amount,
+        address _senderFeeRecipient,
+        uint96 _senderFee,
+        address _liquidityProvider,
+		uint96 _protocolFee,
+        address _recipient,
+        uint96 _rate,
+        string calldata _messageHash
+    ) external onlyAggregator returns (bool) {
+		require(!order[_orderId].isFulfilled, 'OrderNotFulfilled');
+		require(_amount > 0, 'AmountIsZero');
+		require(_recipient != address(0), 'RecipientIsZeroAddress');
+
+		uint256 processedAmount = _amount;
+
+		if(_senderFee != 0) {
+			require(_senderFeeRecipient != address(0), "SenderFeeRecipientIsZeroAddress");
+			
+			processedAmount -= _senderFee;
+			
+			IERC20(_token).transfer(
+				_senderFeeRecipient,
+				_senderFee
+			);
+
+			emit SenderFeeTransferred(
+				_senderFeeRecipient,
+				_senderFee
+			);
+		}
+
+		if (_protocolFee > 0) IERC20(_token).transfer(treasuryAddress, _protocolFee);
+
+		IERC20(_token).transfer(_recipient, processedAmount);
+
+		// update the order state
+		order[_orderId].sender = _recipient;
+		order[_orderId].token = _token;
+		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
+		order[_orderId].senderFee = _senderFee;
+		order[_orderId].protocolFee = _protocolFee;
+		order[_orderId].isFulfilled = true;
+		order[_orderId].amount = processedAmount;
+
+		// emit settlement event
+		emit ProcessSettlement(
+			_orderId,
+			_amount,
+			_recipient,
+			_token,
+			_senderFeeRecipient,
+			_liquidityProvider,
+			_rate,
+			_messageHash
+		);
 
 		return true;
 	}
