@@ -84,8 +84,8 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// increase users nonce to avoid replay attacks
 		_nonce[msg.sender]++;
 
-		// generate transaction id for the transaction
-		orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender]));
+		// generate transaction id for the transaction with chain id
+		orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender], block.chainid));
 
 		// update transaction
 		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
