@@ -87,6 +87,8 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// generate transaction id for the transaction with chain id
 		orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender], block.chainid));
 
+		require(order[orderId].sender == address(0), 'OrderAlreadyExists');
+
 		// update transaction
 		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
 		order[orderId] = Order({
