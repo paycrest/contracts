@@ -158,6 +158,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		address token = order[_orderId].token;
 
 		// subtract sum of amount based on the input _settlePercent
+		uint256 currentOrderBPS = order[_orderId].currentBPS;
 		order[_orderId].currentBPS -= _settlePercent;
 
 		if (order[_orderId].currentBPS == 0) {
@@ -181,7 +182,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		}
 
 		// transfer to liquidity provider
-		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / MAX_BPS;
+		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / currentOrderBPS;
 		order[_orderId].amount -= liquidityProviderAmount;
 
 		uint256 protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
