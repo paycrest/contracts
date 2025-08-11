@@ -234,21 +234,19 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
         uint256 _amount,
         address _senderFeeRecipient,
         uint96 _senderFee,
-        address _liquidityProvider,
-		uint96 _protocolFee,
         address _recipient,
         uint96 _rate,
         string calldata _messageHash
-    ) external onlyAggregator returns (bool) {
+    ) external whenNotPaused returns (bool) {
 		require(!order[_orderId].isFulfilled, 'OrderNotFulfilled');
-		require(_amount > 0, 'AmountIsZero');
-		require(_recipient != address(0), 'RecipientIsZeroAddress');
+		require(_amount > MAX_BPS, 'AmountIsZero');
+		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
+
+		IERC20(_token).transferFrom(msg.sender, address(this), _amount);
 
 		uint256 processedAmount = _amount;
 
-		if(_senderFee != 0) {
-			require(_senderFeeRecipient != address(0), "SenderFeeRecipientIsZeroAddress");
-			
+		if(_senderFee != 0) {			
 			processedAmount -= _senderFee;
 			
 			IERC20(_token).transfer(
@@ -261,17 +259,22 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 				_senderFee
 			);
 		}
+		
+		uint256 protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
 
-		if (_protocolFee > 0) IERC20(_token).transfer(treasuryAddress, _protocolFee);
+		if (protocolFee > 0) {
+			processedAmount -= protocolFee;
+			IERC20(_token).transfer(treasuryAddress, protocolFee);
+		}
 
 		IERC20(_token).transfer(_recipient, processedAmount);
 
-		// update the order state
+		// record the order state
 		order[_orderId].sender = _recipient;
 		order[_orderId].token = _token;
 		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
 		order[_orderId].senderFee = _senderFee;
-		order[_orderId].protocolFee = _protocolFee;
+		order[_orderId].protocolFee = protocolFee;
 		order[_orderId].isFulfilled = true;
 		order[_orderId].amount = processedAmount;
 
@@ -282,7 +285,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			_recipient,
 			_token,
 			_senderFeeRecipient,
-			_liquidityProvider,
 			_rate,
 			_messageHash
 		);
@@ -307,5 +309,9 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {getFeeDetails-IGateway}. */
 	function getFeeDetails() external view returns (uint64, uint256) {
 		return (protocolFeePercent, MAX_BPS);
+	}
+
+	function getAggregator() external view returns (address) {
+		return _aggregatorAddress;
 	}
 }

@@ -60,7 +60,6 @@ interface IGateway {
         address indexed recipient,
         address token,
         address senderFee,
-		address liquidityProvider,
 		uint96 rate,
 		string messageHash
     );
@@ -164,7 +163,6 @@ interface IGateway {
      * @param _amount Amount of tokens to be sent to the user
      * @param _senderFeeRecipient Address that will receive the sender fee
      * @param _senderFee Amount of fee to be paid to the sender fee recipient
-     * @param _liquidityProvider Address of the liquidity provider
      * @param _recipient Address of the recipient who will receive the tokens
      * @param _rate Rate at which the tokens are being sent
      * @param _messageHash Hash of the message associated with the order
@@ -176,8 +174,6 @@ interface IGateway {
         uint256 _amount,
         address _senderFeeRecipient,
         uint96 _senderFee,
-        address _liquidityProvider,
-        uint96 _protocolFee,
         address _recipient,
         uint96 _rate,
         string calldata _messageHash
@@ -208,4 +204,10 @@ interface IGateway {
         external
         view
         returns (uint64 protocolReward, uint256 max_bps);
+
+    /**
+     * @notice Gets the address of the aggregator.
+     * @return address The address of the aggregator.
+     */
+    function getAggregator() external view returns (address);
 }
