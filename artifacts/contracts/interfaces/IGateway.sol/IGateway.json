@@ -125,12 +125,6 @@
         },
         {
           "indexed": false,
-          "internalType": "address",
-          "name": "liquidityProvider",
-          "type": "address"
-        },
-        {
-          "indexed": false,
           "internalType": "uint96",
           "name": "rate",
           "type": "uint96"
@@ -223,6 +217,19 @@
         }
       ],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAggregator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -382,16 +389,6 @@
         {
           "internalType": "uint96",
           "name": "_senderFee",
-          "type": "uint96"
-        },
-        {
-          "internalType": "address",
-          "name": "_liquidityProvider",
-          "type": "address"
-        },
-        {
-          "internalType": "uint96",
-          "name": "_protocolFee",
           "type": "uint96"
         },
         {
