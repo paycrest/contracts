@@ -1,251 +1,322 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-import {GatewaySettingManager} from './GatewaySettingManager.sol';
-import {IGateway, IERC20} from './interfaces/IGateway.sol';
+import {GatewaySettingManager} from "./GatewaySettingManager.sol";
+import {IGateway, IERC20} from "./interfaces/IGateway.sol";
 
 /**
  * @title Gateway
  * @notice This contract serves as a gateway for creating orders and managing settlements.
  */
 contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
-	struct fee {
-		uint256 protocolFee;
-		uint256 liquidityProviderAmount;
-	}
+    mapping(bytes32 => Order) private order;
+    mapping(address => uint256) private _nonce;
+    uint256[50] private __gap;
 
-	mapping(bytes32 => Order) private order;
-	mapping(address => uint256) private _nonce;
-	uint256[50] private __gap;
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
-	/// @custom:oz-upgrades-unsafe-allow constructor
-	constructor() {
-		_disableInitializers();
-	}
+    /**
+     * @dev Initialize function.
+     */
+    function initialize() external initializer {
+        MAX_BPS = 100_000;
+        __Ownable2Step_init();
+        __Pausable_init();
+    }
 
-	/**
-	 * @dev Initialize function.
-	 */
-	function initialize() external initializer {
-		MAX_BPS = 100_000;
-		__Ownable2Step_init();
-		__Pausable_init();
-	}
+    /**
+     * @dev Modifier that allows only the aggregator to call a function.
+     */
+    modifier onlyAggregator() {
+        require(msg.sender == _aggregatorAddress, "OnlyAggregator");
+        _;
+    }
 
-	/**
-	 * @dev Modifier that allows only the aggregator to call a function.
-	 */
-	modifier onlyAggregator() {
-		require(msg.sender == _aggregatorAddress, 'OnlyAggregator');
-		_;
-	}
-
-	/* ##################################################################
+    /* ##################################################################
                                 OWNER FUNCTIONS
     ################################################################## */
-	/**
-	 * @dev Pause the contract.
-	 */
-	function pause() external onlyOwner {
-		_pause();
-	}
+    /**
+     * @dev Pause the contract.
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
 
-	/**
-	 * @dev Unpause the contract.
-	 */
-	function unpause() external onlyOwner {
-		_unpause();
-	}
+    /**
+     * @dev Unpause the contract.
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 
-	/* ##################################################################
+    /* ##################################################################
                                 USER CALLS
     ################################################################## */
-	/** @dev See {createOrder-IGateway}. */
-	function createOrder(
-		address _token,
-		uint256 _amount,
-		uint96 _rate,
-		address _senderFeeRecipient,
-		uint256 _senderFee,
-		address _refundAddress,
-		string calldata messageHash
-	) external whenNotPaused returns (bytes32 orderId) {
-		// checks that are required
-		_handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee);
+    /** @dev See {createOrder-IGateway}. */
+    function createOrder(
+        address _token,
+        uint256 _amount,
+        uint96 _rate,
+        address _senderFeeRecipient,
+        uint256 _senderFee,
+        address _refundAddress,
+        string calldata messageHash
+    ) external whenNotPaused returns (bytes32 orderId) {
+        // checks that are required
+        _handler(
+            _token,
+            _amount,
+            _refundAddress,
+            _senderFeeRecipient,
+            _senderFee
+        );
 
-		// validate messageHash
-		require(bytes(messageHash).length != 0, 'InvalidMessageHash');
+        // validate messageHash
+        require(bytes(messageHash).length != 0, "InvalidMessageHash");
 
-		// transfer token from msg.sender to contract
-		IERC20(_token).transferFrom(msg.sender, address(this), _amount + _senderFee);
+        // transfer token from msg.sender to contract
+        IERC20(_token).transferFrom(
+            msg.sender,
+            address(this),
+            _amount + _senderFee
+        );
 
-		// increase users nonce to avoid replay attacks
-		_nonce[msg.sender]++;
+        // increase users nonce to avoid replay attacks
+        _nonce[msg.sender]++;
 
-		// generate transaction id for the transaction with chain id
-		orderId = keccak256(abi.encode(msg.sender, _nonce[msg.sender], block.chainid));
+        // generate transaction id for the transaction with chain id
+        orderId = keccak256(
+            abi.encode(msg.sender, _nonce[msg.sender], block.chainid)
+        );
 
-		require(order[orderId].sender == address(0), 'OrderAlreadyExists');
+        require(order[orderId].sender == address(0), "OrderAlreadyExists");
 
-		// update transaction
-		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
-		order[orderId] = Order({
-			sender: msg.sender,
-			token: _token,
-			senderFeeRecipient: _senderFeeRecipient,
-			senderFee: _senderFee,
-			protocolFee: _protocolFee,
-			isFulfilled: false,
-			isRefunded: false,
-			refundAddress: _refundAddress,
-			currentBPS: uint64(MAX_BPS),
-			amount: _amount
-		});
+        uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
 
-		// emit order created event
-		emit OrderCreated(
-			_refundAddress,
-			_token,
-			order[orderId].amount,
-			_protocolFee,
-			orderId,
-			_rate,
-			messageHash
-		);
-	}
+        if (_senderFee > 0 && _rate == 100) {
+            _protocolFee = 0;
+        }
 
-	/**
-	 * @dev Internal function to handle order creation.
-	 * @param _token The address of the token being traded.
-	 * @param _amount The amount of tokens being traded.
-	 * @param _refundAddress The address to refund the tokens in case of cancellation.
-	 * @param _senderFeeRecipient The address of the recipient for the sender fee.
-	 * @param _senderFee The amount of the sender fee.
-	 */
-	function _handler(
-		address _token,
-		uint256 _amount,
-		address _refundAddress,
-		address _senderFeeRecipient,
-		uint256 _senderFee
-	) internal view {
-		require(_isTokenSupported[_token] == 1, 'TokenNotSupported');
-		require(_amount != 0, 'AmountIsZero');
-		require(_refundAddress != address(0), 'ThrowZeroAddress');
+        // update transaction
+        order[orderId] = Order({
+            sender: msg.sender,
+            token: _token,
+            senderFeeRecipient: _senderFeeRecipient,
+            senderFee: _senderFee,
+            protocolFee: _protocolFee,
+            isFulfilled: false,
+            isRefunded: false,
+            refundAddress: _refundAddress,
+            currentBPS: uint64(MAX_BPS),
+            amount: _amount
+        });
 
-		if (_senderFee != 0) {
-			require(_senderFeeRecipient != address(0), 'InvalidSenderFeeRecipient');
-		}
-	}
+        // emit order created event
+        emit OrderCreated(
+            _refundAddress,
+            _token,
+            order[orderId].amount,
+            _protocolFee,
+            orderId,
+            _rate,
+            messageHash
+        );
+    }
 
-	/* ##################################################################
+    /**
+     * @dev Internal function to handle order creation.
+     * @param _token The address of the token being traded.
+     * @param _amount The amount of tokens being traded.
+     * @param _refundAddress The address to refund the tokens in case of cancellation.
+     * @param _senderFeeRecipient The address of the recipient for the sender fee.
+     * @param _senderFee The amount of the sender fee.
+     */
+    function _handler(
+        address _token,
+        uint256 _amount,
+        address _refundAddress,
+        address _senderFeeRecipient,
+        uint256 _senderFee
+    ) internal view {
+        require(_isTokenSupported[_token] == 1, "TokenNotSupported");
+        require(_amount != 0, "AmountIsZero");
+        require(_refundAddress != address(0), "ThrowZeroAddress");
+
+        if (_senderFee != 0) {
+            require(
+                _senderFeeRecipient != address(0),
+                "InvalidSenderFeeRecipient"
+            );
+        }
+    }
+
+    /**
+     * @dev Internal function to split fees for local currency orders
+     * @param _order The order details
+     * @return liquidityProviderFee The fee amount for the liquidity provider (after protocol fee deduction)
+     * @return senderFee The fee amount for the sender
+     */
+    function _splitFeesForLocalCurrency(
+        Order memory _order
+    ) internal view returns (uint256 liquidityProviderFee, uint256 senderFee) {
+        if (_order.protocolFee == 0) {
+            liquidityProviderFee = (_order.senderFee * localCurrencyProviderFeePercent) / MAX_BPS;
+            senderFee = _order.senderFee - liquidityProviderFee;
+        } else {
+            liquidityProviderFee = 0;
+            senderFee = _order.senderFee;
+        }
+    }
+
+    /* ##################################################################
                                 AGGREGATOR FUNCTIONS
     ################################################################## */
-	/** @dev See {settle-IGateway}. */
-	function settle(
-		bytes32 _splitOrderId,
-		bytes32 _orderId,
-		address _liquidityProvider,
-		uint64 _settlePercent
-	) external onlyAggregator returns (bool) {
-		// ensure the transaction has not been fulfilled
-		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
-		require(!order[_orderId].isRefunded, 'OrderRefunded');
+    /** @dev See {settle-IGateway}. */
+    function settle(
+        bytes32 _splitOrderId,
+        bytes32 _orderId,
+        address _liquidityProvider,
+        uint64 _settlePercent
+    ) external onlyAggregator returns (bool) {
+        // ensure the transaction has not been fulfilled
+        require(!order[_orderId].isFulfilled, "OrderFulfilled");
+        require(!order[_orderId].isRefunded, "OrderRefunded");
 
-		// load the token into memory
-		address token = order[_orderId].token;
+        // load the token into memory
+        address token = order[_orderId].token;
 
-		// subtract sum of amount based on the input _settlePercent
-		uint256 currentOrderBPS = order[_orderId].currentBPS;
-		order[_orderId].currentBPS -= _settlePercent;
+        uint256 currentOrderBPS = order[_orderId].currentBPS;
+        order[_orderId].currentBPS -= _settlePercent;
 
-		if (order[_orderId].currentBPS == 0) {
-			// update the transaction to be fulfilled
-			order[_orderId].isFulfilled = true;
+        // Handle sender fee distribution for each settlement
+        if (order[_orderId].senderFee > 0) {
+            (uint256 totalLiquidityProviderFeeFromSender, uint256 senderFeeAmount) = _splitFeesForLocalCurrency(order[_orderId]);
 
-			if (order[_orderId].senderFee != 0) {
-				// transfer sender fee
-				IERC20(order[_orderId].token).transfer(
-					order[_orderId].senderFeeRecipient,
-					order[_orderId].senderFee
-				);
+            // For local currencies, distribute provider fees proportionally
+            if (order[_orderId].protocolFee == 0 && totalLiquidityProviderFeeFromSender > 0) {
+                uint256 proportionalProviderFee = (totalLiquidityProviderFeeFromSender * _settlePercent) / MAX_BPS;
 
-				// emit event
-				emit SenderFeeTransferred(
-					order[_orderId].senderFeeRecipient,
-					order[_orderId].senderFee
-				);
-			}
+                // Calculate protocol fee from provider's portion
+                uint256 protocolFeeFromProvider = (proportionalProviderFee * protocolFeePercent) / MAX_BPS;
+                proportionalProviderFee -= protocolFeeFromProvider;
 
-		}
+                if (protocolFeeFromProvider > 0) {
+                    IERC20(order[_orderId].token).transfer(
+                        treasuryAddress,
+                        protocolFeeFromProvider
+                    );
+                }
 
+                // Transfer proportional provider fee to current provider
+                if (proportionalProviderFee > 0) {
+                    IERC20(order[_orderId].token).transfer(
+                        _liquidityProvider,
+                        proportionalProviderFee
+                    );
+                }
+            }
+
+			if (order[_orderId].currentBPS == 0) {
+				// update the transaction to be fulfilled
+				order[_orderId].isFulfilled = true;
+
+				if (senderFeeAmount > 0) {
+					IERC20(order[_orderId].token).transfer(
+						order[_orderId].senderFeeRecipient,
+						senderFeeAmount
+					);
+
+					// emit event
+					emit SenderFeeTransferred(
+						order[_orderId].senderFeeRecipient,
+						senderFeeAmount
+					);
+				}
+			} 
+        }
+
+		
 		// transfer to liquidity provider
-		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / currentOrderBPS;
-		order[_orderId].amount -= liquidityProviderAmount;
+        uint256 liquidityProviderAmount = (order[_orderId].amount *_settlePercent) / currentOrderBPS;
+        order[_orderId].amount -= liquidityProviderAmount;
 
-		uint256 protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
-		liquidityProviderAmount -= protocolFee;
+        if (order[_orderId].protocolFee > 0) {
+            uint256 protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
+            liquidityProviderAmount -= protocolFee;
 
-		// transfer protocol fee
-		IERC20(token).transfer(treasuryAddress, protocolFee);
+            // transfer protocol fee
+            IERC20(token).transfer(treasuryAddress, protocolFee);
+        }
 
-		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
+        IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
-		// emit settled event
-		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
+        emit OrderSettled(
+            _splitOrderId,
+            _orderId,
+            _liquidityProvider,
+            _settlePercent
+        );
 
-		return true;
-	}
+        return true;
+    }
 
-	/** @dev See {refund-IGateway}. */
-	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
-		// ensure the transaction has not been fulfilled
-		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
-		require(!order[_orderId].isRefunded, 'OrderRefunded');
-		require(order[_orderId].protocolFee >= _fee, 'FeeExceedsProtocolFee');
+    /** @dev See {refund-IGateway}. */
+    function refund(
+        uint256 _fee,
+        bytes32 _orderId
+    ) external onlyAggregator returns (bool) {
+        // ensure the transaction has not been fulfilled
+        require(!order[_orderId].isFulfilled, "OrderFulfilled");
+        require(!order[_orderId].isRefunded, "OrderRefunded");
+        require(order[_orderId].protocolFee >= _fee, "FeeExceedsProtocolFee");
 
-		if (_fee > 0) {
-			// transfer refund fee to the treasury
-			IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
-		}
+        if (_fee > 0) {
+            // transfer refund fee to the treasury
+            IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
+        }
 
-		// reset state values
-		order[_orderId].isRefunded = true;
-		order[_orderId].currentBPS = 0;
+        // reset state values
+        order[_orderId].isRefunded = true;
+        order[_orderId].currentBPS = 0;
 
-		// deduct fee from order amount
-		uint256 refundAmount = order[_orderId].amount - _fee;
+        // deduct fee from order amount
+        uint256 refundAmount = order[_orderId].amount - _fee;
 
-		// transfer refund amount and sender fee to the refund address
-		IERC20(order[_orderId].token).transfer(
-			order[_orderId].refundAddress,
-			refundAmount + order[_orderId].senderFee
-		);
+        // transfer refund amount and sender fee to the refund address
+        IERC20(order[_orderId].token).transfer(
+            order[_orderId].refundAddress,
+            refundAmount + order[_orderId].senderFee
+        );
 
-		// emit refunded event
-		emit OrderRefunded(_fee, _orderId);
+        // emit refunded event
+        emit OrderRefunded(_fee, _orderId);
 
-		return true;
-	}
+        return true;
+    }
 
-	/* ##################################################################
+    /* ##################################################################
                                 VIEW CALLS
     ################################################################## */
-	/** @dev See {getOrderInfo-IGateway}. */
-	function getOrderInfo(bytes32 _orderId) external view returns (Order memory) {
-		return order[_orderId];
-	}
+    /** @dev See {getOrderInfo-IGateway}. */
+    function getOrderInfo(
+        bytes32 _orderId
+    ) external view returns (Order memory) {
+        return order[_orderId];
+    }
 
-	/** @dev See {isTokenSupported-IGateway}. */
-	function isTokenSupported(address _token) external view returns (bool) {
-		if (_isTokenSupported[_token] == 1) return true;
-		return false;
-	}
+    /** @dev See {isTokenSupported-IGateway}. */
+    function isTokenSupported(address _token) external view returns (bool) {
+        if (_isTokenSupported[_token] == 1) return true;
+        return false;
+    }
 
-	/** @dev See {getFeeDetails-IGateway}. */
-	function getFeeDetails() external view returns (uint64, uint256) {
-		return (protocolFeePercent, MAX_BPS);
-	}
+    /** @dev See {getFeeDetails-IGateway}. */
+    function getFeeDetails() external view returns (uint64, uint256, uint256) {
+        return (protocolFeePercent, localCurrencyProviderFeePercent, MAX_BPS);
+    }
 }

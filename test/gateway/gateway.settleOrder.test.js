@@ -132,10 +132,10 @@ describe("Gateway settle order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		const argOrderID = [this.sender.address, 1];
+		const argOrderID = [this.sender.address, 1, 31337]; // 31337 is hardhat's default chainId
 
 		const encoded = ethers.utils.defaultAbiCoder.encode(
-			["address", "uint256"],
+			["address", "uint256", "uint256"],
 			argOrderID
 		);
 		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
@@ -239,10 +239,10 @@ describe("Gateway settle order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		const argOrderID = [this.sender.address, 1];
+		const argOrderID = [this.sender.address, 1, 31337]; // 31337 is hardhat's default chainId
 
 		const encoded = ethers.utils.defaultAbiCoder.encode(
-			["address", "uint256"],
+			["address", "uint256", "uint256"],
 			argOrderID
 		);
 		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
@@ -373,10 +373,10 @@ describe("Gateway settle order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		const argOrderID = [this.sender.address, 1];
+		const argOrderID = [this.sender.address, 1, 31337]; // 31337 is hardhat's default chainId
 
 		const encoded = ethers.utils.defaultAbiCoder.encode(
-			["address", "uint256"],
+			["address", "uint256", "uint256"],
 			argOrderID
 		);
 		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);

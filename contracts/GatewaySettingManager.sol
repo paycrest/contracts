@@ -14,13 +14,14 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 	address internal treasuryAddress;
 	address internal _aggregatorAddress;
 	mapping(address => uint256) internal _isTokenSupported;
-
+	uint256 internal localCurrencyProviderFeePercent;
 	// this should decrease if more slots are needed on this contract to avoid collisions with base contract
-	uint256[50] private __gap;
+	uint256[49] private __gap;
 
 
 	event SettingManagerBool(bytes32 indexed what, address indexed value, uint256 status);
 	event ProtocolFeeUpdated(uint64 protocolFee);
+	event LocalCurrencyProviderFeeUpdated(uint256 localCurrencyProviderFee);
 	event ProtocolAddressUpdated(bytes32 indexed what, address indexed treasuryAddress);
 	event SetFeeRecipient(address indexed treasuryAddress);
 
@@ -52,6 +53,15 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 	function updateProtocolFee(uint64 _protocolFeePercent) external onlyOwner {
 		protocolFeePercent = _protocolFeePercent;
 		emit ProtocolFeeUpdated(_protocolFeePercent);
+	}
+
+	/**
+	 * @dev Updates the local currency provider fee percentage.
+	 * @param _localCurrencyProviderFeePercent The new local currency provider fee percentage to be set.
+	 */
+	function updateLocalCurrencyProviderFee(uint256 _localCurrencyProviderFeePercent) external onlyOwner {
+		localCurrencyProviderFeePercent = _localCurrencyProviderFeePercent;
+		emit LocalCurrencyProviderFeeUpdated(_localCurrencyProviderFeePercent);
 	}
 
 	/**

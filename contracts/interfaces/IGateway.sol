@@ -158,7 +158,8 @@ interface IGateway {
 	/**
 	 * @notice Gets the fee details of Gateway.
 	 * @return protocolReward The protocol reward amount.
+	 * @return localCurrencyProviderFee The local currency provider fee percentage.
 	 * @return max_bps The maximum basis points.
 	 */
-	function getFeeDetails() external view returns (uint64 protocolReward, uint256 max_bps);
+	function getFeeDetails() external view returns (uint64 protocolReward, uint256 localCurrencyProviderFee, uint256 max_bps);
 }
