@@ -60,6 +60,7 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 	 * @param _localCurrencyProviderFeePercent The new local currency provider fee percentage to be set.
 	 */
 	function updateLocalCurrencyProviderFee(uint256 _localCurrencyProviderFeePercent) external onlyOwner {
+		require(_localCurrencyProviderFeePercent <= MAX_BPS, "Gateway: fee > MAX_BPS"); 
 		localCurrencyProviderFeePercent = _localCurrencyProviderFeePercent;
 		emit LocalCurrencyProviderFeeUpdated(_localCurrencyProviderFeePercent);
 	}

@@ -186,12 +186,14 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
         // ensure the transaction has not been fulfilled
         require(!order[_orderId].isFulfilled, "OrderFulfilled");
         require(!order[_orderId].isRefunded, "OrderRefunded");
-
         // load the token into memory
         address token = order[_orderId].token;
 
         uint256 currentOrderBPS = order[_orderId].currentBPS;
+		require(_settlePercent > 0 && _settlePercent <= currentOrderBPS, "InvalidSettlePercent");
+		
         order[_orderId].currentBPS -= _settlePercent;
+		
 
         // Handle sender fee distribution for each settlement
         if (order[_orderId].senderFee > 0) {
