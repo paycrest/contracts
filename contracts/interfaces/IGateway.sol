@@ -58,6 +58,32 @@ interface IGateway {
 	 */
 	event SenderFeeTransferred(address indexed sender, uint256 indexed amount);
 
+	/**
+	 * @dev Emitted when a local transfer fee is split.
+	 * @param orderId The ID of the order.
+	 * @param senderAmount The amount that goes to the sender.
+	 * @param providerAmount The amount that goes to the provider.
+	 * @param aggregatorAmount The amount that goes to the aggregator.
+	 */
+	event LocalTransferFeeSplit(
+		bytes32 indexed orderId,
+		uint256 senderAmount,
+		uint256 providerAmount,
+		uint256 aggregatorAmount
+	);
+
+	/**
+	 * @dev Emitted when an FX transfer fee is split.
+	 * @param orderId The ID of the order.
+	 * @param senderAmount The amount that goes to the sender.
+	 * @param aggregatorAmount The amount that goes to the aggregator.
+	 */
+	event FxTransferFeeSplit(
+		bytes32 indexed orderId,
+		uint256 senderAmount,
+		uint256 aggregatorAmount
+	);
+
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */

@@ -29,7 +29,7 @@ async function upgradeProxy() {
 			);
 		}
 
-		const proxyContractAddress = networkConfig.GATEWAY_CONTRACT;
+		const proxyContractAddress = networkConfig.gatewayContract;
 		const factory = await ethers.getContractFactory("Gateway");
 		const contract = await upgrades.upgradeProxy(proxyContractAddress, factory);
 
@@ -62,7 +62,7 @@ async function manualUpgrade() {
 		if (balance.eq(0)) {
 			throw new Error(`Can't upgrade ${network.config.chainId} with 0 balance`);
 		}
-		const proxyContractAddress = networkConfig.GATEWAY_CONTRACT;
+		const proxyContractAddress = networkConfig.gatewayContract;
 
 		const currentImplAddress = await upgrades.erc1967.getImplementationAddress(proxyContractAddress);
 
