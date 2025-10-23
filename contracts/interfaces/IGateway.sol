@@ -180,11 +180,4 @@ interface IGateway {
 	 * @return Order The order details.
 	 */
 	function getOrderInfo(bytes32 _orderId) external view returns (Order memory);
-
-	/**
-	 * @notice Gets the fee details of Gateway.
-	 * @return protocolReward The protocol reward amount.
-	 * @return max_bps The maximum basis points.
-	 */
-	function getFeeDetails() external view returns (uint64 protocolReward, uint256 max_bps);
 }

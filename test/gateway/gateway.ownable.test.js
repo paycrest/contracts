@@ -47,33 +47,49 @@ describe("Ownable settings", function () {
     expect(Alice).to.eq(false);
   });
 
-  it("should be able to set protocol fees and emit events", async function () {
+  it("should be able to set token fee settings and emit events", async function () {
     await setupAndResetFork();
-    // charge 10% as protocol fee
-    const protocolFeePercent = BigNumber.from(10_000);
-
+    
     await expect(
       gateway
         .connect(admin)
-        .updateProtocolFee(protocolFeePercent)
+        .setTokenFeeSettings(
+          mockUSDT.address,
+          BigNumber.from(50000), // senderToProvider: 50%
+          BigNumber.from(50000), // providerToAggregator: 50%
+          BigNumber.from(0),     // senderToAggregator: 0%
+          BigNumber.from(500)    // providerToAggregatorFx: 0.5%
+        )
     )
-      .to.emit(gateway, Events.Gateway.ProtocolFeeUpdated)
-      .withArgs(protocolFeePercent);
+      .to.emit(gateway, Events.Gateway.TokenFeeSettingsUpdated)
+      .withArgs(
+        mockUSDT.address,
+        BigNumber.from(50000),
+        BigNumber.from(50000),
+        BigNumber.from(0),
+        BigNumber.from(500)
+      );
 
-    [this.protocolFeePecent, this.MAXBPS] =
-      await gateway.getFeeDetails();
-    expect(this.protocolFeePecent).to.eq(protocolFeePercent);
+    const settings = await gateway.getTokenFeeSettings(mockUSDT.address);
+    expect(settings.senderToProvider).to.eq(BigNumber.from(50000));
+    expect(settings.providerToAggregator).to.eq(BigNumber.from(50000));
+    expect(settings.senderToAggregator).to.eq(BigNumber.from(0));
+    expect(settings.providerToAggregatorFx).to.eq(BigNumber.from(500));
   });
 
-  it("should not be able to set protocol fees by non-owner", async function () {
+  it("should not be able to set token fee settings by non-owner", async function () {
     await setupAndResetFork();
-    // charge 10% as protocol fee
-    const protocolFeePercent = BigNumber.from(10_000);
 
     await expect(
       gateway
         .connect(hacker)
-        .updateProtocolFee(protocolFeePercent)
+        .setTokenFeeSettings(
+          mockUSDT.address,
+          BigNumber.from(50000),
+          BigNumber.from(50000),
+          BigNumber.from(0),
+          BigNumber.from(500)
+        )
     ).to.be.revertedWith(Errors.Ownable.onlyOwner);
   });
 

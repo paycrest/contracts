@@ -38,7 +38,10 @@ describe("Gateway create order", function () {
 
 		this.mintAmount = ethers.utils.parseEther("27000000");
 		this.orderAmount = ethers.utils.parseEther("27000000");
-		this.protocolFee = ethers.utils.parseEther("27000");
+		// Protocol fee is calculated based on rate and token settings
+		// For FX transfers (rate ≠ 1), it's calculated as: (amount * providerToAggregatorFx) / MAX_BPS
+		// For local transfers (rate = 1), it's 0
+		this.protocolFee = ethers.utils.parseEther("135000"); // 0.5% of 27000000 for FX transfer
 
 
 		this.senderFee = ethers.utils.parseEther("0");
@@ -54,16 +57,6 @@ describe("Gateway create order", function () {
 		expect(await this.mockDAI.balanceOf(this.alice.address)).to.eq(
 			this.mintAmount
 		);
-
-		const token = ethers.utils.formatBytes32String("token");
-
-		await expect(
-			this.gateway
-				.connect(this.deployer)
-				.settingManagerBool(token, this.mockUSDT.address, BigNumber.from(1))
-		)
-			.to.emit(this.gateway, Events.Gateway.SettingManagerBool)
-			.withArgs(token, this.mockUSDT.address, BigNumber.from(1));
 	});
 
 	it("Should be able to create order by Sender for Alice", async function () {
@@ -78,8 +71,6 @@ describe("Gateway create order", function () {
 		await this.gateway
 			.connect(this.deployer)
 			.updateProtocolAddress(aggregator, this.aggregator.address);
-
-		await this.gateway.connect(this.deployer).updateProtocolFee(FEE_BPS);
 
 		await this.mockUSDT
 			.connect(this.sender)
@@ -103,27 +94,24 @@ describe("Gateway create order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		const argOrderID = [this.sender.address, 1];
+		// Create order and capture the actual order ID from the event
+		const tx = await this.gateway
+			.connect(this.sender)
+			.createOrder(
+				this.mockUSDT.address,
+				this.orderAmount,
+				rate,
+				this.sender.address,
+				this.senderFee,
+				this.alice.address,
+				messageHash.toString()
+			);
 
-		const encoded = ethers.utils.defaultAbiCoder.encode(
-			["address", "uint256"],
-			argOrderID
-		);
-		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
+		const receipt = await tx.wait();
+		const orderCreatedEvent = receipt.events.find(e => e.event === 'OrderCreated');
+		const orderId = orderCreatedEvent.args.orderId;
 
-		await expect(
-			this.gateway
-				.connect(this.sender)
-				.createOrder(
-					this.mockUSDT.address,
-					this.orderAmount,
-					rate,
-					this.sender.address,
-					this.senderFee,
-					this.alice.address,
-					messageHash.toString()
-				)
-		)
+		await expect(tx)
 			.to.emit(this.gateway, Events.Gateway.OrderCreated)
 			.withArgs(
 				this.alice.address,
@@ -474,5 +462,94 @@ describe("Gateway create order", function () {
 		expect(await this.mockUSDT.balanceOf(this.sender.address)).to.eq(
 			this.mintAmount
 		);
+	});
+
+	it("Should create order with zero protocol fee for local transfer (rate = 1)", async function () {
+		const ret = await getSupportedInstitutions();
+		const treasury = ethers.utils.formatBytes32String("treasury");
+		const aggregator = ethers.utils.formatBytes32String("aggregator");
+
+		await this.gateway
+			.connect(this.deployer)
+			.updateProtocolAddress(treasury, this.treasuryAddress.address);
+
+		await this.gateway
+			.connect(this.deployer)
+			.updateProtocolAddress(aggregator, this.aggregator.address);
+
+		await this.mockUSDT
+			.connect(this.sender)
+			.approve(this.gateway.address, this.orderAmount.add(this.senderFee));
+
+		const rate = 100; // Local transfer (rate = 1)
+
+		const data = [
+			{ bank_account: "09090990901" },
+			{ bank_name: "ACCESS BANK" },
+			{ account_name: "Jeff Dean" },
+			{ institution_code: ret.accessBank.code },
+		];
+
+		const password = "123";
+
+		const cipher = CryptoJS.AES.encrypt(
+			JSON.stringify(data),
+			password
+		).toString();
+
+		const messageHash = "0x" + cipher;
+
+		// Create order and capture the actual order ID from the event
+		const tx = await this.gateway
+			.connect(this.sender)
+			.createOrder(
+				this.mockUSDT.address,
+				this.orderAmount,
+				rate,
+				this.sender.address,
+				this.senderFee,
+				this.alice.address,
+				messageHash.toString()
+			);
+
+		const receipt = await tx.wait();
+		const orderCreatedEvent = receipt.events.find(e => e.event === 'OrderCreated');
+		const orderId = orderCreatedEvent.args.orderId;
+
+		await expect(tx)
+			.to.emit(this.gateway, Events.Gateway.OrderCreated)
+			.withArgs(
+				this.alice.address,
+				this.mockUSDT.address,
+				BigNumber.from(this.orderAmount),
+				ZERO_AMOUNT, // Protocol fee should be 0 for local transfers
+				orderId,
+				rate,
+				messageHash.toString()
+			);
+
+		[
+			this.seller,
+			this.token,
+			this.senderRecipient,
+			this.senderFee,
+			this.protocolFee,
+			this.isFulfilled,
+			this.isRefunded,
+			this.refundAddress,
+			this.currentBPS,
+			this.amount,
+		] = await this.gateway.getOrderInfo(orderId);
+
+		expect(this.seller).to.eq(this.sender.address);
+		expect(this.token).to.eq(this.mockUSDT.address);
+		expect(this.senderRecipient).to.eq(this.sender.address);
+		expect(this.senderFee).to.eq(this.senderFee);
+		expect(this.protocolFee).to.eq(ZERO_AMOUNT); // Should be 0 for local transfers
+		expect(this.isFulfilled).to.eq(false);
+		expect(this.isRefunded).to.eq(false);
+		expect(this.refundAddress).to.eq(this.alice.address);
+		expect(this.currentBPS).to.eq(MAX_BPS);
+		expect(this.amount).to.eq(BigNumber.from(this.orderAmount));
 	});
 });

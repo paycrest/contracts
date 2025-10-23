@@ -255,11 +255,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return false;
 	}
 
-	/** @dev See {getFeeDetails-IGateway}. */
-	function getFeeDetails() external view returns (uint64, uint256) {
-		return (protocolFeePercent, MAX_BPS);
-	}
-
 	/**
 	 * @dev Handles fee splitting for local transfers (rate = 1).
 	 * @param _orderId The order ID to process.

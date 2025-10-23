@@ -8,6 +8,62 @@
       "inputs": [
         {
           "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "senderAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "aggregatorAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "FxTransferFeeSplit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "senderAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "providerAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "aggregatorAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "LocalTransferFeeSplit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "address",
           "name": "sender",
           "type": "address"
@@ -168,24 +224,6 @@
         }
       ],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getFeeDetails",
-      "outputs": [
-        {
-          "internalType": "uint64",
-          "name": "protocolReward",
-          "type": "uint64"
-        },
-        {
-          "internalType": "uint256",
-          "name": "max_bps",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
