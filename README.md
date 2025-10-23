@@ -72,11 +72,11 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		<tr>
 			<td rowspan="2">Ethereum Sepolia</td>
 			<td>Gateway Proxy</td>
-			<td>0x8d2C0D398832b814e3814802FF2dC8b8eF4381e5</td>
+			<td>0xCAD53Ff499155Cc2fAA2082A85716322906886c2</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x0BC10d31B96838aD5783a0dd994fb16e14609e6E</td>
+			<td>0xafbf71A72d30f81eb66baaF904ea537fD35dd106</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -159,11 +159,11 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 		<tr>
 			<td rowspan="2">Ethereum</td>
 			<td>Gateway Proxy</td>
-			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
+			<td>0x8d2C0D398832b814e3814802FF2dC8b8eF4381e5</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
+			<td>0x0BC10d31B96838aD5783a0dd994fb16e14609e6E</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
