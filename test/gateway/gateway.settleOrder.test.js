@@ -703,14 +703,14 @@ describe("Gateway settle order", function () {
 			ethers.utils.parseEther("1000")
 		);
 		
-		// Provider 1 should get 50% of order amount (no sender fee portion in split orders)
+		// Provider 1 should get 50% of order amount plus 250 tokens from sender fee
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
-			splitAmount
+			splitAmount.add(ethers.utils.parseEther("250"))
 		);
 		
-		// Provider 2 should get 50% of order amount plus 500 tokens from sender fee
+		// Provider 2 should get 50% of order amount plus 250 tokens from sender fee
 		expect(await mockUSDT.balanceOf(this.liquidityProvider2.address)).to.eq(
-			splitAmount.add(ethers.utils.parseEther("500"))
+			splitAmount.add(ethers.utils.parseEther("250"))
 		);
 		
 		// Treasury should get 500 tokens from sender fee (processed once for entire order)
