@@ -23,10 +23,10 @@ async function main() {
     : await provider.getGasPrice()
 
   // Get the current nonce
-  const currentNonce = await wallet.getTransactionCount();
+  let nonce = await wallet.getTransactionCount();
 
-  // Configure token fee settings for each supported token
-  Object.entries(networkConfig.supportedTokens).forEach(async ([tokenName, tokenConfig], index) => {
+  // Configure token fee settings for each supported token sequentially
+  for (const [tokenName, tokenConfig] of Object.entries(networkConfig.supportedTokens)) {
     try {
       const tx = await contractWithSigner.setTokenFeeSettings(
         tokenConfig.address,
@@ -35,7 +35,7 @@ async function main() {
         BigNumber.from(tokenConfig.fx.senderToAggregator),
         BigNumber.from(tokenConfig.fx.providerToAggregator),
         {
-          nonce: currentNonce + index,
+          nonce: nonce++,
           maxPriorityFeePerGas,
           maxFeePerGas,
         }
@@ -48,7 +48,7 @@ async function main() {
     } catch (error) {
       console.error(`❌ Error setting fee settings for ${tokenName}:`, error);
     }
-  });
+  }
 }
 
 main().catch((error) => {

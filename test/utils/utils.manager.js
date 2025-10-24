@@ -76,7 +76,7 @@ async function mockMintDeposit(gateway, account, usdc, amount) {
 }
 
 // Helper function to configure token fee settings
-async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settings) {
+async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settings = {}) {
 	const {
 		senderToProvider = 50000,      // 50% of sender fee goes to provider
 		providerToAggregator = 50000, // 50% of provider's share goes to aggregator
