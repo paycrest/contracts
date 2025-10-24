@@ -469,6 +469,13 @@ describe("Gateway create order", function () {
 		const treasury = ethers.utils.formatBytes32String("treasury");
 		const aggregator = ethers.utils.formatBytes32String("aggregator");
 
+		// Set a sender fee for local transfer (required by contract)
+		this.senderFee = ethers.utils.parseEther("1000"); // 1000 tokens sender fee
+		
+		// Ensure sender has enough tokens to cover both order amount and sender fee
+		await this.mockUSDT.connect(this.alice).mint(this.senderFee);
+		await this.mockUSDT.connect(this.alice).transfer(this.sender.address, this.senderFee);
+
 		await this.gateway
 			.connect(this.deployer)
 			.updateProtocolAddress(treasury, this.treasuryAddress.address);

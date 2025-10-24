@@ -36,12 +36,14 @@ interface IGateway {
 	 * @param orderId The ID of the order.
 	 * @param liquidityProvider The address of the liquidity provider.
 	 * @param settlePercent The percentage at which the transaction is settled.
+	 * @param rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 */
 	event OrderSettled(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
-		uint96 settlePercent
+		uint64 settlePercent,
+		uint64 rebatePercent
 	);
 
 	/**
@@ -148,13 +150,15 @@ interface IGateway {
 	 * @param _orderId The ID of the transaction.
 	 * @param _liquidityProvider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
+	 * @param _rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 * @return bool the settlement is successful.
 	 */
 	function settle(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
-		uint64 _settlePercent
+		uint64 _settlePercent,
+		uint64 _rebatePercent
 	) external returns (bool);
 
 	/**

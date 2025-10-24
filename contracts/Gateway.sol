@@ -94,6 +94,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		if (_rate == 100) {
 			// local transfer (rate = 1)
 			_protocolFee = 0;
+			require(_senderFee > 0, 'SenderFeeIsZero');
 		} else {
 			// fx transfer (rate != 1) - use token-specific providerToAggregatorFx
 			TokenFeeSettings memory settings = _tokenFeeSettings[_token];
@@ -157,11 +158,13 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
-		uint64 _settlePercent
+		uint64 _settlePercent,
+		uint64 _rebatePercent
 	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
+		require(_rebatePercent <= MAX_BPS, 'InvalidRebatePercent');
 
 		// load the token into memory
 		address token = order[_orderId].token;
@@ -197,6 +200,13 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 				MAX_BPS;
 			liquidityProviderAmount -= protocolFee;
 
+			if (_rebatePercent != 0) {
+				// calculate rebate amount
+				uint256 rebateAmount = (protocolFee * _rebatePercent) / MAX_BPS;
+				protocolFee -= rebateAmount;
+				liquidityProviderAmount += rebateAmount;
+			}
+
 			// transfer protocol fee
 			IERC20(token).transfer(treasuryAddress, protocolFee);
 		}
@@ -204,7 +214,13 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event
-		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
+		emit OrderSettled(
+			_splitOrderId,
+			_orderId,
+			_liquidityProvider,
+			_settlePercent,
+			_rebatePercent
+		);
 
 		return true;
 	}
