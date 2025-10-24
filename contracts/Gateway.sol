@@ -157,11 +157,15 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
-		uint64 _settlePercent
+		uint64 _settlePercent,
+		uint256 _clawbackPercent
 	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
+		
+		// validate clawback percentage (0-10000 basis points)
+		require(_clawbackPercent <= MAX_BPS, 'InvalidClawbackPercent');
 
 		// load the token into memory
 		address token = order[_orderId].token;
@@ -198,8 +202,32 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 				MAX_BPS;
 			liquidityProviderAmount -= protocolFee;
 
-			// transfer protocol fee
-			IERC20(token).transfer(treasuryAddress, protocolFee);
+			// Handle clawback: split protocol fee between treasury and provider
+			uint256 providerClawbackAmount = 0;
+			uint256 treasuryAmount = protocolFee;
+			
+			if (_clawbackPercent > 0) {
+				providerClawbackAmount = (protocolFee * _clawbackPercent) / MAX_BPS;
+				if (providerClawbackAmount > 0) {
+					treasuryAmount = protocolFee - providerClawbackAmount;
+
+					IERC20(token).transfer(_liquidityProvider, providerClawbackAmount);
+					
+					// emit clawback event
+					emit ProtocolFeeClawback(
+						_orderId,
+						protocolFee,
+						treasuryAmount,
+						providerClawbackAmount,
+						_clawbackPercent
+					);
+				}
+			}
+
+			// transfer protocol fee to treasury (minus clawback)
+			if (treasuryAmount > 0) {
+				IERC20(token).transfer(treasuryAddress, treasuryAmount);
+			}
 		}
 
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);

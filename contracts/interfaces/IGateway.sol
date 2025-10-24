@@ -84,6 +84,22 @@ interface IGateway {
 		uint256 aggregatorAmount
 	);
 
+	/**
+	 * @dev Emitted when protocol fee is split between treasury and provider.
+	 * @param orderId The ID of the order.
+	 * @param totalProtocolFee The total protocol fee collected.
+	 * @param treasuryAmount The amount that goes to the treasury.
+	 * @param providerClawbackAmount The amount that goes back to the provider.
+	 * @param clawbackPercent The percentage of protocol fee given back to provider.
+	 */
+	event ProtocolFeeClawback(
+		bytes32 indexed orderId,
+		uint256 totalProtocolFee,
+		uint256 treasuryAmount,
+		uint256 providerClawbackAmount,
+		uint256 clawbackPercent
+	);
+
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
@@ -148,13 +164,15 @@ interface IGateway {
 	 * @param _orderId The ID of the transaction.
 	 * @param _liquidityProvider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
+	 * @param _clawbackPercent The percentage of protocol fee to give back to the provider (in basis points, 0-10000).
 	 * @return bool the settlement is successful.
 	 */
 	function settle(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
-		uint64 _settlePercent
+		uint64 _settlePercent,
+		uint256 _clawbackPercent
 	) external returns (bool);
 
 	/**

@@ -173,7 +173,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
@@ -285,7 +285,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent)
+				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
 		).to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent);
 		
@@ -303,7 +303,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent)
+				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
 		).to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent);
 
@@ -409,7 +409,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
@@ -488,7 +488,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
@@ -581,7 +581,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
@@ -681,7 +681,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent)
+				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent);
@@ -690,7 +690,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent)
+				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent);
@@ -794,7 +794,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent)
+				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent);
@@ -803,7 +803,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent)
+				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
 		)
 			.to.emit(gateway, Events.Gateway.OrderSettled)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent);
@@ -834,5 +834,91 @@ describe("Gateway settle order", function () {
 		
 		// Gateway should have 0 balance (all tokens distributed)
 		expect(await mockUSDT.balanceOf(gateway.address)).to.eq(ZERO_AMOUNT);
+	});
+
+	describe("Clawback functionality", function () {
+		it("Should handle clawback percentage correctly", async function () {
+			await mockUSDT.connect(this.sender).approve(gateway.address, this.orderAmount);
+
+			const tx = await gateway
+				.connect(this.sender)
+				.createOrder(
+					mockUSDT.address,
+					this.orderAmount,
+					200, // FX transfer (rate ≠ 100) to trigger protocol fee
+					this.sender.address,
+					this.senderFee,
+					this.sender.address,
+					"test-message-hash"
+				);
+
+			const receipt = await tx.wait();
+			const orderCreatedEvent = receipt.events.find(
+				(event) => event.event === "OrderCreated"
+			);
+
+			const orderId = orderCreatedEvent.args.orderId;
+
+			// Test with 50% clawback (5000 basis points)
+			const clawbackPercent = 5000; // 50%
+			const expectedClawbackAmount = this.protocolFee.mul(clawbackPercent).div(MAX_BPS);
+			const expectedTreasuryAmount = this.protocolFee.sub(expectedClawbackAmount);
+
+			await expect(
+				gateway
+					.connect(this.aggregator)
+					.settle(
+						ethers.utils.keccak256(ethers.utils.toUtf8Bytes("split-order-id")),
+						orderId,
+						this.liquidityProvider.address,
+						MAX_BPS,
+						clawbackPercent
+					)
+			)
+				.to.emit(gateway, "ProtocolFeeClawback")
+				.withArgs(
+					orderId,
+					this.protocolFee,
+					expectedTreasuryAmount,
+					expectedClawbackAmount,
+					clawbackPercent
+				);
+		});
+
+		it("Should reject invalid clawback percentage", async function () {
+			await mockUSDT.connect(this.sender).approve(gateway.address, this.orderAmount);
+
+			const tx = await gateway
+				.connect(this.sender)
+				.createOrder(
+					mockUSDT.address,
+					this.orderAmount,
+					200, // FX transfer (rate ≠ 100) to trigger protocol fee
+					this.sender.address,
+					this.senderFee,
+					this.sender.address,
+					"test-message-hash"
+				);
+
+			const receipt = await tx.wait();
+			const orderCreatedEvent = receipt.events.find(
+				(event) => event.event === "OrderCreated"
+			);
+
+			const orderId = orderCreatedEvent.args.orderId;
+
+			// Test with invalid clawback percentage (> 100%)
+			await expect(
+				gateway
+					.connect(this.aggregator)
+					.settle(
+						ethers.utils.keccak256(ethers.utils.toUtf8Bytes("split-order-id")),
+						orderId,
+						this.liquidityProvider.address,
+						MAX_BPS,
+						100001 // Invalid: > 10000 basis points
+					)
+			).to.be.revertedWith("InvalidClawbackPercent");
+		});
 	});
 });
