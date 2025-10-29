@@ -139,10 +139,18 @@ export async function getContracts(): Promise<any> {
 
   const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
   const Gateway = await artifacts.readArtifact("Gateway");
+
+  let key = process.env.DEPLOYER_PRIVATE_KEY;
+  if (network.config.chainId === 296) {
+    key = process.env.DEPLOYER_PRIVATE_KEY_HEDERA_TESTNET;
+  } else if (network.config.chainId === 295) {
+    key = process.env.DEPLOYER_PRIVATE_KEY_HEDERA;
+  }
+
   
   // Get signer
   const provider = new ethers.providers.JsonRpcProvider(networkConfig.RPC_URL);
-  const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY!, provider);
+  const wallet = new ethers.Wallet(key!, provider);
 
   // Get contract instances
   const gatewayInstance = new ethers.Contract(
