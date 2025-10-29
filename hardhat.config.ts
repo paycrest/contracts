@@ -13,6 +13,8 @@ dotenv.config();
 
 let {
 	DEPLOYER_PRIVATE_KEY,
+	DEPLOYER_PRIVATE_KEY_HEDERA_TESTNET,
+	DEPLOYER_PRIVATE_KEY_HEDERA,
 	SHIELD3_API_KEY,
 	ETHERSCAN_API_KEY,
 	BASESCAN_API_KEY,
@@ -127,6 +129,18 @@ const config: HardhatUserConfig = {
 			chainId: 42421,
 			saveDeployments: true,
 		},
+		hederaMainnet: {
+			url: "https://mainnet.hashio.io/api", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY_HEDERA || testPrivateKey],
+			chainId: 295,
+			saveDeployments: true,
+		},
+		hederaTestnet: {
+			url: "https://testnet.hashio.io/api", // @note this is a public rpc
+			accounts: [DEPLOYER_PRIVATE_KEY_HEDERA_TESTNET || testPrivateKey],
+			chainId: 296,
+			saveDeployments: true,
+		},
 	},
 	solidity: {
 		settings: {
@@ -149,7 +163,7 @@ const config: HardhatUserConfig = {
 			},
 		],
 	},
-	etherscan: {
+		etherscan: {
 		apiKey: {
 			base: BASESCAN_API_KEY!,
 			baseSepolia: BASESCAN_API_KEY!,
@@ -165,6 +179,8 @@ const config: HardhatUserConfig = {
 			celo: CELO_API!,
 			lisk: "Paycrest", // @note https://docs.blockscout.com/devs/verification/hardhat-verification-plugin#config-file-and-unsupported-networks
 			assetChain: "Paycrest",
+			hederaTestnet: "Paycrest", // Hedera doesn't require API key for verification
+			hederaMainnet: "Paycrest",
 		},
 		customChains: [
 			{
@@ -229,6 +245,22 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: "https://api.celoscan.io/api",
 					browserURL: "https://celoscan.io/",
+				},
+			},
+			{
+				network: "hederaTestnet",
+				chainId: 296,
+				urls: {
+					apiURL: "https://hashscan.io/testnet/api",
+					browserURL: "https://hashscan.io/testnet",
+				},
+			},
+			{
+				network: "hederaMainnet",
+				chainId: 295,
+				urls: {
+					apiURL: "https://hashscan.io/mainnet/api",
+					browserURL: "https://hashscan.io/mainnet",
 				},
 			},
 		],

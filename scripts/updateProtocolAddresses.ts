@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import { assertEnvironment, getContracts } from "./utils";
 import dotenv from "dotenv";
+import { network } from "hardhat";
 
 dotenv.config();
 
@@ -14,10 +15,18 @@ async function main() {
   const treasury = ethers.utils.formatBytes32String("treasury");
   const aggregator = ethers.utils.formatBytes32String("aggregator");
 
+  let treasuryAddress = process.env.TREASURY_ADDRESS;
+  // let aggregatorAddress = process.env.AGGREGATOR_ADDRESS;
+
+  if (network.config.chainId === 295) {
+    treasuryAddress = process.env.TREASURY_ADDRESS_HEDERA;
+    // aggregatorAddress = process.env.AGGREGATOR_ADDRESS_HEDERA;
+  }
+
   // Call contract methods
   let tx = await contractWithSigner.updateProtocolAddress(
 		treasury,
-		process.env.TREASURY_ADDRESS,
+		treasuryAddress,
 	);
   await tx.wait();
   console.log(`✅ Update treasury address: ${tx.hash}`);

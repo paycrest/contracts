@@ -262,6 +262,19 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
 		</tr>
 		<tr>
+			<td rowspan="3">Hedera</td>
+			<td>Gateway Proxy</td>
+			<td>0x17d13B7032944af8B420Ac5bedb12a7D92270478 `0.0.10069821`</td>
+		</tr>
+		<tr>
+			<td>Gateway Implementation</td>
+			<td>0x581fD156F8d44814b2E625aA8e1800cb12411138 `0.0.10069805`</td>
+		</tr>
+		<tr>
+			<td>Gateway Admin</td>
+			<td>0x9DBe1247364765efcCAC8658487327E1C8D17369</td>
+		</tr>
+		<tr>
 			<td rowspan="3">Lisk</td>
 			<td>Gateway Proxy</td>
 			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
