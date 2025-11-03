@@ -198,9 +198,9 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
@@ -440,9 +440,9 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(

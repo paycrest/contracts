@@ -144,7 +144,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
                                 AGGREGATOR FUNCTIONS
     ################################################################## */
 	/** @dev See {settle-IGateway}. */
-	function settle(
+	function settleOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
@@ -189,12 +189,12 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		liquidityProviderAmount -= protocolFee;
 
 		// transfer protocol fee
-		IERC20(token).transfer(treasuryAddress, protocolFee);
+		if (protocolFee > 0) IERC20(token).transfer(treasuryAddress, protocolFee);
 
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event
-		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
+		emit SettleOut(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
 
 		return true;
 	}
@@ -230,6 +230,71 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
+	/** @dev See {processSettlement-IGateway}. */
+	function settleIn(
+        bytes32 _orderId,
+        address _token,
+        uint256 _amount,
+        address _senderFeeRecipient,
+        uint96 _senderFee,
+        address _recipient,
+        uint96 _rate,
+        string calldata _messageHash
+    ) external whenNotPaused returns (bool) {
+		require(!order[_orderId].isFulfilled, 'OrderNotFulfilled');
+		require(_amount > MAX_BPS, 'AmountIsZero');
+		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
+
+		IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+
+		uint256 processedAmount = _amount;
+
+		if(_senderFee != 0) {			
+			processedAmount -= _senderFee;
+			
+			IERC20(_token).transfer(
+				_senderFeeRecipient,
+				_senderFee
+			);
+
+			emit SenderFeeTransferred(
+				_senderFeeRecipient,
+				_senderFee
+			);
+		}
+		
+		uint256 protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
+
+		if (protocolFee > 0) {
+			processedAmount -= protocolFee;
+			IERC20(_token).transfer(treasuryAddress, protocolFee);
+		}
+
+		IERC20(_token).transfer(_recipient, processedAmount);
+
+		// record the order state
+		order[_orderId].sender = _recipient;
+		order[_orderId].token = _token;
+		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
+		order[_orderId].senderFee = _senderFee;
+		order[_orderId].protocolFee = protocolFee;
+		order[_orderId].isFulfilled = true;
+		order[_orderId].amount = processedAmount;
+
+		// emit settlement event
+		emit SettleIn(
+			_orderId,
+			_amount,
+			_recipient,
+			_token,
+			_senderFeeRecipient,
+			_rate,
+			_messageHash
+		);
+
+		return true;
+	}
+
 	/* ##################################################################
                                 VIEW CALLS
     ################################################################## */
@@ -247,5 +312,9 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {getFeeDetails-IGateway}. */
 	function getFeeDetails() external view returns (uint64, uint256) {
 		return (protocolFeePercent, MAX_BPS);
+	}
+
+	function getAggregator() external view returns (address) {
+		return _aggregatorAddress;
 	}
 }
