@@ -36,12 +36,14 @@ interface IGateway {
 	 * @param orderId The ID of the order.
 	 * @param liquidityProvider The address of the liquidity provider.
 	 * @param settlePercent The percentage at which the transaction is settled.
+	 * @param rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 */
 	event OrderSettled(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
-		uint96 settlePercent
+		uint64 settlePercent,
+		uint64 rebatePercent
 	);
 
 	/**
@@ -57,6 +59,32 @@ interface IGateway {
 	 * @param amount The amount of the fee transferred.
 	 */
 	event SenderFeeTransferred(address indexed sender, uint256 indexed amount);
+
+	/**
+	 * @dev Emitted when a local transfer fee is split.
+	 * @param orderId The ID of the order.
+	 * @param senderAmount The amount that goes to the sender.
+	 * @param providerAmount The amount that goes to the provider.
+	 * @param aggregatorAmount The amount that goes to the aggregator.
+	 */
+	event LocalTransferFeeSplit(
+		bytes32 indexed orderId,
+		uint256 senderAmount,
+		uint256 providerAmount,
+		uint256 aggregatorAmount
+	);
+
+	/**
+	 * @dev Emitted when an FX transfer fee is split.
+	 * @param orderId The ID of the order.
+	 * @param senderAmount The amount that goes to the sender.
+	 * @param aggregatorAmount The amount that goes to the aggregator.
+	 */
+	event FxTransferFeeSplit(
+		bytes32 indexed orderId,
+		uint256 senderAmount,
+		uint256 aggregatorAmount
+	);
 
 	/* ##################################################################
                                 STRUCTS
@@ -122,13 +150,15 @@ interface IGateway {
 	 * @param _orderId The ID of the transaction.
 	 * @param _liquidityProvider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
+	 * @param _rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 * @return bool the settlement is successful.
 	 */
 	function settle(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
-		uint64 _settlePercent
+		uint64 _settlePercent,
+		uint64 _rebatePercent
 	) external returns (bool);
 
 	/**
@@ -154,11 +184,4 @@ interface IGateway {
 	 * @return Order The order details.
 	 */
 	function getOrderInfo(bytes32 _orderId) external view returns (Order memory);
-
-	/**
-	 * @notice Gets the fee details of Gateway.
-	 * @return protocolReward The protocol reward amount.
-	 * @return max_bps The maximum basis points.
-	 */
-	function getFeeDetails() external view returns (uint64 protocolReward, uint256 max_bps);
 }

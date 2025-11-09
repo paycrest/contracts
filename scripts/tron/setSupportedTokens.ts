@@ -9,13 +9,13 @@ async function main() {
 
   // let result = await gatewayInstance["getFeeDetails"]().call();
   // console.log(result[0].toString(), result[1].toString());
-  const token = ethers.utils.formatBytes32String("token");
+  const tokenKey = ethers.utils.formatBytes32String("token");
 
-  Object.entries(networkConfig.SUPPORTED_TOKENS).forEach(
-    async ([key, value], index) => {
+  Object.entries(networkConfig.supportedTokens).forEach(
+    async ([key, token], index) => {
       try {
         const tx = await gatewayInstance
-          .settingManagerBool(token, value, BigNumber.from(1))
+          .settingManagerBool(tokenKey, token.address, BigNumber.from(1))
           .send({
             feeLimit: 100_000_000,
             tokenValue: 0,

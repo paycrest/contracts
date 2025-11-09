@@ -10,19 +10,33 @@ import '@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol';
 
 contract GatewaySettingManager is Ownable2StepUpgradeable {
 	uint256 internal MAX_BPS;
-	uint64 internal protocolFeePercent;
+	uint64 internal protocolFeePercent; // DEPRECATED — kept for proxy storage compatibility (do not remove)
 	address internal treasuryAddress;
 	address internal _aggregatorAddress;
 	mapping(address => uint256) internal _isTokenSupported;
 
-	// this should decrease if more slots are needed on this contract to avoid collisions with base contract
-	uint256[50] private __gap;
+	// Token-specific fee settings
+	struct TokenFeeSettings {
+		uint256 senderToProvider; // % of sender fee that goes to provider (local mode)
+		uint256 providerToAggregator; // % of provider's share that goes to aggregator (local mode)
+		uint256 senderToAggregator; // % of sender fee that goes to aggregator (fx mode)
+		uint256 providerToAggregatorFx; // % of transaction amount provider pays to aggregator (fx mode)
+	}
 
+	mapping(address => TokenFeeSettings) internal _tokenFeeSettings;
+
+	uint256[49] private __gap;
 
 	event SettingManagerBool(bytes32 indexed what, address indexed value, uint256 status);
-	event ProtocolFeeUpdated(uint64 protocolFee);
 	event ProtocolAddressUpdated(bytes32 indexed what, address indexed treasuryAddress);
 	event SetFeeRecipient(address indexed treasuryAddress);
+	event TokenFeeSettingsUpdated(
+		address indexed token,
+		uint256 senderToProvider,
+		uint256 providerToAggregator,
+		uint256 senderToAggregator,
+		uint256 providerToAggregatorFx
+	);
 
 	/* ##################################################################
                                 OWNER FUNCTIONS
@@ -43,15 +57,6 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 			_isTokenSupported[value] = status;
 			emit SettingManagerBool(what, value, status);
 		}
-	}
-
-	/**
-	 * @dev Updates the protocol fee percentage.
-	 * @param _protocolFeePercent The new protocol fee percentage to be set.
-	 */
-	function updateProtocolFee(uint64 _protocolFeePercent) external onlyOwner {
-		protocolFeePercent = _protocolFeePercent;
-		emit ProtocolFeeUpdated(_protocolFeePercent);
 	}
 
 	/**
@@ -76,5 +81,54 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 		if (updated) {
 			emit ProtocolAddressUpdated(what, value);
 		}
+	}
+
+	/**
+	 * @dev Sets token-specific fee settings for stablecoins.
+	 * @param token The token address to configure.
+	 * @param senderToProvider Percentage of sender fee that goes to provider (local mode).
+	 * @param providerToAggregator Percentage of provider's share that goes to aggregator (local mode).
+	 * @param senderToAggregator Percentage of sender fee that goes to aggregator (fx mode).
+	 * @param providerToAggregatorFx Percentage of transaction amount provider pays to aggregator (fx mode).
+	 * Requirements:
+	 * - The token must be supported.
+	 * - Fee percentages must be within valid ranges.
+	 */
+	function setTokenFeeSettings(
+		address token,
+		uint256 senderToProvider,
+		uint256 providerToAggregator,
+		uint256 senderToAggregator,
+		uint256 providerToAggregatorFx
+	) external onlyOwner {
+		require(_isTokenSupported[token] == 1, 'Gateway: token not supported');
+		require(senderToProvider <= MAX_BPS, 'Gateway: invalid sender to provider');
+		require(providerToAggregator <= MAX_BPS, 'Gateway: invalid provider to aggregator');
+		require(senderToAggregator <= MAX_BPS, 'Gateway: invalid sender to aggregator');
+		require(providerToAggregatorFx <= MAX_BPS, 'Gateway: invalid provider to aggregator fx');
+
+		_tokenFeeSettings[token] = TokenFeeSettings({
+			senderToProvider: senderToProvider,
+			providerToAggregator: providerToAggregator,
+			senderToAggregator: senderToAggregator,
+			providerToAggregatorFx: providerToAggregatorFx
+		});
+
+		emit TokenFeeSettingsUpdated(
+			token,
+			senderToProvider,
+			providerToAggregator,
+			senderToAggregator,
+			providerToAggregatorFx
+		);
+	}
+
+	/**
+	 * @dev Gets token-specific fee settings.
+	 * @param token The token address to query.
+	 * @return TokenFeeSettings struct containing all fee settings for the token.
+	 */
+	function getTokenFeeSettings(address token) external view returns (TokenFeeSettings memory) {
+		return _tokenFeeSettings[token];
 	}
 }

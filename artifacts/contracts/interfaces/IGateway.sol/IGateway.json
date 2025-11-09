@@ -8,6 +8,62 @@
       "inputs": [
         {
           "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "senderAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "aggregatorAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "FxTransferFeeSplit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "senderAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "providerAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "aggregatorAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "LocalTransferFeeSplit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "address",
           "name": "sender",
           "type": "address"
@@ -94,9 +150,15 @@
         },
         {
           "indexed": false,
-          "internalType": "uint96",
+          "internalType": "uint64",
           "name": "settlePercent",
-          "type": "uint96"
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint64",
+          "name": "rebatePercent",
+          "type": "uint64"
         }
       ],
       "name": "OrderSettled",
@@ -168,24 +230,6 @@
         }
       ],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getFeeDetails",
-      "outputs": [
-        {
-          "internalType": "uint64",
-          "name": "protocolReward",
-          "type": "uint64"
-        },
-        {
-          "internalType": "uint256",
-          "name": "max_bps",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -322,6 +366,11 @@
         {
           "internalType": "uint64",
           "name": "_settlePercent",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "_rebatePercent",
           "type": "uint64"
         }
       ],

@@ -90,7 +90,17 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		require(order[orderId].sender == address(0), 'OrderAlreadyExists');
 
 		// update transaction
-		uint256 _protocolFee = (_amount * protocolFeePercent) / MAX_BPS;
+		uint256 _protocolFee;
+		if (_rate == 100) {
+			// local transfer (rate = 1)
+			_protocolFee = 0;
+			require(_senderFee > 0, 'SenderFeeIsZero');
+		} else {
+			// fx transfer (rate != 1) - use token-specific providerToAggregatorFx
+			TokenFeeSettings memory settings = _tokenFeeSettings[_token];
+			require(settings.providerToAggregatorFx > 0, 'TokenFeeSettingsNotConfigured');
+			_protocolFee = (_amount * settings.providerToAggregatorFx) / MAX_BPS;
+		}
 		order[orderId] = Order({
 			sender: msg.sender,
 			token: _token,
@@ -148,53 +158,70 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
-		uint64 _settlePercent
+		uint64 _settlePercent,
+		uint64 _rebatePercent
 	) external onlyAggregator returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
+		require(_rebatePercent <= MAX_BPS, 'InvalidRebatePercent');
 
 		// load the token into memory
 		address token = order[_orderId].token;
 
 		// subtract sum of amount based on the input _settlePercent
 		uint256 currentOrderBPS = order[_orderId].currentBPS;
+		require(_settlePercent > 0 && _settlePercent <= currentOrderBPS, "InvalidSettlePercent");
 		order[_orderId].currentBPS -= _settlePercent;
 
 		if (order[_orderId].currentBPS == 0) {
 			// update the transaction to be fulfilled
 			order[_orderId].isFulfilled = true;
 
-			if (order[_orderId].senderFee != 0) {
-				// transfer sender fee
-				IERC20(order[_orderId].token).transfer(
-					order[_orderId].senderFeeRecipient,
-					order[_orderId].senderFee
-				);
-
-				// emit event
-				emit SenderFeeTransferred(
-					order[_orderId].senderFeeRecipient,
-					order[_orderId].senderFee
-				);
+			if (order[_orderId].senderFee != 0 && order[_orderId].protocolFee != 0) {
+				// fx transfer - sender keeps all fee
+				_handleFxTransferFeeSplitting(_orderId);
 			}
+		}
 
+		if (order[_orderId].senderFee != 0 && order[_orderId].protocolFee == 0) {
+			// local transfer - split sender fee
+			_handleLocalTransferFeeSplitting(_orderId, _liquidityProvider, _settlePercent);
 		}
 
 		// transfer to liquidity provider
-		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / currentOrderBPS;
+		uint256 liquidityProviderAmount = (order[_orderId].amount * _settlePercent) /
+			currentOrderBPS;
 		order[_orderId].amount -= liquidityProviderAmount;
 
-		uint256 protocolFee = (liquidityProviderAmount * protocolFeePercent) / MAX_BPS;
-		liquidityProviderAmount -= protocolFee;
+		if (order[_orderId].protocolFee != 0) {
+			// FX transfer - use token-specific providerToAggregatorFx
+			TokenFeeSettings memory settings = _tokenFeeSettings[order[_orderId].token];
+			uint256 protocolFee = (liquidityProviderAmount * settings.providerToAggregatorFx) /
+				MAX_BPS;
+			liquidityProviderAmount -= protocolFee;
 
-		// transfer protocol fee
-		IERC20(token).transfer(treasuryAddress, protocolFee);
+			if (_rebatePercent != 0) {
+				// calculate rebate amount
+				uint256 rebateAmount = (protocolFee * _rebatePercent) / MAX_BPS;
+				protocolFee -= rebateAmount;
+				liquidityProviderAmount += rebateAmount;
+			}
+
+			// transfer protocol fee
+			IERC20(token).transfer(treasuryAddress, protocolFee);
+		}
 
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event
-		emit OrderSettled(_splitOrderId, _orderId, _liquidityProvider, _settlePercent);
+		emit OrderSettled(
+			_splitOrderId,
+			_orderId,
+			_liquidityProvider,
+			_settlePercent,
+			_rebatePercent
+		);
 
 		return true;
 	}
@@ -244,8 +271,77 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return false;
 	}
 
-	/** @dev See {getFeeDetails-IGateway}. */
-	function getFeeDetails() external view returns (uint64, uint256) {
-		return (protocolFeePercent, MAX_BPS);
+	/**
+	 * @dev Handles fee splitting for local transfers (rate = 1).
+	 * @param _orderId The order ID to process.
+	 * @param _liquidityProvider The address of the liquidity provider who fulfilled the order.
+	 */
+	function _handleLocalTransferFeeSplitting(
+		bytes32 _orderId,
+		address _liquidityProvider,
+		uint64 _settlePercent
+	) internal {
+		TokenFeeSettings memory settings = _tokenFeeSettings[order[_orderId].token];
+		uint256 senderFee = order[_orderId].senderFee;
+
+		// Calculate splits based on config
+		uint256 providerAmount = (senderFee * settings.senderToProvider) / MAX_BPS;
+		uint256 currentProviderAmount = (providerAmount * _settlePercent) / MAX_BPS;
+		uint256 aggregatorAmount = (currentProviderAmount * settings.providerToAggregator) /
+			MAX_BPS;
+		uint256 senderAmount = senderFee - providerAmount;
+
+		// Transfer sender portion
+		if (senderAmount != 0 && order[_orderId].currentBPS == 0) {
+			IERC20(order[_orderId].token).transfer(
+				order[_orderId].senderFeeRecipient,
+				senderAmount
+			);
+		}
+
+		// Transfer aggregator portion to treasury
+		if (aggregatorAmount != 0) {
+			IERC20(order[_orderId].token).transfer(treasuryAddress, aggregatorAmount);
+		}
+
+		// Transfer provider portion to the liquidity provider who fulfilled the order
+		currentProviderAmount = currentProviderAmount - aggregatorAmount;
+		if (currentProviderAmount != 0) {
+			IERC20(order[_orderId].token).transfer(_liquidityProvider, currentProviderAmount);
+		}
+
+		// Emit events
+		emit SenderFeeTransferred(order[_orderId].senderFeeRecipient, senderAmount);
+		emit LocalTransferFeeSplit(_orderId, senderAmount, currentProviderAmount, aggregatorAmount);
+	}
+
+	/**
+	 * @dev Handles fee splitting for FX transfers (rate != 1).
+	 * @param _orderId The order ID to process.
+	 */
+	function _handleFxTransferFeeSplitting(bytes32 _orderId) internal {
+		TokenFeeSettings memory settings = _tokenFeeSettings[order[_orderId].token];
+		uint256 senderFee = order[_orderId].senderFee;
+
+		// Calculate sender portion based on senderToAggregator setting
+		uint256 senderAmount = (senderFee * (MAX_BPS - settings.senderToAggregator)) / MAX_BPS;
+		uint256 aggregatorAmount = senderFee - senderAmount;
+
+		// Transfer sender portion
+		if (senderAmount > 0) {
+			IERC20(order[_orderId].token).transfer(
+				order[_orderId].senderFeeRecipient,
+				senderAmount
+			);
+		}
+
+		// Transfer aggregator portion to treasury
+		if (aggregatorAmount > 0) {
+			IERC20(order[_orderId].token).transfer(treasuryAddress, aggregatorAmount);
+		}
+
+		// Emit events
+		emit SenderFeeTransferred(order[_orderId].senderFeeRecipient, senderAmount);
+		emit FxTransferFeeSplit(_orderId, senderAmount, aggregatorAmount);
 	}
 }
