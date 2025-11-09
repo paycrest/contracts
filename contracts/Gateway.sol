@@ -172,6 +172,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// subtract sum of amount based on the input _settlePercent
 		uint256 currentOrderBPS = order[_orderId].currentBPS;
 		order[_orderId].currentBPS -= _settlePercent;
+		require(_settlePercent > 0 && _settlePercent <= currentOrderBPS, "InvalidSettlePercent");
 
 		if (order[_orderId].currentBPS == 0) {
 			// update the transaction to be fulfilled
