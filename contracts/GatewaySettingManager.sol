@@ -10,7 +10,7 @@ import '@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol';
 
 contract GatewaySettingManager is Ownable2StepUpgradeable {
 	uint256 internal MAX_BPS;
-	uint64 internal protocolFeePercent;
+	uint64 internal protocolFeePercent; // DEPRECATED — kept for proxy storage compatibility (do not remove)
 	address internal treasuryAddress;
 	address internal _aggregatorAddress;
 	mapping(address => uint256) internal _isTokenSupported;

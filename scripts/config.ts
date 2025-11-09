@@ -213,7 +213,7 @@ const NETWORKS = {
 	 * @dev Optimism Mainnet
 	 */
 	10: {
-		rpcUrl: `https://rpc.shield3.com/v3/0x1/${SHIELD3_API_KEY}/rpc`,
+		rpcUrl: `https://rpc.shield3.com/v3/0xa/${SHIELD3_API_KEY}/rpc`,
 		supportedTokens: {
 			USDC: {
 				address: "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
