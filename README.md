@@ -15,15 +15,38 @@ Deployment is done using Hardhat scripts
 #### Deploy and verify upgradeable proxy contract
 
 ```bash
-npx hardhat run scripts/deploy.ts --network <network>
-
-npx hardhat verify --network <network> <contract_address>
-
 # for Tron network,
 tronbox migrate -f 1 --to 1 --network <network>
 ```
 
 #### Upgrade proxy contract
+
+Using Hardhat Ignition:
+
+```bash
+# upgrade using a parameter file for specific network
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network <network> --parameters ignition/parameters/<network>.json
+
+# upgrade using inline parameters
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network <network> --parameters '{"GatewayUpgradeModule":{"chainId":<chainId>}}'
+
+# upgrade across all EVM chains
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network arbitrumOne --parameters ignition/parameters/arbitrumOne.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network base --parameters ignition/parameters/base.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network bsc --parameters ignition/parameters/bsc.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network polygon --parameters ignition/parameters/polygon.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network optimisticEthereum --parameters ignition/parameters/optimisticEthereum.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network scroll --parameters ignition/parameters/scroll.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network celo --parameters ignition/parameters/celo.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network assetChain --parameters ignition/parameters/assetChain.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network lisk --parameters ignition/parameters/lisk.json && \
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network mainnet --parameters ignition/parameters/mainnet.json
+
+# upgrade on testnet
+npx hardhat ignition deploy ignition/modules/GatewayUpgrade.ts --network baseSepolia --parameters ignition/parameters/baseSepolia.json
+```
+
+Using legacy upgrade script:
 
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
@@ -33,8 +56,11 @@ npx hardhat run scripts/upgrade.ts --network arbitrumOne && npx hardhat run scri
 
 # upgrade across all EVM testnet chains
 npx hardhat run scripts/upgrade.ts --network arbitrumSepolia && npx hardhat run scripts/upgrade.ts --network amoy && npx hardhat run scripts/upgrade.ts --network baseSepolia && npx hardhat run scripts/upgrade.ts --network sepolia
+```
 
-# for Tron network,
+For Tron network:
+
+```bash
 tronbox migrate -f 2 --to 2 --network <network>
 ```
 

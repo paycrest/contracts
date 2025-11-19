@@ -11,6 +11,11 @@ publicKey.txt
 # Hardhat files
 cache
 # artifacts
+# types
+
+# Hardhat Ignition deployments (contains deployment records)
+# ignition/deployments/
+ignition/network-chain-ids.json
 
 # Tron Package
 src/js/metacoin-config.js
