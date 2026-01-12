@@ -15,7 +15,7 @@ export interface Gateway$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "project/contracts/Gateway.sol";
-  readonly buildInfoId: "solc-0_8_20-7d0fb87933a3e81eaffd16a88ca58fbb4054f174";
+  readonly buildInfoId: "solc-0_8_20-100c86a0ad428850c64dd979e8770b5f8b18515c";
 };
 
 import "hardhat/types/artifacts";

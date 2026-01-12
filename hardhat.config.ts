@@ -16,71 +16,51 @@ export default defineConfig({
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0xa4b1/${env.SHIELD3_API_KEY}/rpc`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 42161,
-			saveDeployments: true,
 		},
 		base: {
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x2105/${env.SHIELD3_API_KEY}/rpc`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 8453,
-			saveDeployments: true,
 		},
 		bsc: {
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x38/${env.SHIELD3_API_KEY}/rpc`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 56,
-			saveDeployments: true,
 		},
 		polygon: {
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x89/${env.SHIELD3_API_KEY}/rpc`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 137,
-			saveDeployments: true,
 		},
 		mainnet: {
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x1/${env.SHIELD3_API_KEY}/rpc`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 1,
-			saveDeployments: true,
 		},
 		optimisticEthereum: {
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x0a/${env.SHIELD3_API_KEY}/rpc`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 10,
-			saveDeployments: true,
 		},
 		scroll: {
 			type: "http",
 			url: "https://scroll.drpc.org", // @note this is a public rpc
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 534352,
-			saveDeployments: true,
 		},
 		celo: {
 			type: "http",
 			url: "https://forno.celo.org", // @note this is a public rpc
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 42220,
-			saveDeployments: true,
 		},
 		assetChain: {
 			type: "http",
 			url: "https://mainnet-rpc.assetchain.org", // @note this is a public rpc
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 42420,
-			saveDeployments: true,
 		},
 		lisk: {
 			type: "http",
 			url: "https://rpc.api.lisk.com", // @note this is a public rpc
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 1135,
-			saveDeployments: true,
 		},
 
 		// Testnets
@@ -88,8 +68,6 @@ export default defineConfig({
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x14a34/${env.SHIELD3_API_KEY}/rpc`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
-			chainId: 84532,
-			saveDeployments: true,
 		},
 	},
 	solidity: {

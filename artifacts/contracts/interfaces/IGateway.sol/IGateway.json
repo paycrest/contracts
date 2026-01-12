@@ -392,5 +392,5 @@
   "deployedLinkReferences": {},
   "immutableReferences": {},
   "inputSourceName": "project/contracts/interfaces/IGateway.sol",
-  "buildInfoId": "solc-0_8_20-11c139c572509cc55b8bc0acb648f3544f45b6c1"
+  "buildInfoId": "solc-0_8_20-100c86a0ad428850c64dd979e8770b5f8b18515c"
 }
