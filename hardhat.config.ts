@@ -1,6 +1,8 @@
 import { defineConfig } from "hardhat/config";
 import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 import hardhatVerify from "@nomicfoundation/hardhat-verify";
+// Note: @openzeppelin/hardhat-upgrades v3.9.1 is not compatible with Hardhat v3
+// We'll manually deploy proxies in tests instead
 
 import dotenv from "dotenv";
 const dotEnvResult = dotenv.config();
@@ -137,5 +139,8 @@ export default defineConfig({
 				},
 			},
 		},
+	},
+	mocha: {
+		timeout: 40000,
 	},
 });

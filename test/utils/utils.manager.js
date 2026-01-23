@@ -1,12 +1,15 @@
-const { ethers } = require("hardhat");
-const { BigNumber } = require("@ethersproject/bignumber");
+import hre from "hardhat";
 
-const ZERO_AMOUNT = BigNumber.from("0");
-const ZERO_ADDRESS = ethers.constants.AddressZero;
-const MAX_BPS = BigNumber.from("100000");
-const FEE_BPS = BigNumber.from("100");
+// Connect to network and get ethers instance (Hardhat v3 pattern)
+const { ethers } = await hre.network.connect();
 
-const Errors = {
+export const ZERO_AMOUNT = 0n;
+// AddressZero is "0x0000000000000000000000000000000000000000"
+export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const MAX_BPS = 100000n;
+export const FEE_BPS = 100n;
+
+export const Errors = {
 	Ownable: {
 		onlyOwner: "Ownable: caller is not the owner",
 	},
@@ -26,7 +29,7 @@ const Errors = {
 	},
 };
 
-const Events = {
+export const Events = {
 	Gateway: {
 		OrderCreated: "OrderCreated",
 		OrderSettled: "OrderSettled",
@@ -40,27 +43,28 @@ const Events = {
 	},
 };
 
-async function deployContract(name, args = [], value = 0) {
-	const Contract = await ethers.getContractFactory(name);
-	let instance;
-
-	if (value > 0) instance = await Contract.deploy(...args, { value });
-	else instance = await Contract.deploy(...args);
-
+export async function deployContract(name, args = [], value = 0) {
+	// Get the default signer (first signer)
+	const [deployer] = await ethers.getSigners();
+	const factory = await ethers.getContractFactory(name);
+	const instance = value > 0 
+		? await factory.connect(deployer).deploy(...args, { value })
+		: await factory.connect(deployer).deploy(...args);
+	await instance.waitForDeployment();
 	return instance;
 }
 
-async function getSupportedInstitutions() {
-	const currency = ethers.utils.formatBytes32String("NGN");
+export async function getSupportedInstitutions() {
+	const currency = ethers.encodeBytes32String("NGN");
 
 	const accessBank = {
-		code: ethers.utils.formatBytes32String("ABNGNGLA"),
-		name: ethers.utils.formatBytes32String("ACCESS BANK"),
+		code: ethers.encodeBytes32String("ABNGNGLA"),
+		name: ethers.encodeBytes32String("ACCESS BANK"),
 	};
 
 	const diamondBank = {
-		code: ethers.utils.formatBytes32String("DBLNNGLA"),
-		name: ethers.utils.formatBytes32String("DIAMOND BANK"),
+		code: ethers.encodeBytes32String("DBLNNGLA"),
+		name: ethers.encodeBytes32String("DIAMOND BANK"),
 	};
 
 	return {
@@ -70,13 +74,13 @@ async function getSupportedInstitutions() {
 	};
 }
 
-async function mockMintDeposit(gateway, account, usdc, amount) {
+export async function mockMintDeposit(gateway, account, usdc, amount) {
 	await usdc.connect(account).mint(amount);
 	await usdc.connect(account).approve(gateway.address, amount);
 }
 
 // Helper function to configure token fee settings
-async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settings = {}) {
+export async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settings = {}) {
 	const {
 		senderToProvider = 50000,      // 50% of sender fee goes to provider
 		providerToAggregator = 50000, // 50% of provider's share goes to aggregator
@@ -92,16 +96,3 @@ async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settin
 		providerToAggregatorFx
 	);
 }
-
-module.exports = {
-	ZERO_AMOUNT,
-	ZERO_ADDRESS,
-	MAX_BPS,
-	FEE_BPS,
-	Errors,
-	Events,
-	deployContract,
-	mockMintDeposit,
-	getSupportedInstitutions,
-	configureTokenFeeSettings,
-};

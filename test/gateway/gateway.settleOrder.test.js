@@ -1,17 +1,22 @@
-const { ethers } = require("hardhat");
-const { BigNumber } = require("@ethersproject/bignumber");
-const CryptoJS = require("crypto-js");
 
-const { gatewayFixture } = require("../fixtures/gateway.js");
 
-const {
+import { expect } from "chai";
+import hre from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
+import CryptoJS from "crypto-js";
+
+import { gatewayFixture } from "../fixtures/gateway.js";
+
+import {
 	ZERO_AMOUNT,
 	FEE_BPS,
 	MAX_BPS,
 	Events,
 	getSupportedInstitutions,
-} = require("../utils/utils.manager.js");
-const { expect } = require("chai");
+} from "../utils/utils.manager.js";
+
+// Connect to network and get ethers instance (Hardhat v3 pattern)
+const { ethers } = await hre.network.connect();
 
 describe("Gateway settle order", function () {
 	beforeEach(async function () {
@@ -29,22 +34,25 @@ describe("Gateway settle order", function () {
 			...this.accounts
 		] = await ethers.getSigners();
 
-		({ gateway, mockUSDT } = await gatewayFixture());
+		const fixture = await gatewayFixture();
+		this.gateway = fixture.gateway;
+		this.mockUSDT = fixture.mockUSDT;
 
-		this.mintAmount = ethers.utils.parseEther("27000000");
-		this.orderAmount = ethers.utils.parseEther("27000000");
-		this.senderFee = ethers.utils.parseEther("0");
+		this.mintAmount = ethers.parseEther("27000000");
+		this.orderAmount = ethers.parseEther("27000000");
+		this.senderFee = ethers.parseEther("0");
 		
 		// For FX transfers (rate ≠ 1), protocol fee is calculated from token settings
 		// providerToAggregatorFx = 500 (0.5%), so protocol fee = (27000000 * 500) / 100000 = 135000
-		this.protocolFeePercent = BigNumber.from(500); // This is now providerToAggregatorFx from token settings
-		this.protocolFee = ethers.utils.parseEther("135000"); // 0.5% of 27000000
+		this.protocolFeePercent = 500n; // This is now providerToAggregatorFx from token settings
+		this.protocolFee = ethers.parseEther("135000"); // 0.5% of 27000000
 
-		this.liquidityProviderAmount = this.orderAmount.sub(this.protocolFee);
+		this.liquidityProviderAmount = this.orderAmount - this.protocolFee;
 
-		await mockUSDT.connect(this.alice).mint(this.mintAmount);
+		await this.mockUSDT.connect(this.alice).mint(this.mintAmount);
 
-		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(this.mintAmount);
+		const aliceAddress = await this.alice.getAddress();
+		expect(await this.mockUSDT.balanceOf(aliceAddress)).to.eq(this.mintAmount);
 		await mockUSDT
 			.connect(this.alice)
 			.transfer(this.sender.address, this.mintAmount);
