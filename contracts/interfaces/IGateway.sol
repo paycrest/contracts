@@ -38,13 +38,26 @@ interface IGateway {
 	 * @param settlePercent The percentage at which the transaction is settled.
 	 * @param rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 */
-	event OrderSettled(
+	event SettleOut(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
 		uint64 settlePercent,
 		uint64 rebatePercent
 	);
+
+	/**
+     * @dev Emitted when an onramp order is successfully processed
+     */
+    event SettleIn(
+        bytes32 indexed orderId,
+        uint256 indexed amount,
+        address indexed recipient,
+        address token,
+        address senderFee,
+		uint96 rate,
+		string messageHash
+    );
 
 	/**
 	 * @dev Emitted when an aggregator refunds a transaction.
@@ -58,7 +71,7 @@ interface IGateway {
 	 * @param sender The address of the sender.
 	 * @param amount The amount of the fee transferred.
 	 */
-	event SenderFeeTransferred(address indexed sender, uint256 indexed amount);
+	event SenderFeeTransferred(bytes32 indexed orderId, address indexed sender, uint256 indexed amount);
 
 	/**
 	 * @dev Emitted when a local transfer fee is split.
@@ -153,13 +166,38 @@ interface IGateway {
 	 * @param _rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 * @return bool the settlement is successful.
 	 */
-	function settle(
+	function settleOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
 		uint64 _settlePercent,
 		uint64 _rebatePercent
 	) external returns (bool);
+
+	/**
+     * @notice Process an onramp order for cryptocurrency purchase
+     * @dev This function is restricted to be called only by an authorized aggregator
+     * @dev It processes an onramp orders and transfers tokens to the user
+     * @param _orderId Unique identifier for the order being processed
+     * @param _token Address of the token to be sent to the user
+     * @param _amount Amount of tokens to be sent to the user
+     * @param _senderFeeRecipient Address that will receive the sender fee
+     * @param _senderFee Amount of fee to be paid to the sender fee recipient
+     * @param _recipient Address of the recipient who will receive the tokens
+     * @param _rate Rate at which the tokens are being sent
+     * @param _messageHash Hash of the message associated with the order
+     * @return success Boolean indicating if the operation was successful
+     */
+    function settleIn(
+        bytes32 _orderId,
+        address _token,
+        uint256 _amount,
+        address _senderFeeRecipient,
+        uint96 _senderFee,
+        address _recipient,
+        uint96 _rate,
+        string calldata _messageHash
+    ) external returns (bool);
 
 	/**
 	 * @notice Refunds to the specified refundable address.
