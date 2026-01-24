@@ -153,7 +153,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/* ##################################################################
                                 AGGREGATOR FUNCTIONS
     ################################################################## */
-	/** @dev See {settle-IGateway}. */
+	/** @dev See {settleOut-IGateway}. */
 	function settleOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
@@ -224,7 +224,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
-	/** @dev See {processSettlement-IGateway}. */
+	/** @dev See {settleIn-IGateway}. */
 	function settleIn(
 		bytes32 _orderId,
 		address _token,
@@ -249,7 +249,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			// Local transfer (rate = 1) - no protocol fee from amount
 			require(_senderFee > 0, 'SenderFeeIsZero');
 			protocolFee = 0;			
-			// Split sender fee for local transfers (100% settlement)
 			processedAmount -= _senderFee;
 		} else {
 			// FX transfer (rate != 1) - use token-specific providerToAggregatorFx
@@ -264,14 +263,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			}
 
 			if (_senderFee != 0) {
-				// For FX transfers, handle sender fee similar to settleOut
 				processedAmount -= _senderFee;
 			}
 		}
 
-		IERC20(_token).transfer(_recipient, processedAmount);
-
-		// record the order state
 		order[_orderId].sender = _recipient;
 		order[_orderId].token = _token;
 		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
@@ -281,13 +276,15 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		order[_orderId].amount = processedAmount;
 		order[_orderId].currentBPS = 0; // Fully settled
 
+		IERC20(_token).transfer(_recipient, processedAmount);
+
 		// Handle fee splitting after order state is recorded
 		if (_senderFee != 0) {
 			if (protocolFee == 0) {
-				// Local transfer - split sender fee using the consolidated function
+				// Local transfer - split sender fee
 				_handleLocalTransferFeeSplitting(_orderId, msg.sender, _senderFeeRecipient, MAX_BPS);
 			} else {
-				// FX transfer - sender keeps all fee using the consolidated function
+				// FX transfer - sender keeps all fee
 				_handleFxTransferFeeSplitting(_orderId, _token, _senderFeeRecipient, _senderFee);
 			}
 		}
@@ -351,12 +348,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return false;
 	}
 
-	/**
-	 * @dev Handles fee splitting for local transfers (rate = 1).
-	 * @param _orderId The order ID to process.
-	 * @param _liquidityProvider The address of the liquidity provider who fulfilled the order.
-	 * @param _settlePercent The percentage of the order being settled (10000 for 100% in settleIn).
-	 */
 	function _handleLocalTransferFeeSplitting(
 		bytes32 _orderId,
 		address _liquidityProvider,
@@ -394,13 +385,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		emit LocalTransferFeeSplit(_orderId, senderAmount, currentProviderAmount, aggregatorAmount);
 	}
 
-	/**
-	 * @dev Handles sender fee splitting for FX transfers.
-	 * @param _orderId The order ID.
-	 * @param _token The token address.
-	 * @param _senderFeeRecipient The sender fee recipient address.
-	 * @param _senderFee The total sender fee amount.
-	 */
 	function _handleFxTransferFeeSplitting(
 		bytes32 _orderId,
 		address _token,

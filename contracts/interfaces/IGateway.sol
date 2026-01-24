@@ -177,7 +177,7 @@ interface IGateway {
 	/**
      * @notice Process an onramp order for cryptocurrency purchase
      * @dev This function is restricted to be called only by an authorized aggregator
-     * @dev It processes an onramp orders and transfers tokens to the user
+     * @dev It processes an orders and transfers tokens to the recipient after deducting sender fees
      * @param _orderId Unique identifier for the order being processed
      * @param _token Address of the token to be sent to the user
      * @param _amount Amount of tokens to be sent to the user
