@@ -55,8 +55,7 @@ interface IGateway {
         address indexed recipient,
         address token,
         address senderFeeRecipient,
-		uint96 rate,
-		string messageHash
+		uint96 rate
     );
 
 	/**
@@ -185,7 +184,6 @@ interface IGateway {
      * @param _senderFee Amount of fee to be paid to the sender fee recipient
      * @param _recipient Address of the recipient who will receive the tokens
      * @param _rate Rate at which the tokens are being sent
-     * @param _messageHash Hash of the message associated with the order
      * @return success Boolean indicating if the operation was successful
      */
     function settleIn(
@@ -195,8 +193,7 @@ interface IGateway {
         address _senderFeeRecipient,
         uint96 _senderFee,
         address _recipient,
-        uint96 _rate,
-        string calldata _messageHash
+        uint96 _rate
     ) external returns (bool);
 
 	/**

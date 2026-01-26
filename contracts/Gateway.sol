@@ -232,8 +232,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		address _senderFeeRecipient,
 		uint96 _senderFee,
 		address _recipient,
-		uint96 _rate,
-		string calldata _messageHash
+		uint96 _rate
 	) external whenNotPaused returns (bool) {
 		require(order[_orderId].sender == address(0), 'OrderAlreadyExists');
 		require(_amount > MAX_BPS, 'AmountBelowMinimum');
@@ -296,8 +295,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			_recipient,
 			_token,
 			_senderFeeRecipient,
-			_rate,
-			_messageHash
+			_rate
 		);
 
 		return true;

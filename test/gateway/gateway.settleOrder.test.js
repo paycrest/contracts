@@ -1136,16 +1136,6 @@ describe("Gateway settle order", function () {
 			const ret = await getSupportedInstitutions();
 			const rate = 750; // FX transfer
 			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-1"]));
-			
-			const data = [
-				{ bank_account: "09090990901" },
-				{ bank_name: "ACCESS BANK" },
-				{ account_name: "Bob Smith" },
-				{ institution_code: ret.accessBank.code },
-			];
-			const password = "123";
-			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
-			const messageHash = "0x" + cipher;
 
 			// Calculate total amount needed: baseAmount + protocolFee + senderFee
 			// Protocol fee is calculated from total amount, so we need to solve:
@@ -1177,8 +1167,7 @@ describe("Gateway settle order", function () {
 						this.sender.address,
 						this.senderFee,
 						this.recipient.address,
-						rate,
-						messageHash
+						rate
 					)
 			)
 				.to.emit(gateway, Events.Gateway.SettleIn)
@@ -1188,8 +1177,7 @@ describe("Gateway settle order", function () {
 					this.recipient.address,
 					mockUSDT.address,
 					this.sender.address,
-					rate,
-					messageHash
+					rate
 				)
 				.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
 				.withArgs(
@@ -1217,16 +1205,6 @@ describe("Gateway settle order", function () {
 			const ret = await getSupportedInstitutions();
 			const rate = 100; // Local transfer
 			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-2"]));
-			
-			const data = [
-				{ bank_account: "09090990902" },
-				{ bank_name: "ACCESS BANK" },
-				{ account_name: "Bob Smith" },
-				{ institution_code: ret.accessBank.code },
-			];
-			const password = "123";
-			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
-			const messageHash = "0x" + cipher;
 
 			// For local transfer, no protocol fee, total = baseAmount + senderFee
 			const totalAmount = this.baseAmount.add(this.senderFee);
@@ -1252,8 +1230,7 @@ describe("Gateway settle order", function () {
 						this.sender.address,
 						this.senderFee,
 						this.recipient.address,
-						rate,
-						messageHash
+						rate
 					)
 			)
 				.to.emit(gateway, Events.Gateway.SettleIn)
@@ -1263,8 +1240,7 @@ describe("Gateway settle order", function () {
 					this.recipient.address,
 					mockUSDT.address,
 					this.sender.address,
-					rate,
-					messageHash
+					rate
 				)
 				.to.emit(gateway, Events.Gateway.LocalTransferFeeSplit)
 				.withArgs(
@@ -1291,7 +1267,6 @@ describe("Gateway settle order", function () {
 		it("Should revert when settleIn is called with amount below minimum", async function () {
 			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-3"]));
 			const rate = 750;
-			const messageHash = "0x1234";
 			const amountBelowMinimum = MAX_BPS; // Exactly at minimum (100000), should fail (needs > MAX_BPS)
 
 			await mockUSDT.connect(this.provider).approve(gateway.address, amountBelowMinimum.add(1));
@@ -1306,8 +1281,7 @@ describe("Gateway settle order", function () {
 						this.sender.address,
 						0,
 						this.recipient.address,
-						rate,
-						messageHash
+						rate
 					)
 			).to.be.revertedWith('AmountBelowMinimum');
 		});
@@ -1316,10 +1290,6 @@ describe("Gateway settle order", function () {
 			const ret = await getSupportedInstitutions();
 			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-4"]));
 			const rate = 100; // Local transfer requires sender fee
-			const data = [{ bank_account: "09090990903" }];
-			const password = "123";
-			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
-			const messageHash = "0x" + cipher;
 
 			// For local transfer, total = baseAmount + senderFee (but senderFee is 0, so just baseAmount)
 			const totalAmount = this.baseAmount; // No sender fee in this test
@@ -1336,8 +1306,7 @@ describe("Gateway settle order", function () {
 						this.sender.address,
 						0, // Zero sender fee should fail for local transfer
 						this.recipient.address,
-						rate,
-						messageHash
+						rate
 					)
 			).to.be.revertedWith('SenderFeeIsZero');
 		});
@@ -1345,7 +1314,6 @@ describe("Gateway settle order", function () {
 		it("Should revert when settleIn is called with unsupported token", async function () {
 			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-5"]));
 			const rate = 750;
-			const messageHash = "0x1234";
 			const unsupportedToken = this.hacker.address; // Random address, not supported
 			const totalAmount = this.baseAmount.add(this.senderFee);
 
@@ -1359,8 +1327,7 @@ describe("Gateway settle order", function () {
 						this.sender.address,
 						this.senderFee,
 						this.recipient.address,
-						rate,
-						messageHash
+						rate
 					)
 			).to.be.revertedWith('TokenNotSupported');
 		});
@@ -1380,11 +1347,6 @@ describe("Gateway settle order", function () {
 				30000,  // senderToAggregator: 30% of sender fee goes to aggregator
 				500     // providerToAggregatorFx
 			);
-
-			const data = [{ bank_account: "09090990904" }];
-			const password = "123";
-			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
-			const messageHash = "0x" + cipher;
 
 			// Calculate total amount needed: baseAmount + protocolFee + senderFee
 			// Protocol fee is calculated from total amount
@@ -1418,8 +1380,7 @@ describe("Gateway settle order", function () {
 						this.sender.address,
 						senderFee,
 						this.recipient.address,
-						rate,
-						messageHash
+						rate
 					)
 			)
 				.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
@@ -1447,7 +1408,6 @@ describe("Gateway settle order", function () {
 		it("Should revert when settleIn is called on paused contract", async function () {
 			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-7"]));
 			const rate = 750;
-			const messageHash = "0x1234";
 			const totalAmount = this.baseAmount.add(this.senderFee);
 
 			// Pause the contract
@@ -1465,8 +1425,7 @@ describe("Gateway settle order", function () {
 						this.sender.address,
 						this.senderFee,
 						this.recipient.address,
-						rate,
-						messageHash
+						rate
 					)
 			).to.be.revertedWith('Pausable: paused');
 
