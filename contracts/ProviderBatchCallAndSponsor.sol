@@ -22,9 +22,13 @@ interface IGateway {
 contract ProviderBatchCallAndSponsor {
     using ECDSA for bytes32;
 
-    address public constant gatewayAddress = 0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F;
+    address public immutable gatewayAddress;
     /// @notice A nonce used for replay protection.
     uint256 public nonce;
+
+    constructor(address _gatewayAddress) {
+        gatewayAddress = _gatewayAddress;
+    }
 
     /// @notice Represents a single call within a batch.
     struct Call {

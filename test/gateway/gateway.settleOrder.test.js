@@ -173,9 +173,9 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
@@ -285,8 +285,8 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
-		).to.emit(gateway, Events.Gateway.OrderSettled)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
+		).to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0);
 		
 		const splitLiquidityProviderAmount = this.orderAmount.mul(splitOrderpercent).div(MAX_BPS);
@@ -303,8 +303,8 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
-		).to.emit(gateway, Events.Gateway.OrderSettled)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
+		).to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0);
 
 		const splitProtocolFeeSplitedOrder =  splitLiquidityProviderAmount.mul(this.protocolFeePercent).div(MAX_BPS);
@@ -409,9 +409,9 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
@@ -488,9 +488,9 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 			.to.emit(gateway, Events.Gateway.LocalTransferFeeSplit)
 			.withArgs(
@@ -581,9 +581,9 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
 			.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
 			.withArgs(
@@ -681,18 +681,18 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0);
 
 		// Settle second half with provider 2
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0);
 
 		// Verify final balances
@@ -794,18 +794,18 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0);
 
 		// Settle second half with provider 2
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0);
 
 		// Verify final balances
@@ -901,9 +901,9 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, rebatePercent)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, rebatePercent)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, rebatePercent)
 			.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
 			.withArgs(
@@ -1010,18 +1010,18 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, rebatePercent)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, rebatePercent)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, rebatePercent);
 
 		// Settle second half with provider 2
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, rebatePercent)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, rebatePercent)
 		)
-			.to.emit(gateway, Events.Gateway.OrderSettled)
+			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, rebatePercent);
 
 		// Verify final balances
@@ -1108,7 +1108,370 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settle(orderId, orderId, this.liquidityProvider.address, MAX_BPS, invalidRebatePercent)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, invalidRebatePercent)
 		).to.be.revertedWith('InvalidRebatePercent');
+	});
+
+	/* ##################################################################
+	                        SETTLEIN TESTS (ONRAMP)
+    ################################################################## */
+
+	describe("settleIn", function () {
+		beforeEach(async function () {
+			// Setup for settleIn tests
+			this.recipient = this.bob; // Recipient who will receive tokens
+			this.provider = this.liquidityProvider; // Provider who deposits tokens
+			this.senderFee = ethers.utils.parseEther("100"); // Sender fee
+			// For FX: totalAmount needs to cover protocolFee + senderFee + recipient amount
+			// For local: totalAmount needs to cover senderFee + recipient amount
+			// We'll set a base amount and add fees as needed in each test
+			this.baseAmount = ethers.utils.parseEther("10000"); // Base amount for recipient
+			
+			// Mint tokens for provider (will be adjusted per test)
+			await mockUSDT.connect(this.alice).mint(ethers.utils.parseEther("50000"));
+			await mockUSDT.connect(this.alice).transfer(this.provider.address, ethers.utils.parseEther("50000"));
+		});
+
+		it("Should successfully process settleIn for FX transfer (rate ≠ 100)", async function () {
+			const ret = await getSupportedInstitutions();
+			const rate = 750; // FX transfer
+			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-1"]));
+			
+			const data = [
+				{ bank_account: "09090990901" },
+				{ bank_name: "ACCESS BANK" },
+				{ account_name: "Bob Smith" },
+				{ institution_code: ret.accessBank.code },
+			];
+			const password = "123";
+			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
+			const messageHash = "0x" + cipher;
+
+			// Calculate total amount needed: baseAmount + protocolFee + senderFee
+			// Protocol fee is calculated from total amount, so we need to solve:
+			// totalAmount = baseAmount + (totalAmount * protocolFeePercent / MAX_BPS) + senderFee
+			// totalAmount * (1 - protocolFeePercent / MAX_BPS) = baseAmount + senderFee
+			// totalAmount = (baseAmount + senderFee) / (1 - protocolFeePercent / MAX_BPS)
+			const protocolFeeBPS = this.protocolFeePercent;
+			const denominator = MAX_BPS.sub(protocolFeeBPS);
+			const totalAmount = this.baseAmount.add(this.senderFee).mul(MAX_BPS).div(denominator);
+			const protocolFee = totalAmount.mul(protocolFeeBPS).div(MAX_BPS);
+			const processedAmount = totalAmount.sub(protocolFee).sub(this.senderFee);
+
+			// Get initial balances
+			const initialTreasuryBalance = await mockUSDT.balanceOf(this.treasuryAddress.address);
+			const initialSenderBalance = await mockUSDT.balanceOf(this.sender.address);
+			const initialRecipientBalance = await mockUSDT.balanceOf(this.recipient.address);
+
+			// Approve tokens (total amount includes fees)
+			await mockUSDT.connect(this.provider).approve(gateway.address, totalAmount);
+
+			// Execute settleIn
+			await expect(
+				gateway
+					.connect(this.provider)
+					.settleIn(
+						orderId,
+						mockUSDT.address,
+						totalAmount,
+						this.sender.address,
+						this.senderFee,
+						this.recipient.address,
+						rate,
+						messageHash
+					)
+			)
+				.to.emit(gateway, Events.Gateway.SettleIn)
+				.withArgs(
+					orderId,
+					totalAmount,
+					this.recipient.address,
+					mockUSDT.address,
+					this.sender.address,
+					rate,
+					messageHash
+				)
+				.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
+				.withArgs(
+					orderId,
+					ethers.utils.parseEther("100"), // senderAmount: 100% of sender fee (senderToAggregator = 0)
+					ethers.utils.parseEther("0")    // aggregatorAmount: 0% of sender fee
+				);
+
+			// Verify balances (check deltas to account for previous test balances)
+			expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(initialRecipientBalance.add(processedAmount));
+			expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance.add(protocolFee));
+			expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(initialSenderBalance.add(this.senderFee));
+			expect(await mockUSDT.balanceOf(gateway.address)).to.eq(ZERO_AMOUNT);
+
+			// Verify order state
+			const orderInfo = await gateway.getOrderInfo(orderId);
+			expect(orderInfo.sender).to.eq(this.recipient.address);
+			expect(orderInfo.token).to.eq(mockUSDT.address);
+			expect(orderInfo.isFulfilled).to.eq(true);
+			expect(orderInfo.amount).to.eq(processedAmount);
+			expect(orderInfo.currentBPS).to.eq(0);
+		});
+
+		it("Should successfully process settleIn for local transfer (rate = 100)", async function () {
+			const ret = await getSupportedInstitutions();
+			const rate = 100; // Local transfer
+			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-2"]));
+			
+			const data = [
+				{ bank_account: "09090990902" },
+				{ bank_name: "ACCESS BANK" },
+				{ account_name: "Bob Smith" },
+				{ institution_code: ret.accessBank.code },
+			];
+			const password = "123";
+			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
+			const messageHash = "0x" + cipher;
+
+			// For local transfer, no protocol fee, total = baseAmount + senderFee
+			const totalAmount = this.baseAmount.add(this.senderFee);
+			const processedAmount = totalAmount.sub(this.senderFee); // Should equal baseAmount
+
+			// Get initial balances
+			const initialTreasuryBalance = await mockUSDT.balanceOf(this.treasuryAddress.address);
+			const initialSenderBalance = await mockUSDT.balanceOf(this.sender.address);
+			const initialProviderBalance = await mockUSDT.balanceOf(this.provider.address);
+			const initialRecipientBalance = await mockUSDT.balanceOf(this.recipient.address);
+
+			// Approve tokens (provider will transfer totalAmount to contract)
+			await mockUSDT.connect(this.provider).approve(gateway.address, totalAmount);
+
+			// Execute settleIn
+			await expect(
+				gateway
+					.connect(this.provider)
+					.settleIn(
+						orderId,
+						mockUSDT.address,
+						totalAmount,
+						this.sender.address,
+						this.senderFee,
+						this.recipient.address,
+						rate,
+						messageHash
+					)
+			)
+				.to.emit(gateway, Events.Gateway.SettleIn)
+				.withArgs(
+					orderId,
+					totalAmount,
+					this.recipient.address,
+					mockUSDT.address,
+					this.sender.address,
+					rate,
+					messageHash
+				)
+				.to.emit(gateway, Events.Gateway.LocalTransferFeeSplit)
+				.withArgs(
+					orderId,
+					ethers.utils.parseEther("50"),  // senderAmount: 50% of sender fee (100 - 50)
+					ethers.utils.parseEther("25"),  // providerAmount: 25% of sender fee (50% of provider's 50%)
+					ethers.utils.parseEther("25")   // aggregatorAmount: 25% of sender fee
+				);
+
+			// Verify balances (check deltas to account for previous test balances)
+			// Provider: deposits totalAmount, receives providerFee (25% of senderFee) back
+			const providerFee = ethers.utils.parseEther("25"); // 25% of sender fee
+			const senderAmount = ethers.utils.parseEther("50"); // 50% of sender fee
+			const aggregatorAmount = ethers.utils.parseEther("25"); // 25% of sender fee
+			
+			expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(initialRecipientBalance.add(processedAmount));
+			expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(initialSenderBalance.add(senderAmount));
+			// Provider balance: initial - totalAmount (deposited) + providerFee (received)
+			expect(await mockUSDT.balanceOf(this.provider.address)).to.eq(initialProviderBalance.sub(totalAmount).add(providerFee));
+			expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance.add(aggregatorAmount));
+			expect(await mockUSDT.balanceOf(gateway.address)).to.eq(ZERO_AMOUNT);
+		});
+
+		it("Should revert when settleIn is called with amount below minimum", async function () {
+			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-3"]));
+			const rate = 750;
+			const messageHash = "0x1234";
+			const amountBelowMinimum = MAX_BPS; // Exactly at minimum (100000), should fail (needs > MAX_BPS)
+
+			await mockUSDT.connect(this.provider).approve(gateway.address, amountBelowMinimum.add(1));
+
+			await expect(
+				gateway
+					.connect(this.provider)
+					.settleIn(
+						orderId,
+						mockUSDT.address,
+						amountBelowMinimum, // This is exactly MAX_BPS, should fail
+						this.sender.address,
+						0,
+						this.recipient.address,
+						rate,
+						messageHash
+					)
+			).to.be.revertedWith('AmountBelowMinimum');
+		});
+
+		it("Should revert when settleIn is called with zero sender fee for local transfer", async function () {
+			const ret = await getSupportedInstitutions();
+			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-4"]));
+			const rate = 100; // Local transfer requires sender fee
+			const data = [{ bank_account: "09090990903" }];
+			const password = "123";
+			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
+			const messageHash = "0x" + cipher;
+
+			// For local transfer, total = baseAmount + senderFee (but senderFee is 0, so just baseAmount)
+			const totalAmount = this.baseAmount; // No sender fee in this test
+
+			await mockUSDT.connect(this.provider).approve(gateway.address, totalAmount);
+
+			await expect(
+				gateway
+					.connect(this.provider)
+					.settleIn(
+						orderId,
+						mockUSDT.address,
+						totalAmount,
+						this.sender.address,
+						0, // Zero sender fee should fail for local transfer
+						this.recipient.address,
+						rate,
+						messageHash
+					)
+			).to.be.revertedWith('SenderFeeIsZero');
+		});
+
+		it("Should revert when settleIn is called with unsupported token", async function () {
+			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-5"]));
+			const rate = 750;
+			const messageHash = "0x1234";
+			const unsupportedToken = this.hacker.address; // Random address, not supported
+			const totalAmount = this.baseAmount.add(this.senderFee);
+
+			await expect(
+				gateway
+					.connect(this.provider)
+					.settleIn(
+						orderId,
+						unsupportedToken,
+						totalAmount,
+						this.sender.address,
+						this.senderFee,
+						this.recipient.address,
+						rate,
+						messageHash
+					)
+			).to.be.revertedWith('TokenNotSupported');
+		});
+
+		it("Should handle settleIn with FX transfer fee splitting correctly", async function () {
+			const ret = await getSupportedInstitutions();
+			const rate = 750; // FX transfer
+			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-6"]));
+			const senderFee = ethers.utils.parseEther("1000");
+			const baseAmount = ethers.utils.parseEther("10000");
+			
+			// Update token settings to have senderToAggregator > 0 for this test
+			await gateway.connect(this.deployer).setTokenFeeSettings(
+				mockUSDT.address,
+				50000,  // senderToProvider
+				50000,  // providerToAggregator
+				30000,  // senderToAggregator: 30% of sender fee goes to aggregator
+				500     // providerToAggregatorFx
+			);
+
+			const data = [{ bank_account: "09090990904" }];
+			const password = "123";
+			const cipher = CryptoJS.AES.encrypt(JSON.stringify(data), password).toString();
+			const messageHash = "0x" + cipher;
+
+			// Calculate total amount needed: baseAmount + protocolFee + senderFee
+			// Protocol fee is calculated from total amount
+			const protocolFeeBPS = this.protocolFeePercent;
+			const denominator = MAX_BPS.sub(protocolFeeBPS);
+			const totalAmount = baseAmount.add(senderFee).mul(MAX_BPS).div(denominator);
+			
+			// Get initial balances
+			const initialTreasuryBalance = await mockUSDT.balanceOf(this.treasuryAddress.address);
+			const initialSenderBalance = await mockUSDT.balanceOf(this.sender.address);
+			const initialRecipientBalance = await mockUSDT.balanceOf(this.recipient.address);
+
+			// Mint and approve (amount includes protocolFee + senderFee)
+			await mockUSDT.connect(this.alice).mint(totalAmount);
+			await mockUSDT.connect(this.alice).transfer(this.provider.address, totalAmount);
+			await mockUSDT.connect(this.provider).approve(gateway.address, totalAmount);
+
+			// Calculate fees: protocolFee from totalAmount, senderFee is part of totalAmount
+			const protocolFee = totalAmount.mul(protocolFeeBPS).div(MAX_BPS);
+			const senderAmount = senderFee.mul(MAX_BPS.sub(30000)).div(MAX_BPS); // 70% of sender fee
+			const aggregatorAmount = senderFee.sub(senderAmount); // 30% of sender fee
+			const processedAmount = totalAmount.sub(protocolFee).sub(senderFee);
+
+			await expect(
+				gateway
+					.connect(this.provider)
+					.settleIn(
+						orderId,
+						mockUSDT.address,
+						totalAmount,
+						this.sender.address,
+						senderFee,
+						this.recipient.address,
+						rate,
+						messageHash
+					)
+			)
+				.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
+				.withArgs(
+					orderId,
+					senderAmount,      // 70% of sender fee
+					aggregatorAmount  // 30% of sender fee
+				);
+
+			// Verify balances (check deltas to account for previous test balances)
+			expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(initialSenderBalance.add(senderAmount));
+			expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance.add(protocolFee).add(aggregatorAmount));
+			expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(initialRecipientBalance.add(processedAmount));
+
+			// Reset token settings
+			await gateway.connect(this.deployer).setTokenFeeSettings(
+				mockUSDT.address,
+				50000,  // senderToProvider
+				50000,  // providerToAggregator
+				0,      // senderToAggregator: reset to 0
+				500     // providerToAggregatorFx
+			);
+		});
+
+		it("Should revert when settleIn is called on paused contract", async function () {
+			const orderId = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(["string"], ["test-order-7"]));
+			const rate = 750;
+			const messageHash = "0x1234";
+			const totalAmount = this.baseAmount.add(this.senderFee);
+
+			// Pause the contract
+			await gateway.connect(this.deployer).pause();
+
+			await mockUSDT.connect(this.provider).approve(gateway.address, totalAmount);
+
+			await expect(
+				gateway
+					.connect(this.provider)
+					.settleIn(
+						orderId,
+						mockUSDT.address,
+						totalAmount,
+						this.sender.address,
+						this.senderFee,
+						this.recipient.address,
+						rate,
+						messageHash
+					)
+			).to.be.revertedWith('Pausable: paused');
+
+			// Unpause for other tests
+			await gateway.connect(this.deployer).unpause();
+		});
 	});
 });

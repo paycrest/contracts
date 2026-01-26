@@ -282,7 +282,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		if (_senderFee != 0) {
 			if (protocolFee == 0) {
 				// Local transfer - split sender fee
-				_handleLocalTransferFeeSplitting(_orderId, msg.sender, _senderFeeRecipient, MAX_BPS);
+				_handleLocalTransferFeeSplitting(_orderId, msg.sender, _senderFeeRecipient, uint64(MAX_BPS));
 			} else {
 				// FX transfer - sender keeps all fee
 				_handleFxTransferFeeSplitting(_orderId, _token, _senderFeeRecipient, _senderFee);
