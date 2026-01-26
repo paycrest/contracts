@@ -219,4 +219,10 @@ interface IGateway {
 	 * @return Order The order details.
 	 */
 	function getOrderInfo(bytes32 _orderId) external view returns (Order memory);
+
+	/**
+	 * @notice Gets the address of the aggregator.
+	 * @return address The address of the aggregator.
+	 */
+	function getAggregator() external view returns (address);
 }

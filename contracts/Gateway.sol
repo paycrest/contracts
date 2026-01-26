@@ -240,7 +240,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		IERC20(_token).transferFrom(msg.sender, address(this), _amount + _senderFee);
 
-		uint256 senderAmount = _amount;
+		uint256 amountToSettle = _amount;
 		uint256 aggregatorFee;
 
 		// determine if this is FX or local transfer based on rate
@@ -255,7 +255,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			aggregatorFee = (_amount * settings.providerToAggregatorFx) / MAX_BPS;
 			
 			if (aggregatorFee > 0) {
-				senderAmount -= aggregatorFee;
+				amountToSettle -= aggregatorFee;
 				IERC20(_token).transfer(treasuryAddress, aggregatorFee);
 			}
 		}
@@ -266,9 +266,9 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		order[_orderId].senderFee = _senderFee;
 		order[_orderId].protocolFee = aggregatorFee;
 		order[_orderId].isFulfilled = true;
-		order[_orderId].amount = senderAmount;
+		order[_orderId].amount = amountToSettle;
 
-		IERC20(_token).transfer(_recipient, senderAmount);
+		IERC20(_token).transfer(_recipient, amountToSettle);
 
 		// handle fee splitting after order state is recorded
 		if (_senderFee != 0) {
@@ -284,7 +284,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// emit settlement event
 		emit SettleIn(
 			_orderId,
-			senderAmount,
+			amountToSettle,
 			_recipient,
 			_token,
 			aggregatorFee,
@@ -337,6 +337,11 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	function isTokenSupported(address _token) external view returns (bool) {
 		if (_isTokenSupported[_token] == 1) return true;
 		return false;
+	}
+
+	/** @dev See {getAggregator-IGateway}. */
+	function getAggregator() external view returns (address) {
+		return _aggregatorAddress;
 	}
 
 	function _handleLocalTransferFeeSplitting(
