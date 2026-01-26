@@ -213,7 +213,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event
-		emit OrderSettled(
+		emit SettleOut(
 			_splitOrderId,
 			_orderId,
 			_liquidityProvider,
@@ -235,7 +235,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint96 _rate,
 		string calldata _messageHash
 	) external whenNotPaused returns (bool) {
-		require(!order[_orderId].isFulfilled, 'OrderAlreadyFulfilled');
+		require(order[_orderId].sender == address(0), 'OrderAlreadyExists');
 		require(_amount > MAX_BPS, 'AmountBelowMinimum');
 		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
 

@@ -54,7 +54,7 @@ interface IGateway {
         uint256 indexed amount,
         address indexed recipient,
         address token,
-        address senderFee,
+        address senderFeeRecipient,
 		uint96 rate,
 		string messageHash
     );
