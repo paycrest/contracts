@@ -181,9 +181,9 @@
         },
         {
           "indexed": false,
-          "internalType": "address",
-          "name": "senderFeeRecipient",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "aggregatorFee",
+          "type": "uint256"
         },
         {
           "indexed": false,

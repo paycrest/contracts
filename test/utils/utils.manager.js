@@ -37,7 +37,6 @@ const Events = {
 		ProtocolAddressUpdated: "ProtocolAddressUpdated",
 		LocalTransferFeeSplit: "LocalTransferFeeSplit",
 		FxTransferFeeSplit: "FxTransferFeeSplit",
-		SenderFeeTransferred: "SenderFeeTransferred",
 		TokenFeeSettingsUpdated: "TokenFeeSettingsUpdated",
 	},
 };
