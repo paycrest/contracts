@@ -284,7 +284,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 				// Local transfer - split sender fee
 				_handleLocalTransferFeeSplitting(_orderId, msg.sender, _senderFeeRecipient, uint64(MAX_BPS));
 			} else {
-				// FX transfer - sender keeps all fee
+				// FX transfer - split sender fee per senderToAggregator settings
 				_handleFxTransferFeeSplitting(_orderId, _token, _senderFeeRecipient, _senderFee);
 			}
 		}

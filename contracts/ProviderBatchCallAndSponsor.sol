@@ -21,14 +21,12 @@ interface IGateway {
  */
 contract ProviderBatchCallAndSponsor {
     using ECDSA for bytes32;
-
-    address public immutable gatewayAddress;
+    
+    // constant because when it assigned to eao we want to ensure it never changes
+    /// @notice The address of the Gateway contract.
+    address public constant gatewayAddress = 0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F;
     /// @notice A nonce used for replay protection.
     uint256 public nonce;
-
-    constructor(address _gatewayAddress) {
-        gatewayAddress = _gatewayAddress;
-    }
 
     /// @notice Represents a single call within a batch.
     struct Call {
@@ -38,7 +36,7 @@ contract ProviderBatchCallAndSponsor {
     }
 
     modifier onlyAggregator() {
-		require(msg.sender == IGateway(gatewayAddress).getAggregator(), 'OnlyAggregator');
+		require(msg.sender == IGateway(gatewayAddress).getAggregator(), "OnlyAggregator");
 		_;
 	}
 

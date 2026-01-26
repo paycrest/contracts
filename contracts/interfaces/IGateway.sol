@@ -175,12 +175,12 @@ interface IGateway {
 	) external returns (bool);
 
 	/**
-     * @notice Process an onramp order for cryptocurrency purchase
-     * @dev This function is restricted to be called only by an authorized aggregator
-     * @dev It processes an orders and transfers tokens to the recipient after deducting sender fees
+     * @notice Process settleIn order
+     * @dev Intended for order in-flows where the caller provides tokens via transferFrom; not restricted to onlyAggregator
+     * @dev It process an order and transfers tokens to the recipient after deducting sender fees
      * @param _orderId Unique identifier for the order being processed
      * @param _token Address of the token to be sent to the user
-     * @param _amount Amount of tokens to be sent to the user
+     * @param _amount Total amount transferred in (includes sender fee and, for FX, protocol fee); recipient receives _amount minus applicable fees
      * @param _senderFeeRecipient Address that will receive the sender fee
      * @param _senderFee Amount of fee to be paid to the sender fee recipient
      * @param _recipient Address of the recipient who will receive the tokens
