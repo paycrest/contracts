@@ -1,5 +1,5 @@
 {
-  "_format": "hh-sol-artifact-1",
+  "_format": "hh3-artifact-1",
   "contractName": "IGateway",
   "sourceName": "contracts/ProviderBatchCallAndSponsor.sol",
   "abi": [
@@ -20,5 +20,8 @@
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "linkReferences": {},
-  "deployedLinkReferences": {}
+  "deployedLinkReferences": {},
+  "immutableReferences": {},
+  "inputSourceName": "project/contracts/ProviderBatchCallAndSponsor.sol",
+  "buildInfoId": "solc-0_8_20-2e65ee4c9be4eba1182cf6ba2eb61d23bee1229e"
 }

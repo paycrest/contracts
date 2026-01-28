@@ -1,5 +1,5 @@
 {
-  "_format": "hh-sol-artifact-1",
+  "_format": "hh3-artifact-1",
   "contractName": "IGateway",
   "sourceName": "contracts/interfaces/IGateway.sol",
   "abi": [
@@ -282,6 +282,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getAggregator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "bytes32",
@@ -487,5 +500,8 @@
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "linkReferences": {},
-  "deployedLinkReferences": {}
+  "deployedLinkReferences": {},
+  "immutableReferences": {},
+  "inputSourceName": "project/contracts/interfaces/IGateway.sol",
+  "buildInfoId": "solc-0_8_20-bd6e4e24138a83f4c9cd5dfca1bf7485245b4d63"
 }

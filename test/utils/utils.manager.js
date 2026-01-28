@@ -1,10 +1,12 @@
-const { ethers } = require("hardhat");
-const { BigNumber } = require("@ethersproject/bignumber");
+import hre from "hardhat";
+import { ZeroAddress } from "ethers";
 
-const ZERO_AMOUNT = BigNumber.from("0");
-const ZERO_ADDRESS = ethers.constants.AddressZero;
-const MAX_BPS = BigNumber.from("100000");
-const FEE_BPS = BigNumber.from("100");
+const { ethers } = hre;
+
+const ZERO_AMOUNT = 0n;
+const ZERO_ADDRESS = ZeroAddress;
+const MAX_BPS = 100000n;
+const FEE_BPS = 100n;
 
 const Errors = {
 	Ownable: {
@@ -94,7 +96,7 @@ async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settin
 	);
 }
 
-module.exports = {
+export {
 	ZERO_AMOUNT,
 	ZERO_ADDRESS,
 	MAX_BPS,
