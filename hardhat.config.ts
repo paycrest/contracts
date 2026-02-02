@@ -147,7 +147,9 @@ export default defineConfig({
 			},
 		},
 	},
-	mocha: {
-		timeout: 40000,
+	test: {
+		solidity: {
+			timeout: 40000,
+		},
 	},
 });

@@ -34,7 +34,7 @@
     "dotenv": "^16.0.2",
     "ethers": "^6.16.0",
     "hardhat": "^3.0.12",
-    "mocha": "^11.7.5",
+    "mocha": "^11.3.0",
     "ts-node": "^10.9.2",
     "typechain": "^8.1.1",
     "typescript": "^5.3.3"
