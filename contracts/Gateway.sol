@@ -284,8 +284,9 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// emit settlement event
 		emit SettleIn(
 			_orderId,
-			amountToSettle,
+			msg.sender,
 			_recipient,
+			amountToSettle,
 			_token,
 			aggregatorFee,
 			_rate

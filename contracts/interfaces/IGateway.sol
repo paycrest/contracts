@@ -51,8 +51,9 @@ interface IGateway {
      */
     event SettleIn(
         bytes32 indexed orderId,
-        uint256 indexed amount,
+		address indexed liquidityProvider,
         address indexed recipient,
+        uint256 amount,
         address token,
         uint256 aggregatorFee,
 		uint96 rate

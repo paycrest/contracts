@@ -163,15 +163,21 @@
         },
         {
           "indexed": true,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "liquidityProvider",
+          "type": "address"
         },
         {
           "indexed": true,
           "internalType": "address",
           "name": "recipient",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
         },
         {
           "indexed": false,
@@ -503,5 +509,5 @@
   "deployedLinkReferences": {},
   "immutableReferences": {},
   "inputSourceName": "project/contracts/interfaces/IGateway.sol",
-  "buildInfoId": "solc-0_8_20-bd6e4e24138a83f4c9cd5dfca1bf7485245b4d63"
+  "buildInfoId": "solc-0_8_20-e74879e18fdb8d547b58bcc3fc16ab7854f50005"
 }

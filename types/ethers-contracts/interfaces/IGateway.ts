@@ -96,9 +96,9 @@ decodeFunctionResult(functionFragment: 'settleOut', data: BytesLike): Result;
   
 
     export namespace SettleInEvent {
-      export type InputTuple = [orderId: BytesLike, amount: BigNumberish, recipient: AddressLike, token: AddressLike, aggregatorFee: BigNumberish, rate: BigNumberish];
-      export type OutputTuple = [orderId: string, amount: bigint, recipient: string, token: string, aggregatorFee: bigint, rate: bigint];
-      export interface OutputObject {orderId: string, amount: bigint, recipient: string, token: string, aggregatorFee: bigint, rate: bigint };
+      export type InputTuple = [orderId: BytesLike, liquidityProvider: AddressLike, recipient: AddressLike, amount: BigNumberish, token: AddressLike, aggregatorFee: BigNumberish, rate: BigNumberish];
+      export type OutputTuple = [orderId: string, liquidityProvider: string, recipient: string, amount: bigint, token: string, aggregatorFee: bigint, rate: bigint];
+      export interface OutputObject {orderId: string, liquidityProvider: string, recipient: string, amount: bigint, token: string, aggregatorFee: bigint, rate: bigint };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -277,7 +277,7 @@ getEvent(key: 'SettleOut'): TypedContractEvent<SettleOutEvent.InputTuple, Settle
       SenderFeeTransferred: TypedContractEvent<SenderFeeTransferredEvent.InputTuple, SenderFeeTransferredEvent.OutputTuple, SenderFeeTransferredEvent.OutputObject>;
     
 
-      'SettleIn(bytes32,uint256,address,address,uint256,uint96)': TypedContractEvent<SettleInEvent.InputTuple, SettleInEvent.OutputTuple, SettleInEvent.OutputObject>;
+      'SettleIn(bytes32,address,address,uint256,address,uint256,uint96)': TypedContractEvent<SettleInEvent.InputTuple, SettleInEvent.OutputTuple, SettleInEvent.OutputObject>;
       SettleIn: TypedContractEvent<SettleInEvent.InputTuple, SettleInEvent.OutputTuple, SettleInEvent.OutputObject>;
     
 

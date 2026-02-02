@@ -24,7 +24,7 @@ contract ProviderBatchCallAndSponsor {
     
     // constant because when it assigned to eao we want to ensure it never changes
     /// @notice The address of the Gateway contract.
-    address public constant gatewayAddress = 0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F;
+    address public constant gatewayAddress = 0x56dA8fCE8FD64CaaE90D80DED55587b282bb4303;
     /// @notice A nonce used for replay protection.
     uint256 public nonce;
 

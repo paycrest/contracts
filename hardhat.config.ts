@@ -76,6 +76,10 @@ export default defineConfig({
 		},
 	},
 	solidity: {
+		npmFilesToBuild: [
+			"@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol",
+			"@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol",
+		],
 		compilers: [
 			{
 				version: "0.8.18",
@@ -112,16 +116,6 @@ export default defineConfig({
 		}
 	},
 	chainDescriptors: {
-		8453: {
-			name: "base",
-			blockExplorers: {
-				etherscan: {
-					name: "Basescan",
-					url: "https://basescan.org",
-					apiUrl: "https://api.basescan.org/api",
-				},
-			},
-		},
 		42220: {
 			name: "celo",
 			blockExplorers: {
