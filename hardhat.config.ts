@@ -1,4 +1,4 @@
-import { defineConfig } from "hardhat/config";
+import { defineConfig, task  } from "hardhat/config";
 import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 import hardhatVerify from "@nomicfoundation/hardhat-verify";
 import hardhatEthers from "@nomicfoundation/hardhat-ethers";
@@ -13,8 +13,18 @@ const env = (dotEnvResult.parsed ?? {}) as Record<string, string>;
 
 const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
 
+const printAccounts = task("accounts", "Print the accounts")
+  .setAction(() => import("./tasks/accounts.js"))
+  .build();
+
+const flattenContracts = task("flat", "Flattens and prints contracts and their dependencies (Resolves licenses)")
+  .setAction(() => import("./tasks/flatten.js"))
+  .build();
+
+
 export default defineConfig({
 	plugins: [hardhatToolboxMochaEthers, hardhatVerify, hardhatEthers, hardhatTypechain, hardhatMocha, hardhatEthersChaiMatchers, hardhatNetworkHelpers],
+	tasks: [printAccounts, flattenContracts],
 	networks: {
 		// Mainnets
 		arbitrumOne: {
