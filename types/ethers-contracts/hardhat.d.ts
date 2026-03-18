@@ -15,7 +15,6 @@ getContractFactory(name: 'ITransparentUpgradeableProxy', signerOrOptions?: ether
 getContractFactory(name: 'TransparentUpgradeableProxy', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.TransparentUpgradeableProxy__factory>
 getContractFactory(name: 'Gateway', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.Gateway__factory>
 getContractFactory(name: 'GatewaySettingManager', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.GatewaySettingManager__factory>
-getContractFactory(name: 'IGateway', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IGateway__factory>
 getContractFactory(name: 'ProviderBatchCallAndSponsor', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ProviderBatchCallAndSponsor__factory>
 getContractFactory(name: 'IGateway', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IGateway__factory>
 getContractFactory(name: 'MockUSDT', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MockUSDT__factory>
@@ -25,7 +24,6 @@ getContractAt(name: 'ITransparentUpgradeableProxy', address: string | ethers.Add
 getContractAt(name: 'TransparentUpgradeableProxy', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.TransparentUpgradeableProxy>
 getContractAt(name: 'Gateway', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Gateway>
 getContractAt(name: 'GatewaySettingManager', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.GatewaySettingManager>
-getContractAt(name: 'IGateway', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IGateway>
 getContractAt(name: 'ProviderBatchCallAndSponsor', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ProviderBatchCallAndSponsor>
 getContractAt(name: 'IGateway', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IGateway>
 getContractAt(name: 'MockUSDT', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MockUSDT>
@@ -35,7 +33,6 @@ deployContract(name: 'ITransparentUpgradeableProxy', signerOrOptions?: ethers.Si
 deployContract(name: 'TransparentUpgradeableProxy', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TransparentUpgradeableProxy>
 deployContract(name: 'Gateway', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Gateway>
 deployContract(name: 'GatewaySettingManager', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.GatewaySettingManager>
-deployContract(name: 'IGateway', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IGateway>
 deployContract(name: 'ProviderBatchCallAndSponsor', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProviderBatchCallAndSponsor>
 deployContract(name: 'IGateway', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IGateway>
 deployContract(name: 'MockUSDT', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDT>
@@ -45,7 +42,6 @@ deployContract(name: 'ITransparentUpgradeableProxy', args: any[], signerOrOption
 deployContract(name: 'TransparentUpgradeableProxy', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TransparentUpgradeableProxy>
 deployContract(name: 'Gateway', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Gateway>
 deployContract(name: 'GatewaySettingManager', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.GatewaySettingManager>
-deployContract(name: 'IGateway', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IGateway>
 deployContract(name: 'ProviderBatchCallAndSponsor', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProviderBatchCallAndSponsor>
 deployContract(name: 'IGateway', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IGateway>
 deployContract(name: 'MockUSDT', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDT>

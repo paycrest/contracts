@@ -3,9 +3,6 @@ pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-interface IGateway {
-    function getAggregator() external view returns (address);
-}
 /**
  * @title ProviderBatchCallAndSponsor
  *
@@ -22,9 +19,6 @@ interface IGateway {
 contract ProviderBatchCallAndSponsor {
     using ECDSA for bytes32;
     
-    // constant because when it assigned to eao we want to ensure it never changes
-    /// @notice The address of the Gateway contract.
-    address public constant gatewayAddress = 0x56dA8fCE8FD64CaaE90D80DED55587b282bb4303;
     /// @notice A nonce used for replay protection.
     uint256 public nonce;
 
@@ -34,11 +28,6 @@ contract ProviderBatchCallAndSponsor {
         uint256 value;
         bytes data;
     }
-
-    modifier onlyAggregator() {
-		require(msg.sender == IGateway(gatewayAddress).getAggregator(), "OnlyAggregator");
-		_;
-	}
 
     /// @notice Emitted for every individual call executed.
     event CallExecuted(address indexed sender, address indexed to, uint256 value, bytes data);
@@ -53,7 +42,7 @@ contract ProviderBatchCallAndSponsor {
      * The signature must be produced off–chain by signing:
      * The signing key should be the account’s key (which becomes the smart account’s own identity after upgrade).
      */
-    function execute(Call[] calldata calls, bytes calldata signature) external payable onlyAggregator {
+    function execute(Call[] calldata calls, bytes calldata signature) external payable {
         // Compute the digest that the account was expected to sign.
         bytes memory encodedCalls;
         for (uint256 i = 0; i < calls.length; i++) {

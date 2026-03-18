@@ -29,27 +29,27 @@ export default defineConfig({
 		// Mainnets
 		arbitrumOne: {
 			type: "http",
-			url: `https://rpc.shield3.com/v3/0xa4b1/${env.SHIELD3_API_KEY}/rpc`,
+			url: `https://arbitrum.drpc.org`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		base: {
 			type: "http",
-			url: `https://rpc.shield3.com/v3/0x2105/${env.SHIELD3_API_KEY}/rpc`,
+			url: `https://base-public.nodies.app`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		bsc: {
 			type: "http",
-			url: `https://rpc.shield3.com/v3/0x38/${env.SHIELD3_API_KEY}/rpc`,
+			url: `https://bsc.drpc.org`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		polygon: {
 			type: "http",
-			url: `https://rpc.shield3.com/v3/0x89/${env.SHIELD3_API_KEY}/rpc`,
+			url: `https://1rpc.io/matic`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		mainnet: {
 			type: "http",
-			url: `https://rpc.shield3.com/v3/0x1/${env.SHIELD3_API_KEY}/rpc`,
+			url: `https://ethereum.public.blockpi.network/v1/rpc/public`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		optimisticEthereum: {
@@ -65,6 +65,7 @@ export default defineConfig({
 		celo: {
 			type: "http",
 			url: "https://forno.celo.org", // @note this is a public rpc
+			chainId: 42220,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		assetChain: {
@@ -74,7 +75,7 @@ export default defineConfig({
 		},
 		lisk: {
 			type: "http",
-			url: "https://rpc.api.lisk.com", // @note this is a public rpc
+			url: "https://api-lisk-mainnet.n.dwellir.com/2ccf18bf-2916-4198-8856-42172854353c", // @note this is a public rpc
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 
@@ -122,7 +123,8 @@ export default defineConfig({
 	},
 	verify: {
 		etherscan: {
-			apiKey: env.BASESCAN_API_KEY || env.ETHERSCAN_API_KEY || "",
+			// For Celo verification use CELOSCAN_API_KEY (get one at https://celoscan.io/myapikey)
+			apiKey: env.CELOSCAN_API_KEY || env.BASESCAN_API_KEY || env.ETHERSCAN_API_KEY || "",
 		}
 	},
 	chainDescriptors: {
@@ -131,8 +133,8 @@ export default defineConfig({
 			blockExplorers: {
 				etherscan: {
 					name: "celoscan",
-					url: "https://api.celoscan.io/api",
-					apiUrl: "https://celoscan.io/",
+					url: "https://celoscan.io",
+					apiUrl: "https://api.etherscan.io/v2/api",
 				},
 			},
 		},
