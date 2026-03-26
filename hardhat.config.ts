@@ -29,7 +29,7 @@ export default defineConfig({
 		// Mainnets
 		arbitrumOne: {
 			type: "http",
-			url: `https://arbitrum.drpc.org`,
+			url: `https://api.zan.top/arb-one`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		base: {
@@ -54,7 +54,7 @@ export default defineConfig({
 		},
 		optimisticEthereum: {
 			type: "http",
-			url: `https://rpc.shield3.com/v3/0x0a/${env.SHIELD3_API_KEY}/rpc`,
+			url: `https://optimism-rpc.publicnode.com`,
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 		scroll: {
@@ -75,7 +75,7 @@ export default defineConfig({
 		},
 		lisk: {
 			type: "http",
-			url: "https://api-lisk-mainnet.n.dwellir.com/2ccf18bf-2916-4198-8856-42172854353c", // @note this is a public rpc
+			url: "https://lisk.drpc.org", // @note this is a public rpc
 			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
 		},
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import {GatewaySettingManager} from './GatewaySettingManager.sol';
 import {IGateway, IERC20} from './interfaces/IGateway.sol';
@@ -11,6 +12,7 @@ import {IGateway, IERC20} from './interfaces/IGateway.sol';
  * @notice This contract serves as a gateway for creating orders and managing settlements.
  */
 contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
+	using SafeERC20 for IERC20;
 	struct fee {
 		uint256 protocolFee;
 		uint256 liquidityProviderAmount;
@@ -79,7 +81,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		require(bytes(messageHash).length != 0, 'InvalidMessageHash');
 
 		// transfer token from msg.sender to contract
-		IERC20(_token).transferFrom(msg.sender, address(this), _amount + _senderFee);
+		IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount + _senderFee);
 
 		// increase users nonce to avoid replay attacks
 		_nonce[msg.sender]++;
@@ -207,10 +209,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			}
 
 			// transfer aggregator fee
-			IERC20(token).transfer(treasuryAddress, aggregatorFee);
+			IERC20(token).safeTransfer(treasuryAddress, aggregatorFee);
 		}
 
-		IERC20(token).transfer(_liquidityProvider, liquidityProviderAmount);
+		IERC20(token).safeTransfer(_liquidityProvider, liquidityProviderAmount);
 
 		// emit settled event
 		emit SettleOut(
@@ -238,7 +240,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		require(_amount > MAX_BPS, 'InvalidAmount');
 		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
 
-		IERC20(_token).transferFrom(msg.sender, address(this), _amount + _senderFee);
+		IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount + _senderFee);
 
 		uint256 amountToSettle = _amount;
 		uint256 aggregatorFee;
@@ -256,7 +258,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			
 			if (aggregatorFee > 0) {
 				amountToSettle -= aggregatorFee;
-				IERC20(_token).transfer(treasuryAddress, aggregatorFee);
+				IERC20(_token).safeTransfer(treasuryAddress, aggregatorFee);
 			}
 		}
 
@@ -268,7 +270,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		order[_orderId].isFulfilled = true;
 		order[_orderId].amount = amountToSettle;
 
-		IERC20(_token).transfer(_recipient, amountToSettle);
+		IERC20(_token).safeTransfer(_recipient, amountToSettle);
 
 		// handle fee splitting after order state is recorded
 		if (_senderFee != 0) {
@@ -304,7 +306,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		if (_fee > 0) {
 			// transfer refund fee to the treasury
-			IERC20(order[_orderId].token).transfer(treasuryAddress, _fee);
+			IERC20(order[_orderId].token).safeTransfer(treasuryAddress, _fee);
 		}
 
 		// reset state values
@@ -315,7 +317,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint256 refundAmount = order[_orderId].amount - _fee;
 
 		// transfer refund amount and sender fee to the refund address
-		IERC20(order[_orderId].token).transfer(
+		IERC20(order[_orderId].token).safeTransfer(
 			order[_orderId].refundAddress,
 			refundAmount + order[_orderId].senderFee
 		);
@@ -363,18 +365,18 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// Transfer sender portion
 		if (senderAmount != 0 && order[_orderId].currentBPS == 0) {
-			IERC20(token).transfer(_senderFeeRecipient, senderAmount);
+			IERC20(token).safeTransfer(_senderFeeRecipient, senderAmount);
 		}
 
 		// Transfer aggregator portion to treasury
 		if (aggregatorAmount != 0) {
-			IERC20(token).transfer(treasuryAddress, aggregatorAmount);
+			IERC20(token).safeTransfer(treasuryAddress, aggregatorAmount);
 		}
 
 		// Transfer provider portion to the liquidity provider who fulfilled the order
 		currentProviderAmount = currentProviderAmount - aggregatorAmount;
 		if (currentProviderAmount != 0) {
-			IERC20(token).transfer(_liquidityProvider, currentProviderAmount);
+			IERC20(token).safeTransfer(_liquidityProvider, currentProviderAmount);
 		}
 
 		// Emit events
@@ -396,12 +398,12 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 
 		// Transfer sender portion
 		if (senderAmount > 0) {
-			IERC20(_token).transfer(_senderFeeRecipient, senderAmount);
+			IERC20(_token).safeTransfer(_senderFeeRecipient, senderAmount);
 		}
 
 		// Transfer aggregator portion to treasury
 		if (aggregatorAmount > 0) {
-			IERC20(_token).transfer(treasuryAddress, aggregatorAmount);
+			IERC20(_token).safeTransfer(treasuryAddress, aggregatorAmount);
 		}
 
 		// Emit events
