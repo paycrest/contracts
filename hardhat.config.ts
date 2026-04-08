@@ -3,7 +3,7 @@ import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-et
 import hardhatVerify from "@nomicfoundation/hardhat-verify";
 import hardhatEthers from "@nomicfoundation/hardhat-ethers";
 import hardhatTypechain from "@nomicfoundation/hardhat-typechain";
-import hardhatMocha from "@nomicfoundation/hardhat-mocha";
+// import hardhatMocha from "@nomicfoundation/hardhat-mocha";
 import hardhatEthersChaiMatchers from "@nomicfoundation/hardhat-ethers-chai-matchers";
 import hardhatNetworkHelpers from "@nomicfoundation/hardhat-network-helpers";
 
@@ -23,7 +23,7 @@ const flattenContracts = task("flat", "Flattens and prints contracts and their d
 
 
 export default defineConfig({
-	plugins: [hardhatToolboxMochaEthers, hardhatVerify, hardhatEthers, hardhatTypechain, hardhatMocha, hardhatEthersChaiMatchers, hardhatNetworkHelpers],
+	plugins: [hardhatToolboxMochaEthers, hardhatVerify, hardhatEthers, hardhatTypechain, hardhatEthersChaiMatchers, hardhatNetworkHelpers],
 	tasks: [printAccounts, flattenContracts],
 	networks: {
 		// Mainnets
