@@ -1,6 +1,4 @@
-import hre from "hardhat";
-
-const { ethers } = await hre.network.connect();
+import { ethers } from "../setup.js";
 
 async function mockUSDTFixture() {
   // get mock usdc contract and deploy it

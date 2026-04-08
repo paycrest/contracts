@@ -1,8 +1,9 @@
 import hre from "hardhat";
+import { ethers } from "../setup.js";
 import { mockUSDTFixture } from "./mockUSDT.js";
 import { configureTokenFeeSettings } from "../utils/utils.manager.js";
 
-const { ethers, artifacts } = await hre.network.connect();
+const { artifacts } = hre;
 
 async function gatewayFixture() {
   const { mockUSDT } = await mockUSDTFixture();
@@ -16,7 +17,7 @@ async function gatewayFixture() {
   // Load OpenZeppelin artifacts and deploy ProxyAdmin
   const ProxyAdminArtifact = await artifacts.readArtifact("@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol:ProxyAdmin");
   const ProxyAdmin = await ethers.getContractFactoryFromArtifact(ProxyAdminArtifact);
-  const proxyAdmin = await ProxyAdmin.deploy(deployer.address);
+  const proxyAdmin = await ProxyAdmin.deploy();
   await proxyAdmin.waitForDeployment();
   
   // Encode initialize call

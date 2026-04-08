@@ -60,15 +60,6 @@ contract ProviderBatchCallAndSponsor {
     }
 
     /**
-     * @notice Executes a batch of calls directly.
-     * @dev This contract doesnt authorized self execution.
-     * @param calls An array of Call structs containing destination, ETH value, and calldata.
-     */
-    function execute(Call[] calldata calls) external payable {
-        revert("Not implemented"); // we don't expect this to be called directly
-    }
-
-    /**
      * @dev Internal function that handles batch execution and nonce incrementation.
      * @param calls An array of Call structs.
      */

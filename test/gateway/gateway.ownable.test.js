@@ -1,9 +1,7 @@
 import { expect } from "chai";
-import hre from "hardhat";
+import { ethers } from "../setup.js";
 import { gatewayFixture } from "../fixtures/gateway.js";
 import { Errors, Events } from "../utils/utils.manager.js";
-
-const { ethers } = await hre.network.connect();
 
 describe("Ownable settings", function () {
   let gateway;

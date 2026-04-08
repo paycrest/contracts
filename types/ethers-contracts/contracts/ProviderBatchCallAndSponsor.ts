@@ -13,16 +13,14 @@ export declare namespace ProviderBatchCallAndSponsor {
     }
 
   export interface ProviderBatchCallAndSponsorInterface extends Interface {
-    getFunction(nameOrSignature: "execute((address,uint256,bytes)[])" | "execute((address,uint256,bytes)[],bytes)" | "nonce"): FunctionFragment;
+    getFunction(nameOrSignature: "execute" | "nonce"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "BatchExecuted" | "CallExecuted"): EventFragment;
 
-    encodeFunctionData(functionFragment: 'execute((address,uint256,bytes)[])', values: [ProviderBatchCallAndSponsor.CallStruct[]]): string;
-encodeFunctionData(functionFragment: 'execute((address,uint256,bytes)[],bytes)', values: [ProviderBatchCallAndSponsor.CallStruct[], BytesLike]): string;
+    encodeFunctionData(functionFragment: 'execute', values: [ProviderBatchCallAndSponsor.CallStruct[], BytesLike]): string;
 encodeFunctionData(functionFragment: 'nonce', values?: undefined): string;
 
-    decodeFunctionResult(functionFragment: 'execute((address,uint256,bytes)[])', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'execute((address,uint256,bytes)[],bytes)', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'execute', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'nonce', data: BytesLike): Result;
   }
 
@@ -85,15 +83,7 @@ decodeFunctionResult(functionFragment: 'nonce', data: BytesLike): Result;
 
     
     
-    "execute((address,uint256,bytes)[])": TypedContractMethod<
-      [calls: ProviderBatchCallAndSponsor.CallStruct[], ],
-      [void],
-      'payable'
-    >
-    
-
-    
-    "execute((address,uint256,bytes)[],bytes)": TypedContractMethod<
+    execute: TypedContractMethod<
       [calls: ProviderBatchCallAndSponsor.CallStruct[], signature: BytesLike, ],
       [void],
       'payable'
@@ -111,12 +101,7 @@ decodeFunctionResult(functionFragment: 'nonce', data: BytesLike): Result;
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
-    getFunction(nameOrSignature: 'execute((address,uint256,bytes)[])'): TypedContractMethod<
-      [calls: ProviderBatchCallAndSponsor.CallStruct[], ],
-      [void],
-      'payable'
-    >;
-getFunction(nameOrSignature: 'execute((address,uint256,bytes)[],bytes)'): TypedContractMethod<
+    getFunction(nameOrSignature: 'execute'): TypedContractMethod<
       [calls: ProviderBatchCallAndSponsor.CallStruct[], signature: BytesLike, ],
       [void],
       'payable'

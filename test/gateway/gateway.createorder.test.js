@@ -1,10 +1,8 @@
-const { ethers } = require("hardhat");
-const { BigNumber } = require("@ethersproject/bignumber");
-const CryptoJS = require("crypto-js");
-
-const { gatewayFixture } = require("../fixtures/gateway.js");
-
-const {
+import CryptoJS from "crypto-js";
+import { expect } from "chai";
+import { ethers } from "../setup.js";
+import { gatewayFixture } from "../fixtures/gateway.js";
+import {
 	deployContract,
 	ZERO_AMOUNT,
 	ZERO_ADDRESS,
@@ -13,10 +11,11 @@ const {
 	Errors,
 	Events,
 	getSupportedInstitutions,
-} = require("../utils/utils.manager.js");
-const { expect } = require("chai");
+} from "../utils/utils.manager.js";
 
 describe("Gateway create order", function () {
+	let gateway, mockUSDT;
+
 	beforeEach(async function () {
 		[
 			this.deployer,
@@ -36,15 +35,11 @@ describe("Gateway create order", function () {
 		this.mockUSDT = mockUSDT;
 		this.gateway = gateway;
 
-		this.mintAmount = ethers.utils.parseEther("27000000");
-		this.orderAmount = ethers.utils.parseEther("27000000");
-		// Protocol fee is calculated based on rate and token settings
-		// For FX transfers (rate ≠ 1), it's calculated as: (amount * providerToAggregatorFx) / MAX_BPS
-		// For local transfers (rate = 1), it's 0
-		this.protocolFee = ethers.utils.parseEther("135000"); // 0.5% of 27000000 for FX transfer
+		this.mintAmount = ethers.parseEther("27000000");
+		this.orderAmount = ethers.parseEther("27000000");
+		this.protocolFee = ethers.parseEther("135000");
+		this.senderFee = ethers.parseEther("0");
 
-
-		this.senderFee = ethers.utils.parseEther("0");
 		await this.mockUSDT.connect(this.alice).mint(this.mintAmount);
 		await this.mockDAI.connect(this.alice).mint(this.mintAmount);
 		await this.mockUSDT
@@ -61,8 +56,8 @@ describe("Gateway create order", function () {
 
 	it("Should be able to create order by Sender for Alice", async function () {
 		const ret = await getSupportedInstitutions();
-		const treasury = ethers.utils.formatBytes32String("treasury");
-		const aggregator = ethers.utils.formatBytes32String("aggregator");
+		const treasury = ethers.encodeBytes32String("treasury");
+		const aggregator = ethers.encodeBytes32String("aggregator");
 
 		await this.gateway
 			.connect(this.deployer)
@@ -74,7 +69,7 @@ describe("Gateway create order", function () {
 
 		await this.mockUSDT
 			.connect(this.sender)
-			.approve(this.gateway.address, this.orderAmount.add(this.senderFee));
+			.approve(this.gateway.target, this.orderAmount + this.senderFee);
 
 		const rate = 750;
 
@@ -94,11 +89,10 @@ describe("Gateway create order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		// Create order and capture the actual order ID from the event
 		const tx = await this.gateway
 			.connect(this.sender)
 			.createOrder(
-				this.mockUSDT.address,
+				this.mockUSDT.target,
 				this.orderAmount,
 				rate,
 				this.sender.address,
@@ -108,15 +102,17 @@ describe("Gateway create order", function () {
 			);
 
 		const receipt = await tx.wait();
-		const orderCreatedEvent = receipt.events.find(e => e.event === 'OrderCreated');
-		const orderId = orderCreatedEvent.args.orderId;
+		const orderId = receipt.logs
+			.map(log => { try { return this.gateway.interface.parseLog(log); } catch { return null; } })
+			.find(e => e?.name === "OrderCreated")
+			?.args.orderId;
 
 		await expect(tx)
 			.to.emit(this.gateway, Events.Gateway.OrderCreated)
 			.withArgs(
 				this.alice.address,
-				this.mockUSDT.address,
-				BigNumber.from(this.orderAmount),
+				this.mockUSDT.target,
+				this.orderAmount,
 				this.protocolFee,
 				orderId,
 				rate,
@@ -135,39 +131,35 @@ describe("Gateway create order", function () {
 			this.currentBPS,
 			this.amount,
 		] = await this.gateway.getOrderInfo(orderId);
-		// expect sender balance to increase by sender fee
+
 		expect(await this.mockUSDT.balanceOf(this.sender.address)).to.eq(
 			ZERO_AMOUNT
 		);
 
 		expect(this.seller).to.eq(this.sender.address);
-		expect(this.token).to.eq(this.mockUSDT.address);
+		expect(this.token).to.eq(this.mockUSDT.target);
 		expect(this.senderRecipient).to.eq(this.sender.address);
-		expect(this.senderFee).to.eq(this.senderFee);
 		expect(this.isFulfilled).to.eq(false);
 		expect(this.isRefunded).to.eq(false);
 		expect(this.refundAddress).to.eq(this.alice.address);
 		expect(this.currentBPS).to.eq(MAX_BPS);
-		expect(this.amount).to.eq(
-			BigNumber.from(this.orderAmount)
-		);
+		expect(this.amount).to.eq(this.orderAmount);
 
 		expect(await this.mockUSDT.balanceOf(this.alice.address)).to.eq(
 			ZERO_AMOUNT
 		);
 
-		// =================== Create Order ===================
 		var bytes = CryptoJS.AES.decrypt(messageHash.substring(2), password);
 		var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
 
-		const mockUSDT = await this.gateway.isTokenSupported(this.mockUSDT.address);
-		expect(mockUSDT).to.eq(true);
+		const isMockUSDTSupported = await this.gateway.isTokenSupported(this.mockUSDT.target);
+		expect(isMockUSDTSupported).to.eq(true);
 		expect(decryptedData[0].bank_account).to.eq("09090990901");
 	});
 
 	it("Should revert when creating order with non-supported token", async function () {
 		const ret = await getSupportedInstitutions();
-		const fee = ethers.utils.formatBytes32String("fee");
+		const fee = ethers.encodeBytes32String("fee");
 
 		await this.gateway
 			.connect(this.deployer)
@@ -175,7 +167,7 @@ describe("Gateway create order", function () {
 
 		await this.mockDAI
 			.connect(this.sender)
-			.approve(this.gateway.address, this.mintAmount);
+			.approve(this.gateway.target, this.mintAmount);
 		const rate = 750;
 		const data = [
 			{ bank_account: "09090990901" },
@@ -194,17 +186,17 @@ describe("Gateway create order", function () {
 
 		const argOrderID = [this.sender.address, 1];
 
-		const encoded = ethers.utils.defaultAbiCoder.encode(
+		const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
 			["address", "uint256"],
 			argOrderID
 		);
-		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
+		const orderId = ethers.keccak256(encoded);
 
 		await expect(
 			this.gateway
 				.connect(this.sender)
 				.createOrder(
-					this.mockDAI.address,
+					this.mockDAI.target,
 					this.orderAmount,
 					rate,
 					this.sender.address,
@@ -242,7 +234,7 @@ describe("Gateway create order", function () {
 
 	it("Should revert when creating order with zero input amount", async function () {
 		const ret = await getSupportedInstitutions();
-		const fee = ethers.utils.formatBytes32String("fee");
+		const fee = ethers.encodeBytes32String("fee");
 
 		await this.gateway
 			.connect(this.deployer)
@@ -250,7 +242,7 @@ describe("Gateway create order", function () {
 
 		await this.mockUSDT
 			.connect(this.sender)
-			.approve(this.gateway.address, this.mintAmount);
+			.approve(this.gateway.target, this.mintAmount);
 		const rate = 750;
 		const data = [
 			{ bank_account: "09090990901" },
@@ -269,17 +261,17 @@ describe("Gateway create order", function () {
 
 		const argOrderID = [this.sender.address, 1];
 
-		const encoded = ethers.utils.defaultAbiCoder.encode(
+		const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
 			["address", "uint256"],
 			argOrderID
 		);
-		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
+		const orderId = ethers.keccak256(encoded);
 
 		await expect(
 			this.gateway
 				.connect(this.sender)
 				.createOrder(
-					this.mockUSDT.address,
+					this.mockUSDT.target,
 					ZERO_AMOUNT,
 					rate,
 					this.sender.address,
@@ -317,7 +309,7 @@ describe("Gateway create order", function () {
 
 	it("Should revert when creating order with zero address as refundable address", async function () {
 		const ret = await getSupportedInstitutions();
-		const fee = ethers.utils.formatBytes32String("fee");
+		const fee = ethers.encodeBytes32String("fee");
 
 		await this.gateway
 			.connect(this.deployer)
@@ -325,7 +317,7 @@ describe("Gateway create order", function () {
 
 		await this.mockUSDT
 			.connect(this.sender)
-			.approve(this.gateway.address, this.mintAmount);
+			.approve(this.gateway.target, this.mintAmount);
 		const rate = 750;
 		const data = [
 			{ bank_account: "09090990901" },
@@ -344,17 +336,17 @@ describe("Gateway create order", function () {
 
 		const argOrderID = [this.sender.address, 1];
 
-		const encoded = ethers.utils.defaultAbiCoder.encode(
+		const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
 			["address", "uint256"],
 			argOrderID
 		);
-		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
+		const orderId = ethers.keccak256(encoded);
 
 		await expect(
 			this.gateway
 				.connect(this.sender)
 				.createOrder(
-					this.mockUSDT.address,
+					this.mockUSDT.target,
 					this.orderAmount,
 					rate,
 					this.sender.address,
@@ -391,7 +383,7 @@ describe("Gateway create order", function () {
 	});
 
 	it("Should revert when creating order with insufficient allowance", async function () {
-		const fee = ethers.utils.formatBytes32String("fee");
+		const fee = ethers.encodeBytes32String("fee");
 
 		await this.gateway
 			.connect(this.deployer)
@@ -399,7 +391,7 @@ describe("Gateway create order", function () {
 
 		await this.mockUSDT
 			.connect(this.sender)
-			.approve(this.gateway.address, this.protocolFee);
+			.approve(this.gateway.target, this.protocolFee);
 		const rate = 750;
 		const data = [
 			{ bank_account: "09090990901" },
@@ -418,17 +410,17 @@ describe("Gateway create order", function () {
 
 		const argOrderID = [this.sender.address, 1];
 
-		const encoded = ethers.utils.defaultAbiCoder.encode(
+		const encoded = ethers.AbiCoder.defaultAbiCoder().encode(
 			["address", "uint256"],
 			argOrderID
 		);
-		const orderId = ethers.utils.solidityKeccak256(["bytes"], [encoded]);
+		const orderId = ethers.keccak256(encoded);
 
 		await expect(
 			this.gateway
 				.connect(this.sender)
 				.createOrder(
-					this.mockUSDT.address,
+					this.mockUSDT.target,
 					this.mintAmount,
 					rate,
 					this.sender.address,
@@ -466,13 +458,11 @@ describe("Gateway create order", function () {
 
 	it("Should create order with zero protocol fee for local transfer (rate = 1)", async function () {
 		const ret = await getSupportedInstitutions();
-		const treasury = ethers.utils.formatBytes32String("treasury");
-		const aggregator = ethers.utils.formatBytes32String("aggregator");
+		const treasury = ethers.encodeBytes32String("treasury");
+		const aggregator = ethers.encodeBytes32String("aggregator");
 
-		// Set a sender fee for local transfer (required by contract)
-		this.senderFee = ethers.utils.parseEther("1000"); // 1000 tokens sender fee
-		
-		// Ensure sender has enough tokens to cover both order amount and sender fee
+		this.senderFee = ethers.parseEther("1000");
+
 		await this.mockUSDT.connect(this.alice).mint(this.senderFee);
 		await this.mockUSDT.connect(this.alice).transfer(this.sender.address, this.senderFee);
 
@@ -486,9 +476,9 @@ describe("Gateway create order", function () {
 
 		await this.mockUSDT
 			.connect(this.sender)
-			.approve(this.gateway.address, this.orderAmount.add(this.senderFee));
+			.approve(this.gateway.target, this.orderAmount + this.senderFee);
 
-		const rate = 100; // Local transfer (rate = 1)
+		const rate = 100;
 
 		const data = [
 			{ bank_account: "09090990901" },
@@ -506,11 +496,10 @@ describe("Gateway create order", function () {
 
 		const messageHash = "0x" + cipher;
 
-		// Create order and capture the actual order ID from the event
 		const tx = await this.gateway
 			.connect(this.sender)
 			.createOrder(
-				this.mockUSDT.address,
+				this.mockUSDT.target,
 				this.orderAmount,
 				rate,
 				this.sender.address,
@@ -520,16 +509,18 @@ describe("Gateway create order", function () {
 			);
 
 		const receipt = await tx.wait();
-		const orderCreatedEvent = receipt.events.find(e => e.event === 'OrderCreated');
-		const orderId = orderCreatedEvent.args.orderId;
+		const orderId = receipt.logs
+			.map(log => { try { return this.gateway.interface.parseLog(log); } catch { return null; } })
+			.find(e => e?.name === "OrderCreated")
+			?.args.orderId;
 
 		await expect(tx)
 			.to.emit(this.gateway, Events.Gateway.OrderCreated)
 			.withArgs(
 				this.alice.address,
-				this.mockUSDT.address,
-				BigNumber.from(this.orderAmount),
-				ZERO_AMOUNT, // Protocol fee should be 0 for local transfers
+				this.mockUSDT.target,
+				this.orderAmount,
+				ZERO_AMOUNT,
 				orderId,
 				rate,
 				messageHash.toString()
@@ -549,14 +540,13 @@ describe("Gateway create order", function () {
 		] = await this.gateway.getOrderInfo(orderId);
 
 		expect(this.seller).to.eq(this.sender.address);
-		expect(this.token).to.eq(this.mockUSDT.address);
+		expect(this.token).to.eq(this.mockUSDT.target);
 		expect(this.senderRecipient).to.eq(this.sender.address);
-		expect(this.senderFee).to.eq(this.senderFee);
-		expect(this.protocolFee).to.eq(ZERO_AMOUNT); // Should be 0 for local transfers
+		expect(this.protocolFee).to.eq(ZERO_AMOUNT);
 		expect(this.isFulfilled).to.eq(false);
 		expect(this.isRefunded).to.eq(false);
 		expect(this.refundAddress).to.eq(this.alice.address);
 		expect(this.currentBPS).to.eq(MAX_BPS);
-		expect(this.amount).to.eq(BigNumber.from(this.orderAmount));
+		expect(this.amount).to.eq(this.orderAmount);
 	});
 });

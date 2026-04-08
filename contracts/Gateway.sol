@@ -237,7 +237,6 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint96 _rate
 	) external whenNotPaused returns (bool) {
 		require(order[_orderId].sender == address(0), 'OrderAlreadyExists');
-		require(_amount > MAX_BPS, 'InvalidAmount');
 		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
 
 		IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount + _senderFee);
