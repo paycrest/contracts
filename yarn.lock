@@ -845,30 +845,30 @@
     "@nomicfoundation/edr-linux-x64-musl" "0.12.0-next.27"
     "@nomicfoundation/edr-win32-x64-msvc" "0.12.0-next.27"
 
-"@nomicfoundation/hardhat-errors@^3.0.0", "@nomicfoundation/hardhat-errors@^3.0.2", "@nomicfoundation/hardhat-errors@^3.0.3", "@nomicfoundation/hardhat-errors@^3.0.5", "@nomicfoundation/hardhat-errors@^3.0.7":
-  version "3.0.7"
-  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-errors/-/hardhat-errors-3.0.7.tgz"
-  integrity sha512-l4RrzTfJ/WO0B9Te6i9161+pRbCSFXILanmHmgRfS4Bb4pDOjs+0eQf2I2cQrnqcJ6O/bxLvChPTQuad97dmQw==
+"@nomicfoundation/hardhat-errors@^3.0.0", "@nomicfoundation/hardhat-errors@^3.0.10", "@nomicfoundation/hardhat-errors@^3.0.3", "@nomicfoundation/hardhat-errors@^3.0.5", "@nomicfoundation/hardhat-errors@^3.0.7":
+  version "3.0.10"
+  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-errors/-/hardhat-errors-3.0.10.tgz"
+  integrity sha512-jfQ75/t21674cIQPbQmzRSY8YdusvQhKMsT+IGEoXlJuAzw+ngWsD7y7nHT8UKQ+liHWgMA+Am2843KwP0KtiA==
   dependencies:
-    "@nomicfoundation/hardhat-utils" "^4.0.0"
+    "@nomicfoundation/hardhat-utils" "^4.0.2"
 
-"@nomicfoundation/hardhat-ethers-chai-matchers@^3.0.0":
-  version "3.0.3"
-  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-ethers-chai-matchers/-/hardhat-ethers-chai-matchers-3.0.3.tgz"
-  integrity sha512-X02s5neeaBsHiXYcPsXeqbHJ2bRytsBmQRkh0JyO6AYbkIY4pM9g+M4wnCUMWPnh1wQnLyT3Iqx+g8nJ8Ont6A==
+"@nomicfoundation/hardhat-ethers-chai-matchers@^3.0.0", "@nomicfoundation/hardhat-ethers-chai-matchers@^3.0.4":
+  version "3.0.4"
+  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-ethers-chai-matchers/-/hardhat-ethers-chai-matchers-3.0.4.tgz"
+  integrity sha512-ikChHtkA50U4uyKZ1bJav1Y3wNY4UcDtXw5b3zyYJLWC82UZ9LTkb8tf7wGbU0WQQognUFwkUk7XlWQcylHRZw==
   dependencies:
-    "@nomicfoundation/hardhat-utils" "^4.0.0"
+    "@nomicfoundation/hardhat-utils" "^4.0.2"
     "@types/chai-as-promised" "^8.0.1"
     chai-as-promised "^8.0.0"
     deep-eql "^5.0.1"
 
-"@nomicfoundation/hardhat-ethers@^4.0.0", "@nomicfoundation/hardhat-ethers@^4.0.4":
-  version "4.0.4"
-  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-ethers/-/hardhat-ethers-4.0.4.tgz"
-  integrity sha512-UTw3iM7AMZ1kZlzgJbtAEfWWDYjcnT0EZkRUZd1wIVtMOXIE4nc6Ya4veodAt/KpBhG+6W06g50W+Z/0wTm62g==
+"@nomicfoundation/hardhat-ethers@^4.0.0", "@nomicfoundation/hardhat-ethers@^4.0.4", "@nomicfoundation/hardhat-ethers@^4.0.7":
+  version "4.0.7"
+  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-ethers/-/hardhat-ethers-4.0.7.tgz"
+  integrity sha512-7wT4/ikhnL44fzJpe4Bh+bnsuWN55P02rbULCvhmcOOCbh/vouIrfVd008Te4+gwx+rYmJtL92vthj/I9dUd0g==
   dependencies:
-    "@nomicfoundation/hardhat-errors" "^3.0.2"
-    "@nomicfoundation/hardhat-utils" "^3.0.5"
+    "@nomicfoundation/hardhat-errors" "^3.0.10"
+    "@nomicfoundation/hardhat-utils" "^4.0.2"
     debug "^4.3.2"
     ethereum-cryptography "^2.2.1"
     ethers "^6.14.0"
@@ -965,6 +965,20 @@
   version "4.0.0"
   resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-utils/-/hardhat-utils-4.0.0.tgz"
   integrity sha512-Deu4od7flcM89K+SEAxmOyn7FFWGiEILrGjoxYl/Gus0tctgpLNaK3M4LIjrJ25ci8LBjGVe3i28XZA4+QGQHQ==
+  dependencies:
+    "@streamparser/json-node" "^0.0.22"
+    debug "^4.3.2"
+    env-paths "^2.2.0"
+    ethereum-cryptography "^2.2.1"
+    fast-equals "^5.4.0"
+    json-stream-stringify "^3.1.6"
+    rfdc "^1.3.1"
+    undici "^6.16.1"
+
+"@nomicfoundation/hardhat-utils@^4.0.2":
+  version "4.0.2"
+  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-utils/-/hardhat-utils-4.0.2.tgz"
+  integrity sha512-6lK0+9ygB7wGDlu11DAmTuZxhnoGbyGZC2aRaKKehW0vDNTS9iT7GUimgVvlO3B23E/HwwRKOOLmSVPC4qmmQw==
   dependencies:
     "@streamparser/json-node" "^0.0.22"
     debug "^4.3.2"
@@ -4921,7 +4935,7 @@ har-validator@~5.1.3:
     ajv "^6.12.3"
     har-schema "^2.0.0"
 
-hardhat@^3.0.0, hardhat@^3.0.7, hardhat@^3.1.11, hardhat@^3.1.5, hardhat@^3.1.6, hardhat@^3.1.9:
+hardhat@^3.0.0, hardhat@^3.1.11, hardhat@^3.1.5, hardhat@^3.1.6, hardhat@^3.1.9:
   version "3.1.11"
   resolved "https://registry.npmjs.org/hardhat/-/hardhat-3.1.11.tgz"
   integrity sha512-8cDr57VCqC2nFF5RsOR643B9l8aeWIfn3/X5v+PC+k5vg1XMgJFYZzBJl1N4c/PbCIJQov9Oo/eMwb0zki6OhQ==
