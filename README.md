@@ -1,7 +1,7 @@
 <a href="https://solidity.readthedocs.io/en/v0.8.18/"><img alt="solidity v0.8.18" src="https://badgen.net/badge/solidity/v0.8.18/blue"></a>
 
 # Paycrest Contracts
-    
+
 ## Description
 
 Paycrest contracts are multi-chain EVM-based smart contracts that facilitate the on-chain lifecycle of a payment order. They empower a sender to create a payment order, enable a liquidity provider to receive cryptocurrency in escrow, and much more.
@@ -47,17 +47,15 @@ npx hardhat run scripts/setSupportedTokens.ts --network <network>
 
 npx hardhat run scripts/updateProtocolAddresses.ts --network <network>
 
-npx hardhat run scripts/updateProtocolFee.ts --network <network>
+npx hardhat run scripts/setTokenFeeSettings.ts --network <network>
 
 # for Tron network,
 npx hardhat run scripts/tron/setSupportedTokens.ts
 
 npx hardhat run scripts/tron/updateProtocolAddresses.ts
 
-npx hardhat run scripts/tron/updateProtocolFee.ts
+npx hardhat run scripts/tron/setTokenFeeSettings.ts
 ```
-
-
 ## Testnet Contracts
 
 <table>
@@ -304,7 +302,7 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 
 ## Testing
 
-Contract tests are defined under the tests directory. To run all the tests, run:
+Contract tests are defined under the `test/` directory. To run all tests, run:
 
 ```bash
 npx hardhat test

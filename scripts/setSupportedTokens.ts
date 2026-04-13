@@ -18,7 +18,7 @@ async function main() {
   const provider = new ethers.providers.JsonRpcProvider(networkConfig.rpcUrl);
 
   const maxPriorityFeePerGas = network.config.chainId === 42220 
-    ? ethers.utils.parseUnits("90", "gwei") // Fallback to 30 Gwei
+    ? ethers.utils.parseUnits("90", "gwei") // Fallback to 90 Gwei
     : await provider.getGasPrice()
 
   const maxFeePerGas = network.config.chainId === 42220 

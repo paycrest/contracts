@@ -16,7 +16,7 @@ async function deployGatewayProxy(): Promise<any> {
   const contract = await upgrades.deployProxy(factory);
 
   const tx = await contract.deployTransaction.wait();
-  
+
   console.log("✅ Deployed Gateway: ", tx.transactionHash);
 
   if (network.config.chainId !== undefined) {
@@ -38,19 +38,19 @@ async function deployGateway(): Promise<any> {
   const contract = await factory.deploy();
 
   const tx = await contract.deployTransaction.wait();
-  
+
   console.log("✅ Deployed Gateway: ", tx.transactionHash);
 
   // const implementationAddress = await contract.implementation();
   await hre.run("verify:verify", {
-		address: contract.address,
-	});
+    address: contract.address,
+  });
 
   if (network.config.chainId !== undefined) {
     await updateConfigFile(network.config.chainId, contract.address);
   }
 
-  console.log(`Proxy Contract Address: ${contract.address}`);
+  console.log(`Contract Address: ${contract.address}`);
 
   return tx;
 }

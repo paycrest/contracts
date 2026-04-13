@@ -24,7 +24,7 @@ let {
 	CELO_API,
 } = process.env;
 
-const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
+const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001";
 
 const config: HardhatUserConfig = {
 	namedAccounts: {
@@ -236,33 +236,31 @@ const config: HardhatUserConfig = {
 };
 
 task("flat", "Flattens and prints contracts and their dependencies (Resolves licenses)")
-  .addOptionalVariadicPositionalParam("files", "The files to flatten", undefined, types.inputFile)
-  .setAction(async ({ files }, hre) => {
-    let flattened = await hre.run("flatten:get-flattened-sources", { files });
-    
-    // Remove every line started with "// SPDX-License-Identifier:"
-    flattened = flattened.replace(/SPDX-License-Identifier:/gm, "License-Identifier:");
-    flattened = `// SPDX-License-Identifier: MIXED\n\n${flattened}`;
+	.addOptionalVariadicPositionalParam("files", "The files to flatten", undefined, types.inputFile)
+	.setAction(async ({ files }, hre) => {
+		let flattened = await hre.run("flatten:get-flattened-sources", { files });
 
-    // Remove every line started with "pragma experimental ABIEncoderV2;" except the first one
-    flattened = flattened.replace(/pragma experimental ABIEncoderV2;\n/gm, ((i) => (m: any) => (!i++ ? m : ""))(0));
-    console.log(flattened);
-  });
+		// Remove every line started with "// SPDX-License-Identifier:"
+		flattened = flattened.replace(/SPDX-License-Identifier:/gm, "License-Identifier:");
+		flattened = `// SPDX-License-Identifier: MIXED\n\n${flattened}`;
 
-task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
-  const provider = hre.ethers.provider;
+		// Remove every line started with "pragma experimental ABIEncoderV2;" except the first one
+		flattened = flattened.replace(/pragma experimental ABIEncoderV2;\n/gm, ((i) => (m: any) => (!i++ ? m : ""))(0));
+		console.log(flattened);
+	});
 
-  for (const account of accounts) {
-      console.log(
-          "%s (%i ETH)",
-          account.address,
-          // hre.ethers.utils.formatEther(
-              // getBalance returns wei amount, format to ETH amount
-              await provider.getBalance(account.address)
-          // )
-      );
-  }
+task("accounts", "Prints the list of accounts", async (_taskArgs, hre) => {
+	const accounts = await hre.ethers.getSigners();
+	const provider = hre.ethers.provider;
+
+	for (const account of accounts) {
+		console.log(
+			"%s (%i ETH)",
+			account.address,
+			// getBalance returns wei amount.
+			await provider.getBalance(account.address)
+		);
+	}
 });
 
 export default config;
