@@ -13,10 +13,6 @@ import {IGateway, IERC20} from './interfaces/IGateway.sol';
  */
 contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	using SafeERC20 for IERC20;
-	struct fee {
-		uint256 protocolFee;
-		uint256 liquidityProviderAmount;
-	}
 
 	mapping(bytes32 => Order) private order;
 	mapping(address => uint256) private _nonce;
@@ -94,7 +90,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		// update transaction
 		uint256 _protocolFee;
 		if (_rate == 100) {
-			// local transfer (rate = 1)
+			// local transfer (_rate == 100)
 			_protocolFee = 0;
 			require(_senderFee > 0, 'SenderFeeIsZero');
 		} else {
@@ -198,7 +194,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		if (order[_orderId].protocolFee != 0) {
 			// FX transfer: use token-specific providerToAggregatorFx
 			TokenFeeSettings memory settings = _tokenFeeSettings[order[_orderId].token];
-			uint256 aggregatorFee = (liquidityProviderAmount * settings.providerToAggregatorFx) /	MAX_BPS;
+			uint256 aggregatorFee = (liquidityProviderAmount * settings.providerToAggregatorFx) / MAX_BPS;
 			liquidityProviderAmount -= aggregatorFee;
 
 			if (_rebatePercent != 0) {
@@ -252,9 +248,9 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			// FX transfer: use token-specific providerToAggregatorFx
 			TokenFeeSettings memory settings = _tokenFeeSettings[_token];
 			require(settings.providerToAggregatorFx > 0, 'TokenFeeSettingsNotConfigured');
-			
+
 			aggregatorFee = (_amount * settings.providerToAggregatorFx) / MAX_BPS;
-			
+
 			if (aggregatorFee > 0) {
 				amountToSettle -= aggregatorFee;
 				IERC20(_token).safeTransfer(treasuryAddress, aggregatorFee);

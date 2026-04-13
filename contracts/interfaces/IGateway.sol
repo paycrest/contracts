@@ -12,12 +12,12 @@ interface IGateway {
                                 EVENTS
     ################################################################## */
 	/**
-	 * @dev Emitted when a deposit is made.
+	 * @dev Emitted when an order is created.
 	 * @param sender The address of the sender.
-	 * @param token The address of the deposited token.
-	 * @param amount The amount of the deposit.
+	 * @param token The address of the order token.
+	 * @param amount The order amount.
 	 * @param orderId The ID of the order.
-	 * @param rate The rate at which the deposit is made.
+	 * @param rate The rate used for the order.
 	 * @param messageHash The hash of the message.
 	 */
 	event OrderCreated(
@@ -47,17 +47,17 @@ interface IGateway {
 	);
 
 	/**
-     * @dev Emitted when an onramp order is successfully processed
-     */
-    event SettleIn(
-        bytes32 indexed orderId,
+	 * @dev Emitted when an onramp order is successfully processed.
+	 */
+	event SettleIn(
+		bytes32 indexed orderId,
 		address indexed liquidityProvider,
-        address indexed recipient,
-        uint256 amount,
-        address token,
-        uint256 aggregatorFee,
+		address indexed recipient,
+		uint256 amount,
+		address token,
+		uint256 aggregatorFee,
 		uint96 rate
-    );
+	);
 
 	/**
 	 * @dev Emitted when an aggregator refunds a transaction.
@@ -175,27 +175,27 @@ interface IGateway {
 	) external returns (bool);
 
 	/**
-     * @notice Process settleIn order
-     * @dev Intended for order in-flows where the caller provides tokens via transferFrom; not restricted to onlyAggregator
-     * @dev It process an order and transfers tokens to the recipient after deducting sender fees
-     * @param _orderId Unique identifier for the order being processed
-     * @param _token Address of the token to be sent to the user
-     * @param _amount Total amount transferred in (includes sender fee and, for FX, protocol fee); recipient receives _amount minus applicable fees
-     * @param _senderFeeRecipient Address that will receive the sender fee
-     * @param _senderFee Amount of fee to be paid to the sender fee recipient
-     * @param _recipient Address of the recipient who will receive the tokens
-     * @param _rate Rate at which the tokens are being sent
-     * @return success Boolean indicating if the operation was successful
-     */
-    function settleIn(
-        bytes32 _orderId,
-        address _token,
-        uint256 _amount,
-        address _senderFeeRecipient,
-        uint96 _senderFee,
-        address _recipient,
-        uint96 _rate
-    ) external returns (bool);
+	 * @notice Processes a settleIn order.
+	 * @dev Intended for order inflows where the caller provides tokens via transferFrom.
+	 * @dev This call processes an order and transfers tokens to the recipient after deducting fees.
+	 * @param _orderId Unique identifier for the order being processed.
+	 * @param _token Address of the token to be sent to the recipient.
+	 * @param _amount Total amount transferred in.
+	 * @param _senderFeeRecipient Address that will receive the sender fee.
+	 * @param _senderFee Amount of fee to be paid to the sender fee recipient.
+	 * @param _recipient Address of the recipient who will receive the tokens.
+	 * @param _rate Rate at which the tokens are being sent.
+	 * @return success Whether the operation was successful.
+	 */
+	function settleIn(
+		bytes32 _orderId,
+		address _token,
+		uint256 _amount,
+		address _senderFeeRecipient,
+		uint96 _senderFee,
+		address _recipient,
+		uint96 _rate
+	) external returns (bool);
 
 	/**
 	 * @notice Refunds to the specified refundable address.
