@@ -10,20 +10,37 @@ Paycrest contracts are multi-chain EVM-based smart contracts that facilitate the
 
 ## Deployment
 
-Deployment is done using Hardhat scripts
+Deployment is done using Hardhat Ignition
 
-#### Deploy and verify upgradeable proxy contract
+#### Deploy upgradeable proxy contract
 
 ```bash
-npx hardhat run scripts/deploy.ts --network <network>
-
-npx hardhat verify --network <network> <contract_address>
-
-# for Tron network,
-tronbox migrate -f 1 --to 1 --network <network>
+npx hardhat ignition deploy ./ignition/modules/Gateway.ts --network <network>
 ```
 
-#### Upgrade proxy contract
+#### Redeploy (reset previous deployment state)
+
+```bash
+npx hardhat ignition deploy ./ignition/modules/Gateway.ts --network <network> --reset
+```
+
+#### Verify contract
+
+```bash
+npx hardhat verify --network <network> <contract_address>
+```
+
+#### Tron network
+
+```bash
+# deploy
+tronbox migrate -f 1 --to 1 --network <network>
+
+# upgrade
+tronbox migrate -f 2 --to 2 --network <network>
+```
+
+#### Upgrade proxy contract (legacy scripts)
 
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
@@ -33,9 +50,6 @@ npx hardhat run scripts/upgrade.ts --network arbitrumOne && npx hardhat run scri
 
 # upgrade across all EVM testnet chains
 npx hardhat run scripts/upgrade.ts --network arbitrumSepolia && npx hardhat run scripts/upgrade.ts --network amoy && npx hardhat run scripts/upgrade.ts --network baseSepolia && npx hardhat run scripts/upgrade.ts --network sepolia
-
-# for Tron network,
-tronbox migrate -f 2 --to 2 --network <network>
 ```
 
 #### Owner configurations

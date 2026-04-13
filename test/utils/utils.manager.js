@@ -1,10 +1,10 @@
-const { ethers } = require("hardhat");
-const { BigNumber } = require("@ethersproject/bignumber");
+import { ZeroAddress } from "ethers";
+import { ethers } from "../setup.js";
 
-const ZERO_AMOUNT = BigNumber.from("0");
-const ZERO_ADDRESS = ethers.constants.AddressZero;
-const MAX_BPS = BigNumber.from("100000");
-const FEE_BPS = BigNumber.from("100");
+const ZERO_AMOUNT = 0n;
+const ZERO_ADDRESS = ZeroAddress;
+const MAX_BPS = 100000n;
+const FEE_BPS = 100n;
 
 const Errors = {
 	Ownable: {
@@ -29,7 +29,8 @@ const Errors = {
 const Events = {
 	Gateway: {
 		OrderCreated: "OrderCreated",
-		OrderSettled: "OrderSettled",
+		SettleOut: "SettleOut",
+		SettleIn: "SettleIn",
 		OrderRefunded: "OrderRefunded",
 		SettingManagerBool: "SettingManagerBool",
 		ProtocolFeeUpdated: "ProtocolFeeUpdated",
@@ -51,16 +52,16 @@ async function deployContract(name, args = [], value = 0) {
 }
 
 async function getSupportedInstitutions() {
-	const currency = ethers.utils.formatBytes32String("NGN");
+	const currency = ethers.encodeBytes32String("NGN");
 
 	const accessBank = {
-		code: ethers.utils.formatBytes32String("ABNGNGLA"),
-		name: ethers.utils.formatBytes32String("ACCESS BANK"),
+		code: ethers.encodeBytes32String("ABNGNGLA"),
+		name: ethers.encodeBytes32String("ACCESS BANK"),
 	};
 
 	const diamondBank = {
-		code: ethers.utils.formatBytes32String("DBLNNGLA"),
-		name: ethers.utils.formatBytes32String("DIAMOND BANK"),
+		code: ethers.encodeBytes32String("DBLNNGLA"),
+		name: ethers.encodeBytes32String("DIAMOND BANK"),
 	};
 
 	return {
@@ -72,7 +73,7 @@ async function getSupportedInstitutions() {
 
 async function mockMintDeposit(gateway, account, usdc, amount) {
 	await usdc.connect(account).mint(amount);
-	await usdc.connect(account).approve(gateway.address, amount);
+	await usdc.connect(account).approve(gateway.target, amount);
 }
 
 // Helper function to configure token fee settings
@@ -93,7 +94,7 @@ async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settin
 	);
 }
 
-module.exports = {
+export {
 	ZERO_AMOUNT,
 	ZERO_ADDRESS,
 	MAX_BPS,
