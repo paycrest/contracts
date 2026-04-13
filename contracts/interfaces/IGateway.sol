@@ -38,13 +38,26 @@ interface IGateway {
 	 * @param settlePercent The percentage at which the transaction is settled.
 	 * @param rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 */
-	event OrderSettled(
+	event SettleOut(
 		bytes32 splitOrderId,
 		bytes32 indexed orderId,
 		address indexed liquidityProvider,
 		uint64 settlePercent,
 		uint64 rebatePercent
 	);
+
+	/**
+     * @dev Emitted when an onramp order is successfully processed
+     */
+    event SettleIn(
+        bytes32 indexed orderId,
+		address indexed liquidityProvider,
+        address indexed recipient,
+        uint256 amount,
+        address token,
+        uint256 aggregatorFee,
+		uint96 rate
+    );
 
 	/**
 	 * @dev Emitted when an aggregator refunds a transaction.
@@ -58,7 +71,7 @@ interface IGateway {
 	 * @param sender The address of the sender.
 	 * @param amount The amount of the fee transferred.
 	 */
-	event SenderFeeTransferred(address indexed sender, uint256 indexed amount);
+	event SenderFeeTransferred(bytes32 indexed orderId, address indexed sender, uint256 indexed amount);
 
 	/**
 	 * @dev Emitted when a local transfer fee is split.
@@ -153,13 +166,36 @@ interface IGateway {
 	 * @param _rebatePercent The percentage of the aggregator fee that is given back to the provider.
 	 * @return bool the settlement is successful.
 	 */
-	function settle(
+	function settleOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
 		uint64 _settlePercent,
 		uint64 _rebatePercent
 	) external returns (bool);
+
+	/**
+     * @notice Process settleIn order
+     * @dev Intended for order in-flows where the caller provides tokens via transferFrom; not restricted to onlyAggregator
+     * @dev It process an order and transfers tokens to the recipient after deducting sender fees
+     * @param _orderId Unique identifier for the order being processed
+     * @param _token Address of the token to be sent to the user
+     * @param _amount Total amount transferred in (includes sender fee and, for FX, protocol fee); recipient receives _amount minus applicable fees
+     * @param _senderFeeRecipient Address that will receive the sender fee
+     * @param _senderFee Amount of fee to be paid to the sender fee recipient
+     * @param _recipient Address of the recipient who will receive the tokens
+     * @param _rate Rate at which the tokens are being sent
+     * @return success Boolean indicating if the operation was successful
+     */
+    function settleIn(
+        bytes32 _orderId,
+        address _token,
+        uint256 _amount,
+        address _senderFeeRecipient,
+        uint96 _senderFee,
+        address _recipient,
+        uint96 _rate
+    ) external returns (bool);
 
 	/**
 	 * @notice Refunds to the specified refundable address.
@@ -184,4 +220,10 @@ interface IGateway {
 	 * @return Order The order details.
 	 */
 	function getOrderInfo(bytes32 _orderId) external view returns (Order memory);
+
+	/**
+	 * @notice Gets the address of the aggregator.
+	 * @return address The address of the aggregator.
+	 */
+	function getAggregator() external view returns (address);
 }
