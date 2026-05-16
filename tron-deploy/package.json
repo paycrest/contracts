@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "TronBox runs as CommonJS; this folder is separate from the root package.json \"type\": \"module\".",
+  "scripts": {
+    "migrate": "tronbox migrate",
+    "compile": "tronbox compile"
+  }
+}

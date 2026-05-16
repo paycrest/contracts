@@ -873,14 +873,14 @@
     ethereum-cryptography "^2.2.1"
     ethers "^6.14.0"
 
-"@nomicfoundation/hardhat-ignition-ethers@^3.0.0":
+"@nomicfoundation/hardhat-ignition-ethers@^3.0.0", "@nomicfoundation/hardhat-ignition-ethers@^3.0.9":
   version "3.0.9"
   resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-ignition-ethers/-/hardhat-ignition-ethers-3.0.9.tgz"
   integrity sha512-ecRY+rnTW7bpM/sofEiJ5XMs/r6U5TgtfV2daICCAlCQPWE7+pZLWHoLH4/V1KqG5mSPZKs6lyY0bpX9Yv5vvQ==
   dependencies:
     "@nomicfoundation/hardhat-errors" "^3.0.7"
 
-"@nomicfoundation/hardhat-ignition@^3.0.0", "@nomicfoundation/hardhat-ignition@^3.0.7":
+"@nomicfoundation/hardhat-ignition@^3.0.0", "@nomicfoundation/hardhat-ignition@^3.0.7", "@nomicfoundation/hardhat-ignition@^3.0.9":
   version "3.0.9"
   resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-ignition/-/hardhat-ignition-3.0.9.tgz"
   integrity sha512-dESFX2Pc42Km4SeXSEXBu+S/8/4bDP7KqM36mZomLCTWktIxfeUYi2LxR1ogdQltl5/plwBCeZCxvrDzluXBGw==
@@ -894,7 +894,7 @@
     json5 "^2.2.3"
     prompts "^2.4.2"
 
-"@nomicfoundation/hardhat-keystore@^3.0.0":
+"@nomicfoundation/hardhat-keystore@^3.0.0", "@nomicfoundation/hardhat-keystore@^3.0.5":
   version "3.0.5"
   resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-keystore/-/hardhat-keystore-3.0.5.tgz"
   integrity sha512-jxihFx7r9ekcGmxRVbeDxFJcE3P9cmOHObKxX4ORyBR4b/AKiaqKiktirvsF5MXKJSuQbbp/+wmaqfQDB3LyeA==
@@ -908,7 +908,7 @@
     debug "^4.3.2"
     zod "^3.23.8"
 
-"@nomicfoundation/hardhat-mocha@^3.0.0":
+"@nomicfoundation/hardhat-mocha@^3.0.0", "@nomicfoundation/hardhat-mocha@^3.0.12":
   version "3.0.12"
   resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-mocha/-/hardhat-mocha-3.0.12.tgz"
   integrity sha512-XN6GX2Yx5Tt3nIkB+sWqgCGQIfXE+rj/vLFioeG5mHwsmuIMDTtR3NuXhidMB51tpczdWa3KWm41RXk4tILh9A==

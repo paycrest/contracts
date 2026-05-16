@@ -1,12 +1,11 @@
 import { BigNumber } from "@ethersproject/bignumber";
 
-import { NETWORKS } from "../config";
-import { getTronContracts } from "../utils";
+import { getTronContracts, getTronNetworkConfig } from "../utils";
 
 async function main() {
   // Get contract instances
   const { gatewayInstance } = await getTronContracts();
-  const networkConfig = NETWORKS[12002];
+  const networkConfig = getTronNetworkConfig();
 
   // Configure token fee settings for each supported token sequentially
   for (const [tokenName, tokenConfig] of Object.entries(networkConfig.supportedTokens)) {

@@ -15,4 +15,9 @@ cache
 # Tron Package
 src/js/metacoin-config.js
 
+# TronBox subfolder: symlinks + build (recreated by postinstall / tronbox)
+tron-deploy/contracts
+tron-deploy/node_modules
+tron-deploy/build
+
 

@@ -6,20 +6,23 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 /**
  * @title ProviderBatchCallAndSponsor
  *
- * When an EOA upgrades via EIP‑7702, it delegates to this implementation.
- * Off‑chain, the account signs a message authorizing a batch of calls. The message is the hash of:
- *    keccak256(abi.encodePacked(nonce, calls))
- * The signature must be generated with the EOA’s private key so that, once upgraded, the recovered signer equals the account’s own address (i.e. address(this)).
- *
- * This contract provides just one way to execute a batch:
- * 1. With a signature: Any sponsor can submit the batch if it carries a valid signature.
- *
- * Replay protection is achieved by using a nonce that is included in the signed message.
+ * @notice When an EOA authorizes this contract via EIP-7702, it runs in the EOA’s context (`address(this)` is the EOA).
+ * @notice Batches are authorized with EIP-712: domain binds `chainId` and `verifyingContract`; the struct binds
+ *         `nonce`, `deadline`, and `callsHash` where `callsHash = keccak256(abi.encode(calls))`.
+ * @notice Signers must use EIP-712 typed data (not `personal_sign` over a raw digest). The contract recovers
+ *         against the final `\x19\x01` digest without an additional EIP-191 wrapper.
  */
 contract ProviderBatchCallAndSponsor {
-    using ECDSA for bytes32;
-    
-    /// @notice A nonce used for replay protection.
+    /// @dev keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
+    bytes32 private constant _DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
+    /// @dev keccak256("ProviderBatchCallAndSponsor")
+    bytes32 private constant _NAME_HASH = keccak256("ProviderBatchCallAndSponsor");
+    /// @dev keccak256("Batch(uint256 nonce,uint256 deadline,bytes32 callsHash)")
+    bytes32 private constant _BATCH_TYPEHASH =
+        keccak256("Batch(uint256 nonce,uint256 deadline,bytes32 callsHash)");
+
+    /// @notice A nonce used for replay protection (included in the EIP-712 struct).
     uint256 public nonce;
 
     /// @notice Represents a single call within a batch.
@@ -34,26 +37,49 @@ contract ProviderBatchCallAndSponsor {
     /// @notice Emitted when a full batch is executed.
     event BatchExecuted(uint256 indexed nonce, Call[] calls);
 
-    /**
-     * @notice Executes a batch of calls using an off–chain signature.
-     * @param calls An array of Call structs containing destination, ETH value, and calldata.
-     * @param signature The ECDSA signature over the current nonce and the call data.
-     *
-     * The signature must be produced off–chain by signing:
-     * The signing key should be the account’s key (which becomes the smart account’s own identity after upgrade).
-     */
-    function execute(Call[] calldata calls, bytes calldata signature) external payable {
-        // Compute the digest that the account was expected to sign.
-        bytes memory encodedCalls;
-        for (uint256 i = 0; i < calls.length; i++) {
-            encodedCalls = abi.encodePacked(encodedCalls, calls[i].to, calls[i].value, calls[i].data);
-        }
-        bytes32 digest = keccak256(abi.encodePacked(nonce, encodedCalls));
-        
-        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(digest);
+    function _domainSeparator() internal view returns (bytes32) {
+        return keccak256(abi.encode(_DOMAIN_TYPEHASH, _NAME_HASH, block.chainid, address(this)));
+    }
 
-        // Recover the signer from the provided signature.
-        address recovered = ECDSA.recover(ethSignedMessageHash, signature);
+    /**
+     * @notice EIP-712 domain separator for this account and chain.
+     */
+    function domainSeparator() public view returns (bytes32) {
+        return _domainSeparator();
+    }
+
+    /**
+     * @notice Hash of the `Batch` struct for the current chain nonce (before `execute` increments it).
+     * @param calls Same calldata as passed to `execute`; used to compute `callsHash`.
+     */
+    function hashTypedBatch(Call[] calldata calls, uint256 deadline) public view returns (bytes32 structHash) {
+        uint256 currentNonce = nonce;
+        bytes32 callsHash = keccak256(abi.encode(calls));
+        structHash = keccak256(abi.encode(_BATCH_TYPEHASH, currentNonce, deadline, callsHash));
+    }
+
+    /**
+     * @notice Full EIP-712 digest the EOA must sign (`eth_signTypedData` / `_TypedDataEncoder.hash`).
+     */
+    function digestForCurrentNonce(Call[] calldata calls, uint256 deadline) public view returns (bytes32) {
+        return ECDSA.toTypedDataHash(_domainSeparator(), hashTypedBatch(calls, deadline));
+    }
+
+    /**
+     * @notice Executes a batch of calls using an off-chain EIP-712 signature.
+     * @param calls Calls to execute (must match what was hashed in `callsHash` when signing).
+     * @param deadline Unix timestamp after which the signature is rejected.
+     * @param signature ECDSA signature over `digestForCurrentNonce(calls, deadline)`.
+     */
+    function execute(Call[] calldata calls, uint256 deadline, bytes calldata signature) external payable {
+        require(block.timestamp <= deadline, "Expired");
+
+        uint256 currentNonce = nonce;
+        bytes32 callsHash = keccak256(abi.encode(calls));
+        bytes32 structHash = keccak256(abi.encode(_BATCH_TYPEHASH, currentNonce, deadline, callsHash));
+        bytes32 digest = ECDSA.toTypedDataHash(_domainSeparator(), structHash);
+
+        address recovered = ECDSA.recover(digest, signature);
         require(recovered == address(this), "Invalid signature");
 
         _executeBatch(calls);
@@ -61,11 +87,10 @@ contract ProviderBatchCallAndSponsor {
 
     /**
      * @dev Internal function that handles batch execution and nonce incrementation.
-     * @param calls An array of Call structs.
      */
     function _executeBatch(Call[] calldata calls) internal {
         uint256 currentNonce = nonce;
-        nonce++; // Increment nonce to protect against replay attacks
+        nonce++;
 
         for (uint256 i = 0; i < calls.length; i++) {
             _executeCall(calls[i]);
@@ -76,7 +101,6 @@ contract ProviderBatchCallAndSponsor {
 
     /**
      * @dev Internal function to execute a single call.
-     * @param callItem The Call struct containing destination, value, and calldata.
      */
     function _executeCall(Call calldata callItem) internal {
         (bool success,) = callItem.to.call{value: callItem.value}(callItem.data);
@@ -84,7 +108,6 @@ contract ProviderBatchCallAndSponsor {
         emit CallExecuted(msg.sender, callItem.to, callItem.value, callItem.data);
     }
 
-    // Allow the contract to receive ETH (e.g. from DEX swaps or other transfers).
     fallback() external payable {}
     receive() external payable {}
 }

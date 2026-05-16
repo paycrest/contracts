@@ -1,10 +1,11 @@
 {
   "_format": "hh3-sol-build-info-1",
-  "id": "solc-0_8_20-b0db7bfee97a65cd73d88f8fb2491a0ad1723288",
+  "id": "solc-0_8_20-23bb8b57cb79320c3b226231b1fa18253bddd52c",
   "solcVersion": "0.8.20",
   "solcLongVersion": "0.8.20+commit.a1b79de6",
   "userSourceNameMap": {
-    "contracts/Gateway.sol": "project/contracts/Gateway.sol"
+    "contracts/Gateway.sol": "project/contracts/Gateway.sol",
+    "contracts/interfaces/IGateway.sol": "project/contracts/interfaces/IGateway.sol"
   },
   "input": {
     "language": "Solidity",

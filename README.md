@@ -33,6 +33,8 @@ npx hardhat verify --network <network> <contract_address>
 #### Tron network
 
 ```bash
+cd tron-deploy
+
 # deploy
 tronbox migrate -f 1 --to 1 --network <network>
 

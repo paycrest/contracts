@@ -13,14 +13,20 @@ export declare namespace ProviderBatchCallAndSponsor {
     }
 
   export interface ProviderBatchCallAndSponsorInterface extends Interface {
-    getFunction(nameOrSignature: "execute" | "nonce"): FunctionFragment;
+    getFunction(nameOrSignature: "digestForCurrentNonce" | "domainSeparator" | "execute" | "hashTypedBatch" | "nonce"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "BatchExecuted" | "CallExecuted"): EventFragment;
 
-    encodeFunctionData(functionFragment: 'execute', values: [ProviderBatchCallAndSponsor.CallStruct[], BytesLike]): string;
+    encodeFunctionData(functionFragment: 'digestForCurrentNonce', values: [ProviderBatchCallAndSponsor.CallStruct[], BigNumberish]): string;
+encodeFunctionData(functionFragment: 'domainSeparator', values?: undefined): string;
+encodeFunctionData(functionFragment: 'execute', values: [ProviderBatchCallAndSponsor.CallStruct[], BigNumberish, BytesLike]): string;
+encodeFunctionData(functionFragment: 'hashTypedBatch', values: [ProviderBatchCallAndSponsor.CallStruct[], BigNumberish]): string;
 encodeFunctionData(functionFragment: 'nonce', values?: undefined): string;
 
-    decodeFunctionResult(functionFragment: 'execute', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'digestForCurrentNonce', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'domainSeparator', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'execute', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'hashTypedBatch', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'nonce', data: BytesLike): Result;
   }
 
@@ -83,10 +89,34 @@ decodeFunctionResult(functionFragment: 'nonce', data: BytesLike): Result;
 
     
     
+    digestForCurrentNonce: TypedContractMethod<
+      [calls: ProviderBatchCallAndSponsor.CallStruct[], deadline: BigNumberish, ],
+      [string],
+      'view'
+    >
+    
+
+    
+    domainSeparator: TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >
+    
+
+    
     execute: TypedContractMethod<
-      [calls: ProviderBatchCallAndSponsor.CallStruct[], signature: BytesLike, ],
+      [calls: ProviderBatchCallAndSponsor.CallStruct[], deadline: BigNumberish, signature: BytesLike, ],
       [void],
       'payable'
+    >
+    
+
+    
+    hashTypedBatch: TypedContractMethod<
+      [calls: ProviderBatchCallAndSponsor.CallStruct[], deadline: BigNumberish, ],
+      [string],
+      'view'
     >
     
 
@@ -101,10 +131,25 @@ decodeFunctionResult(functionFragment: 'nonce', data: BytesLike): Result;
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
-    getFunction(nameOrSignature: 'execute'): TypedContractMethod<
-      [calls: ProviderBatchCallAndSponsor.CallStruct[], signature: BytesLike, ],
+    getFunction(nameOrSignature: 'digestForCurrentNonce'): TypedContractMethod<
+      [calls: ProviderBatchCallAndSponsor.CallStruct[], deadline: BigNumberish, ],
+      [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'domainSeparator'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'execute'): TypedContractMethod<
+      [calls: ProviderBatchCallAndSponsor.CallStruct[], deadline: BigNumberish, signature: BytesLike, ],
       [void],
       'payable'
+    >;
+getFunction(nameOrSignature: 'hashTypedBatch'): TypedContractMethod<
+      [calls: ProviderBatchCallAndSponsor.CallStruct[], deadline: BigNumberish, ],
+      [string],
+      'view'
     >;
 getFunction(nameOrSignature: 'nonce'): TypedContractMethod<
       [],

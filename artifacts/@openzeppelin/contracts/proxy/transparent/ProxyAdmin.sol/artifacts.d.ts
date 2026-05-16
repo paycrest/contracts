@@ -15,7 +15,7 @@ export interface ProxyAdmin$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "npm/@openzeppelin/contracts@4.9.6/proxy/transparent/ProxyAdmin.sol";
-  readonly buildInfoId: "solc-0_8_20-5932920006877773a4e6f81980380273c6f2fa80";
+  readonly buildInfoId: "solc-0_8_20-5b619388b75ba10d23efef4c6322a339a2d7ad55";
 };
 
 import "hardhat/types/artifacts";
