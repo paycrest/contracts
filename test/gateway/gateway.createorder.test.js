@@ -456,7 +456,7 @@ describe("Gateway create order", function () {
 		);
 	});
 
-	it("Should create order with zero protocol fee for local transfer (rate = 1)", async function () {
+	it("Should create order with protocol fee regardless of rate metadata", async function () {
 		const ret = await getSupportedInstitutions();
 		const treasury = ethers.encodeBytes32String("treasury");
 		const aggregator = ethers.encodeBytes32String("aggregator");
@@ -520,7 +520,7 @@ describe("Gateway create order", function () {
 				this.alice.address,
 				this.mockUSDT.target,
 				this.orderAmount,
-				ZERO_AMOUNT,
+				this.protocolFee,
 				orderId,
 				rate,
 				messageHash.toString()
@@ -542,7 +542,7 @@ describe("Gateway create order", function () {
 		expect(this.seller).to.eq(this.sender.address);
 		expect(this.token).to.eq(this.mockUSDT.target);
 		expect(this.senderRecipient).to.eq(this.sender.address);
-		expect(this.protocolFee).to.eq(ZERO_AMOUNT);
+		expect(this.protocolFee).to.eq(ethers.parseEther("135000"));
 		expect(this.isFulfilled).to.eq(false);
 		expect(this.isRefunded).to.eq(false);
 		expect(this.refundAddress).to.eq(this.alice.address);

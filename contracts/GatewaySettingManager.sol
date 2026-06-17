@@ -17,10 +17,10 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 
 	// Token-specific fee settings
 	struct TokenFeeSettings {
-		uint256 senderToProvider; // % of sender fee that goes to provider (local mode)
-		uint256 providerToAggregator; // % of provider's share that goes to aggregator (local mode)
-		uint256 senderToAggregator; // % of sender fee that goes to aggregator (fx mode)
-		uint256 providerToAggregatorFx; // % of transaction amount provider pays to aggregator (fx mode)
+		uint256 senderToProvider; // DEPRECATED
+		uint256 providerToAggregator; // DEPRECATED 
+		uint256 senderToTreasury; // BPS of sender fee paid to treasury
+		uint256 providerToTreasury; // BPS of order principal paid to treasury
 	}
 
 	mapping(address => TokenFeeSettings) internal _tokenFeeSettings;
@@ -32,10 +32,8 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 	event SetFeeRecipient(address indexed treasuryAddress);
 	event TokenFeeSettingsUpdated(
 		address indexed token,
-		uint256 senderToProvider,
-		uint256 providerToAggregator,
-		uint256 senderToAggregator,
-		uint256 providerToAggregatorFx
+		uint256 senderToTreasury,
+		uint256 providerToTreasury
 	);
 
 	/* ##################################################################
@@ -86,40 +84,32 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 	/**
 	 * @dev Sets token-specific fee settings for stablecoins.
 	 * @param token The token address to configure.
-	 * @param senderToProvider Percentage of sender fee that goes to provider (local mode).
-	 * @param providerToAggregator Percentage of provider's share that goes to aggregator (local mode).
-	 * @param senderToAggregator Percentage of sender fee that goes to aggregator (fx mode).
-	 * @param providerToAggregatorFx Percentage of transaction amount provider pays to aggregator (fx mode).
+	 * @param senderToTreasury BPS of sender fee paid to treasury.
+	 * @param providerToTreasury BPS of order principal paid to treasury.
 	 * Requirements:
 	 * - The token must be supported.
 	 * - Fee percentages must be within valid ranges.
 	 */
 	function setTokenFeeSettings(
 		address token,
-		uint256 senderToProvider,
-		uint256 providerToAggregator,
-		uint256 senderToAggregator,
-		uint256 providerToAggregatorFx
+		uint256 senderToTreasury,
+		uint256 providerToTreasury
 	) external onlyOwner {
 		require(_isTokenSupported[token] == 1, 'Gateway: token not supported');
-		require(senderToProvider <= MAX_BPS, 'Gateway: invalid sender to provider');
-		require(providerToAggregator <= MAX_BPS, 'Gateway: invalid provider to aggregator');
-		require(senderToAggregator <= MAX_BPS, 'Gateway: invalid sender to aggregator');
-		require(providerToAggregatorFx <= MAX_BPS, 'Gateway: invalid provider to aggregator fx');
+		require(senderToTreasury <= MAX_BPS, 'Gateway: invalid sender to treasury');
+		require(providerToTreasury <= MAX_BPS, 'Gateway: invalid provider to treasury');
 
 		_tokenFeeSettings[token] = TokenFeeSettings({
-			senderToProvider: senderToProvider,
-			providerToAggregator: providerToAggregator,
-			senderToAggregator: senderToAggregator,
-			providerToAggregatorFx: providerToAggregatorFx
+			senderToProvider: 0,
+			providerToAggregator: 0,
+			senderToTreasury: senderToTreasury,
+			providerToTreasury: providerToTreasury
 		});
 
 		emit TokenFeeSettingsUpdated(
 			token,
-			senderToProvider,
-			providerToAggregator,
-			senderToAggregator,
-			providerToAggregatorFx
+			senderToTreasury,
+			providerToTreasury
 		);
 	}
 

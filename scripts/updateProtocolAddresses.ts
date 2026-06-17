@@ -11,8 +11,8 @@ async function main() {
   const { gatewayInstance, wallet } = await getContracts();
   const contractWithSigner = gatewayInstance.connect(wallet);
 
-  const treasury = ethers.utils.formatBytes32String("treasury");
-  const aggregator = ethers.utils.formatBytes32String("aggregator");
+  const treasury = ethers.encodeBytes32String("treasury");
+  const aggregator = ethers.encodeBytes32String("aggregator");
 
   // Call contract methods
   let tx = await contractWithSigner.updateProtocolAddress(

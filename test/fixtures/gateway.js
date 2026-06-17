@@ -45,10 +45,8 @@ async function gatewayFixture() {
 
   // Then configure token fee settings for mockUSDT
   await configureTokenFeeSettings(gateway, deployer, mockUSDTAddress, {
-    senderToProvider: 50000n,      // 50% of sender fee goes to provider
-    providerToAggregator: 50000n, // 50% of provider's share goes to aggregator
-    senderToAggregator: 0n,       // 0% of sender fee goes to aggregator (FX mode)
-    providerToAggregatorFx: 500n  // 0.5% of transaction amount provider pays to aggregator (FX mode)
+    senderToTreasury: 0n,
+    providerToTreasury: 500n
   });
 
   return { gateway, mockUSDT };
