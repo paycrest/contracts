@@ -15,7 +15,7 @@ export interface MockUSDT$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "project/contracts/mocks/MockUSDC.sol";
-  readonly buildInfoId: "solc-0_8_20-5932920006877773a4e6f81980380273c6f2fa80";
+  readonly buildInfoId: "solc-0_8_20-86f81c85ebc812d850fcd17cad1134e0618d89a9";
 };
 
 import "hardhat/types/artifacts";
