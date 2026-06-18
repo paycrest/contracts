@@ -56,7 +56,7 @@ async function upgradeProxy() {
 		const [signer] = await ethers.getSigners(); // Get the signer (the account performing the upgrade)
 		const balance = await signer.getBalance(); // Get the balance of the signer's address
 
-		if (balance.eq(0)) {
+		if (balance === 0n) {
 			throw new Error(
 				`"Can't upgrade ${chainId} with 0 balance`
 			);
@@ -93,7 +93,7 @@ async function manualUpgrade() {
 
 		const [signer] = await ethers.getSigners(); // Get the signer (the account performing the upgrade)
 		const balance = await signer.getBalance(); // Get the balance of the signer's address
-		if (balance.eq(0)) {
+		if (balance === 0n) {
 			throw new Error(`Can't upgrade ${chainId} with 0 balance`);
 		}
 		const proxyContractAddress = networkConfig.gatewayContract;

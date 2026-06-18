@@ -1,15 +1,17 @@
 // Import necessary libraries
-import { ethers } from "ethers";
 import hre from "hardhat";
 import Gateway from "../artifacts/contracts/Gateway.sol/Gateway.json";
 
-const { upgrades } = hre as unknown as {
+const { ethers, upgrades } = hre as unknown as {
+  ethers: {
+    ContractFactory: new (abi: unknown[], bytecode: string) => any;
+  };
   upgrades: {
     forceImport: (
       address: string,
-      factory: ethers.ContractFactory,
+      factory: any,
       opts: { kind: "uups" | "transparent" | "beacon" }
-    ) => Promise<ethers.BaseContract>;
+    ) => Promise<{ getAddress: () => Promise<string> }>;
   };
 };
 

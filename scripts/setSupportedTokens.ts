@@ -19,13 +19,19 @@ async function main() {
   // get provider
   const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
 
-  const maxPriorityFeePerGas = chainId === 42220 
-    ? ethers.parseUnits("90", "gwei")
-    : (await provider.getFeeData()).gasPrice
-
-  const maxFeePerGas = chainId === 42220 
-    ? ethers.parseUnits("120", "gwei")
-    : (await provider.getFeeData()).gasPrice
+  let maxPriorityFeePerGas: bigint;
+  let maxFeePerGas: bigint;
+  if (chainId === 42220) {
+    maxPriorityFeePerGas = ethers.parseUnits("90", "gwei");
+    maxFeePerGas = ethers.parseUnits("120", "gwei");
+  } else {
+    const { gasPrice } = await provider.getFeeData();
+    if (gasPrice === null) {
+      throw new Error(`Unable to fetch gas price for chain ${chainId}`);
+    }
+    maxPriorityFeePerGas = gasPrice;
+    maxFeePerGas = gasPrice;
+  }
 
   // Call contract methods
   Object.entries(networkConfig.supportedTokens).forEach(async ([key, token], index) => {
