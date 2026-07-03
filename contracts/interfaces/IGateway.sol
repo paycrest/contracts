@@ -74,26 +74,12 @@ interface IGateway {
 	event SenderFeeTransferred(bytes32 indexed orderId, address indexed sender, uint256 indexed amount);
 
 	/**
-	 * @dev Emitted when a local transfer fee is split.
+	 * @dev Emitted when sender fee is split between recipient and treasury.
 	 * @param orderId The ID of the order.
-	 * @param senderAmount The amount that goes to the sender.
-	 * @param providerAmount The amount that goes to the provider.
-	 * @param aggregatorAmount The amount that goes to the aggregator.
+	 * @param senderAmount The amount that goes to the sender fee recipient.
+	 * @param aggregatorAmount The amount that goes to the treasury.
 	 */
-	event LocalTransferFeeSplit(
-		bytes32 indexed orderId,
-		uint256 senderAmount,
-		uint256 providerAmount,
-		uint256 aggregatorAmount
-	);
-
-	/**
-	 * @dev Emitted when an FX transfer fee is split.
-	 * @param orderId The ID of the order.
-	 * @param senderAmount The amount that goes to the sender.
-	 * @param aggregatorAmount The amount that goes to the aggregator.
-	 */
-	event FxTransferFeeSplit(
+	event TransferFeeSplit(
 		bytes32 indexed orderId,
 		uint256 senderAmount,
 		uint256 aggregatorAmount
@@ -180,11 +166,11 @@ interface IGateway {
      * @dev It process an order and transfers tokens to the recipient after deducting sender fees
      * @param _orderId Unique identifier for the order being processed
      * @param _token Address of the token to be sent to the user
-     * @param _amount Total amount transferred in (includes sender fee and, for FX, protocol fee); recipient receives _amount minus applicable fees
+     * @param _amount Total amount transferred in (includes sender fee and protocol fee); recipient receives _amount minus applicable fees
      * @param _senderFeeRecipient Address that will receive the sender fee
      * @param _senderFee Amount of fee to be paid to the sender fee recipient
      * @param _recipient Address of the recipient who will receive the tokens
-     * @param _rate Rate at which the tokens are being sent
+     * @param _rate Quote rate metadata (informational; does not select fee behavior)
      * @return success Boolean indicating if the operation was successful
      */
     function settleIn(

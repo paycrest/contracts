@@ -35,8 +35,7 @@ const Events = {
 		SettingManagerBool: "SettingManagerBool",
 		ProtocolFeeUpdated: "ProtocolFeeUpdated",
 		ProtocolAddressUpdated: "ProtocolAddressUpdated",
-		LocalTransferFeeSplit: "LocalTransferFeeSplit",
-		FxTransferFeeSplit: "FxTransferFeeSplit",
+		TransferFeeSplit: "TransferFeeSplit",
 		TokenFeeSettingsUpdated: "TokenFeeSettingsUpdated",
 	},
 };
@@ -79,18 +78,14 @@ async function mockMintDeposit(gateway, account, usdc, amount) {
 // Helper function to configure token fee settings
 async function configureTokenFeeSettings(gateway, deployer, tokenAddress, settings = {}) {
 	const {
-		senderToProvider = 50000,      // 50% of sender fee goes to provider
-		providerToAggregator = 50000, // 50% of provider's share goes to aggregator
-		senderToAggregator = 0,       // 0% of sender fee goes to aggregator (FX mode)
-		providerToAggregatorFx = 500  // 0.5% of transaction amount provider pays to aggregator (FX mode)
+		senderToTreasury = 0,
+		providerToTreasury = 500
 	} = settings;
 
 	await gateway.connect(deployer).setTokenFeeSettings(
 		tokenAddress,
-		senderToProvider,
-		providerToAggregator,
-		senderToAggregator,
-		providerToAggregatorFx
+		senderToTreasury,
+		providerToTreasury
 	);
 }
 

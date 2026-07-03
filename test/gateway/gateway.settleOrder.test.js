@@ -403,7 +403,7 @@ describe("Gateway settle order", function () {
 		expect(await mockUSDT.balanceOf(gateway.target)).to.eq(ZERO_AMOUNT);
 	});
 
-	it("Should handle local transfer fee splitting (rate = 1) with sender fee", async function () {
+	it("Should handle sender fee splitting regardless of rate metadata", async function () {
 		const ret = await getSupportedInstitutions();
 
 		this.senderFee = ethers.parseEther("1000");
@@ -452,7 +452,7 @@ describe("Gateway settle order", function () {
 				this.alice.address,
 				mockUSDT.target,
 				this.orderAmount,
-				ZERO_AMOUNT,
+				this.protocolFee,
 				orderId,
 				rate,
 				messageHash.toString()
@@ -465,28 +465,27 @@ describe("Gateway settle order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
-			.to.emit(gateway, Events.Gateway.LocalTransferFeeSplit)
+			.to.emit(gateway, Events.Gateway.TransferFeeSplit)
 			.withArgs(
 				orderId,
-				ethers.parseEther("500"),
-				ethers.parseEther("250"),
-				ethers.parseEther("250")
+				this.senderFee,
+				ZERO_AMOUNT
 			);
 
 		expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(
-			ethers.parseEther("500")
+			this.senderFee
 		);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
-			this.orderAmount + ethers.parseEther("250")
+			this.liquidityProviderAmount
 		);
 
 		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
-			ethers.parseEther("250")
+			this.protocolFee
 		);
 	});
 
-	it("Should handle FX transfer fee splitting (rate ≠ 1) with sender fee", async function () {
+	it("Should handle sender fee splitting with non-100 rate metadata", async function () {
 		const ret = await getSupportedInstitutions();
 
 		this.senderFee = ethers.parseEther("1000");
@@ -548,7 +547,7 @@ describe("Gateway settle order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
-			.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
+			.to.emit(gateway, Events.Gateway.TransferFeeSplit)
 			.withArgs(
 				orderId,
 				ethers.parseEther("1000"),
@@ -568,7 +567,7 @@ describe("Gateway settle order", function () {
 		);
 	});
 
-	it("Should handle split order with sender fee for local transfer (rate = 1)", async function () {
+	it("Should split order with sender fee only on final settlement regardless of rate metadata", async function () {
 		const ret = await getSupportedInstitutions();
 
 		this.senderFee = ethers.parseEther("2000");
@@ -617,7 +616,7 @@ describe("Gateway settle order", function () {
 				this.alice.address,
 				mockUSDT.target,
 				this.orderAmount,
-				ZERO_AMOUNT,
+				this.protocolFee,
 				orderId,
 				rate,
 				messageHash.toString()
@@ -644,30 +643,33 @@ describe("Gateway settle order", function () {
 				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
-			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0);
+			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
+			.to.emit(gateway, Events.Gateway.TransferFeeSplit)
+			.withArgs(orderId, this.senderFee, ZERO_AMOUNT);
 
 		const splitAmount = this.orderAmount * splitOrderpercent / MAX_BPS;
+		const splitProtocolFee = splitAmount * this.protocolFeePercent / MAX_BPS;
 
 		expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(
-			ethers.parseEther("1000")
+			this.senderFee
 		);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider.address)).to.eq(
-			splitAmount + ethers.parseEther("250")
+			splitAmount - splitProtocolFee
 		);
 
 		expect(await mockUSDT.balanceOf(this.liquidityProvider2.address)).to.eq(
-			splitAmount + ethers.parseEther("250")
+			splitAmount - splitProtocolFee
 		);
 
 		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(
-			ethers.parseEther("500")
+			splitProtocolFee + splitProtocolFee
 		);
 
 		expect(await mockUSDT.balanceOf(gateway.target)).to.eq(ZERO_AMOUNT);
 	});
 
-	it("Should handle split order with sender fee for FX transfer (rate ≠ 1)", async function () {
+	it("Should handle split order with sender fee for non-100 rate metadata", async function () {
 		const ret = await getSupportedInstitutions();
 
 		this.senderFee = ethers.parseEther("2000");
@@ -767,7 +769,7 @@ describe("Gateway settle order", function () {
 		expect(await mockUSDT.balanceOf(gateway.target)).to.eq(ZERO_AMOUNT);
 	});
 
-	it("Should handle rebate functionality for FX transfer (rate ≠ 1)", async function () {
+	it("Should handle rebate functionality with non-100 rate metadata", async function () {
 		const ret = await getSupportedInstitutions();
 
 		this.senderFee = ethers.parseEther("1000");
@@ -830,7 +832,7 @@ describe("Gateway settle order", function () {
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, rebatePercent)
-			.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
+			.to.emit(gateway, Events.Gateway.TransferFeeSplit)
 			.withArgs(
 				orderId,
 				ethers.parseEther("1000"),
@@ -1012,6 +1014,70 @@ describe("Gateway settle order", function () {
 		).to.be.revertedWith("InvalidRebatePercent");
 	});
 
+	it("Should cap refund fee at stored protocol fee", async function () {
+		const ret = await getSupportedInstitutions();
+
+		this.senderFee = ethers.parseEther("1000");
+
+		await mockUSDT.connect(this.alice).mint(this.senderFee);
+		await mockUSDT.connect(this.alice).transfer(this.sender.address, this.senderFee);
+
+		await mockUSDT
+			.connect(this.sender)
+			.approve(gateway.target, this.mintAmount + this.senderFee);
+
+		const rate = 100;
+		const data = [
+			{ bank_account: "09090990901" },
+			{ bank_name: "ACCESS BANK" },
+			{ account_name: "Jeff Dean" },
+			{ institution_code: ret.accessBank.code },
+		];
+		const password = "123";
+
+		const cipher = CryptoJS.AES.encrypt(
+			JSON.stringify(data),
+			password
+		).toString();
+
+		const messageHash = "0x" + cipher;
+
+		const tx = await gateway
+			.connect(this.sender)
+			.createOrder(
+				mockUSDT.target,
+				this.orderAmount,
+				rate,
+				this.sender.address,
+				this.senderFee,
+				this.alice.address,
+				messageHash.toString()
+			);
+
+		const receipt = await tx.wait();
+		const orderId = parseOrderId(gateway, receipt);
+
+		await expect(
+			gateway
+				.connect(this.aggregator)
+				.refund(this.protocolFee + 1n, orderId)
+		).to.be.revertedWith("FeeExceedsProtocolFee");
+
+		await expect(
+			gateway
+				.connect(this.aggregator)
+				.refund(this.protocolFee, orderId)
+		)
+			.to.emit(gateway, Events.Gateway.OrderRefunded)
+			.withArgs(this.protocolFee, orderId);
+
+		expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(this.protocolFee);
+		expect(await mockUSDT.balanceOf(this.alice.address)).to.eq(
+			this.orderAmount - this.protocolFee + this.senderFee
+		);
+		expect(await mockUSDT.balanceOf(gateway.target)).to.eq(ZERO_AMOUNT);
+	});
+
 	/* ##################################################################
 	                        SETTLEIN TESTS (ONRAMP)
     ################################################################## */
@@ -1027,7 +1093,7 @@ describe("Gateway settle order", function () {
 			await mockUSDT.connect(this.alice).transfer(this.provider.address, ethers.parseEther("50000"));
 		});
 
-		it("Should successfully process settleIn for FX transfer (rate ≠ 100)", async function () {
+		it("Should successfully process settleIn with non-100 rate metadata", async function () {
 			const rate = 750;
 			const orderId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string"], ["test-order-1"]));
 
@@ -1064,7 +1130,7 @@ describe("Gateway settle order", function () {
 					protocolFee,
 					rate
 				)
-				.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
+				.to.emit(gateway, Events.Gateway.TransferFeeSplit)
 				.withArgs(
 					orderId,
 					ethers.parseEther("100"),
@@ -1084,12 +1150,13 @@ describe("Gateway settle order", function () {
 			expect(orderInfo.currentBPS).to.eq(0n);
 		});
 
-		it("Should successfully process settleIn for local transfer (rate = 100)", async function () {
+		it("Should process settleIn with protocol fee regardless of rate metadata", async function () {
 			const rate = 100;
 			const orderId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string"], ["test-order-2"]));
 
 			const totalAmount = this.baseAmount;
-			const senderAmount = totalAmount;
+			const protocolFee = totalAmount * this.protocolFeePercent / MAX_BPS;
+			const senderAmount = totalAmount - protocolFee;
 
 			const initialTreasuryBalance = await mockUSDT.balanceOf(this.treasuryAddress.address);
 			const initialSenderBalance = await mockUSDT.balanceOf(this.sender.address);
@@ -1118,27 +1185,22 @@ describe("Gateway settle order", function () {
 					this.recipient.address,
 					senderAmount,
 					mockUSDT.target,
-					ZERO_AMOUNT,
+					protocolFee,
 					rate
 				)
-				.to.emit(gateway, Events.Gateway.LocalTransferFeeSplit)
+				.to.emit(gateway, Events.Gateway.TransferFeeSplit)
 				.withArgs(
 					orderId,
-					ethers.parseEther("50"),
-					ethers.parseEther("25"),
-					ethers.parseEther("25")
+					this.senderFee,
+					ZERO_AMOUNT
 				);
 
-			const providerFee = ethers.parseEther("25");
-			const senderFeeAmount = ethers.parseEther("50");
-			const aggregatorAmount = ethers.parseEther("25");
-
 			expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(initialRecipientBalance + senderAmount);
-			expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(initialSenderBalance + senderFeeAmount);
+			expect(await mockUSDT.balanceOf(this.sender.address)).to.eq(initialSenderBalance + this.senderFee);
 			expect(await mockUSDT.balanceOf(this.provider.address)).to.eq(
-				initialProviderBalance - (totalAmount + this.senderFee) + providerFee
+				initialProviderBalance - (totalAmount + this.senderFee)
 			);
-			expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance + aggregatorAmount);
+			expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance + protocolFee);
 			expect(await mockUSDT.balanceOf(gateway.target)).to.eq(ZERO_AMOUNT);
 		});
 
@@ -1163,13 +1225,18 @@ describe("Gateway settle order", function () {
 			).to.be.revertedWith("AmountIsZero");
 		});
 
-		it("Should revert when settleIn is called with zero sender fee for local transfer", async function () {
+		it("Should process settleIn with zero sender fee regardless of rate metadata", async function () {
 			const orderId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string"], ["test-order-4"]));
 			const rate = 100;
 
 			const totalAmount = this.baseAmount;
 
 			await mockUSDT.connect(this.provider).approve(gateway.target, totalAmount);
+
+			const protocolFee = totalAmount * this.protocolFeePercent / MAX_BPS;
+			const recipientAmount = totalAmount - protocolFee;
+			const initialRecipientBalance = await mockUSDT.balanceOf(this.recipient.address);
+			const initialTreasuryBalance = await mockUSDT.balanceOf(this.treasuryAddress.address);
 
 			await expect(
 				gateway
@@ -1183,7 +1250,20 @@ describe("Gateway settle order", function () {
 						this.recipient.address,
 						rate
 					)
-			).to.be.revertedWith("SenderFeeIsZero");
+			)
+				.to.emit(gateway, Events.Gateway.SettleIn)
+				.withArgs(
+					orderId,
+					this.provider.address,
+					this.recipient.address,
+					recipientAmount,
+					mockUSDT.target,
+					protocolFee,
+					rate
+				);
+
+			expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(initialRecipientBalance + recipientAmount);
+			expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance + protocolFee);
 		});
 
 		it("Should revert when settleIn is called with unsupported token", async function () {
@@ -1207,7 +1287,7 @@ describe("Gateway settle order", function () {
 			).to.be.revertedWith("TokenNotSupported");
 		});
 
-		it("Should handle settleIn with FX transfer fee splitting correctly", async function () {
+		it("Should handle settleIn sender fee splitting correctly", async function () {
 			const rate = 750;
 			const orderId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string"], ["test-order-6"]));
 			const senderFee = ethers.parseEther("1000");
@@ -1215,7 +1295,7 @@ describe("Gateway settle order", function () {
 
 			await gateway.connect(this.deployer).setTokenFeeSettings(
 				mockUSDT.target,
-				50000, 50000, 30000, 500
+				30000, 500
 			);
 
 			const totalAmount = baseAmount;
@@ -1246,7 +1326,7 @@ describe("Gateway settle order", function () {
 						rate
 					)
 			)
-				.to.emit(gateway, Events.Gateway.FxTransferFeeSplit)
+				.to.emit(gateway, Events.Gateway.TransferFeeSplit)
 				.withArgs(
 					orderId,
 					senderAmount,
@@ -1261,7 +1341,7 @@ describe("Gateway settle order", function () {
 
 			await gateway.connect(this.deployer).setTokenFeeSettings(
 				mockUSDT.target,
-				50000, 50000, 0, 500
+				0, 500
 			);
 		});
 

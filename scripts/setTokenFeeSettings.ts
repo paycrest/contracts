@@ -5,22 +5,23 @@ import { ethers } from "ethers";
 import { NETWORKS } from "./config";
 import { getContracts } from "./utils";
 
-const networkConfig = NETWORKS[network.config.chainId as keyof typeof NETWORKS];
+const chainId = (network as unknown as { config: { chainId: number } }).config.chainId;
+const networkConfig = NETWORKS[chainId as keyof typeof NETWORKS];
 
 async function main() {
   // Get contract instances
   const { gatewayInstance, wallet } = await getContracts();
   const contractWithSigner = gatewayInstance.connect(wallet);
 
-  const provider = new ethers.providers.JsonRpcProvider(networkConfig.rpcUrl);
+  const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
   
-  const maxPriorityFeePerGas = network.config.chainId === 137 
-    ? ethers.utils.parseUnits("90", "gwei") // Fallback to 30 Gwei
-    : await provider.getGasPrice()
+  const maxPriorityFeePerGas = chainId === 137 
+    ? ethers.parseUnits("90", "gwei")
+    : (await provider.getFeeData()).gasPrice
   
-  const maxFeePerGas = network.config.chainId === 137 
-    ? ethers.utils.parseUnits("120", "gwei")
-    : await provider.getGasPrice()
+  const maxFeePerGas = chainId === 137 
+    ? ethers.parseUnits("120", "gwei")
+    : (await provider.getFeeData()).gasPrice
 
   // Get the current nonce
   let nonce = await wallet.getTransactionCount();
@@ -30,10 +31,8 @@ async function main() {
     try {
       const tx = await contractWithSigner.setTokenFeeSettings(
         tokenConfig.address,
-        BigNumber.from(tokenConfig.local.senderToProvider),
-        BigNumber.from(tokenConfig.local.providerToAggregator),
-        BigNumber.from(tokenConfig.fx.senderToAggregator),
-        BigNumber.from(tokenConfig.fx.providerToAggregator),
+        BigNumber.from(tokenConfig.senderToTreasury),
+        BigNumber.from(tokenConfig.providerToTreasury),
         {
           nonce: nonce++,
           maxPriorityFeePerGas,
@@ -43,8 +42,7 @@ async function main() {
 
       await tx.wait();
       console.log(`✅ Set fee settings for ${tokenName} (${tokenConfig.address}): ${tx.hash}`);
-      console.log(`   Local: senderToProvider=${tokenConfig.local.senderToProvider}, providerToAggregator=${tokenConfig.local.providerToAggregator}`);
-      console.log(`   FX: senderToAggregator=${tokenConfig.fx.senderToAggregator}, providerToAggregator=${tokenConfig.fx.providerToAggregator}`);
+      console.log(`   Treasury: senderToTreasury=${tokenConfig.senderToTreasury}, providerToTreasury=${tokenConfig.providerToTreasury}`);
     } catch (error) {
       console.error(`❌ Error setting fee settings for ${tokenName}:`, error);
     }
