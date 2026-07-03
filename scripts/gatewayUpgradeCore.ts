@@ -66,6 +66,18 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
 	}
 }
 
+function chainTag(chainId: number): string {
+	return CHAIN_NAMES[chainId] ?? String(chainId);
+}
+
+function chainLog(chainId: number, message: string) {
+	console.log(`[${chainTag(chainId)}] ${message}`);
+}
+
+function chainWarn(chainId: number, message: string) {
+	console.warn(`[${chainTag(chainId)}] ${message}`);
+}
+
 function getProxyAdmin(chainId: number): string {
 	const envOverride = process.env[`PROXY_ADMIN_${chainId}`];
 	if (envOverride) {
@@ -85,11 +97,10 @@ function createProvider(rpcUrl: string, chainId: number): JsonRpcProvider {
 	return new JsonRpcProvider(rpcUrl, network, { staticNetwork: network, batchMaxCount: 1 });
 }
 
-async function withRpcProvider<T>(
+async function connectRpcProvider(
 	chainId: number,
 	configuredUrl: string,
-	fn: (provider: JsonRpcProvider) => Promise<T>,
-): Promise<T> {
+): Promise<{ provider: JsonRpcProvider; rpcUrl: string }> {
 	const candidates = rpcCandidates(chainId, configuredUrl);
 	let lastError: Error | undefined;
 
@@ -97,21 +108,33 @@ async function withRpcProvider<T>(
 		const provider = createProvider(rpcUrl, chainId);
 		try {
 			await withTimeout(provider.getBlockNumber(), RPC_PROBE_TIMEOUT_MS, `rpc probe ${rpcUrl}`);
-			const result = await withTimeout(fn(provider), RPC_OPERATION_TIMEOUT_MS, `rpc ${rpcUrl}`);
 			if (candidates.length > 1) {
-				console.log(`  using rpc ${rpcUrl}`);
+				chainLog(chainId, `using rpc ${rpcUrl}`);
 			}
-			return result;
+			return { provider, rpcUrl };
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error));
 			if (candidates.length > 1) {
-				console.warn(`  rpc unavailable (${rpcUrl}): ${lastError.message}`);
+				chainWarn(chainId, `rpc unavailable (${rpcUrl}): ${lastError.message}`);
 			}
 			provider.destroy();
 		}
 	}
 
 	throw lastError ?? new Error("No RPC endpoint available");
+}
+
+async function withRpcProvider<T>(
+	chainId: number,
+	configuredUrl: string,
+	fn: (provider: JsonRpcProvider) => Promise<T>,
+): Promise<T> {
+	const { provider } = await connectRpcProvider(chainId, configuredUrl);
+	try {
+		return await withTimeout(fn(provider), RPC_OPERATION_TIMEOUT_MS, `rpc chain ${chainId}`);
+	} finally {
+		provider.destroy();
+	}
 }
 
 function storageAddress(slotValue: string): string {
@@ -129,15 +152,81 @@ async function readStorageAddress(
 }
 
 function loadGatewayArtifact(): { abi: unknown; bytecode: string } {
-	const artifactPath = path.join(process.cwd(), "build/contracts/Gateway.json");
-	const artifact = JSON.parse(readFileSync(artifactPath, "utf8")) as {
-		abi: unknown;
-		bytecode: string;
-	};
-	if (!artifact.bytecode || artifact.bytecode === "0x") {
-		throw new Error("Gateway artifact missing bytecode — run `npx hardhat compile` first");
+	const candidates = [
+		path.join(process.cwd(), "artifacts/contracts/Gateway.sol/Gateway.json"),
+		path.join(process.cwd(), "build/contracts/Gateway.json"),
+	];
+
+	for (const artifactPath of candidates) {
+		try {
+			const artifact = JSON.parse(readFileSync(artifactPath, "utf8")) as {
+				abi: unknown;
+				bytecode: string;
+			};
+			if (artifact.bytecode && artifact.bytecode !== "0x") {
+				return artifact;
+			}
+		} catch {
+			// try next path
+		}
 	}
-	return artifact;
+
+	throw new Error(
+		"Gateway artifact missing bytecode — run `npx hardhat compile` (artifacts/contracts/Gateway.sol/Gateway.json)",
+	);
+}
+
+function findNetworkBlock(content: string, chainId: number): { start: number; end: number } | null {
+	const key = `${chainId}:`;
+	const keyIndex = content.indexOf(key);
+	if (keyIndex === -1) {
+		return null;
+	}
+
+	const braceStart = content.indexOf("{", keyIndex);
+	if (braceStart === -1) {
+		return null;
+	}
+
+	let depth = 0;
+	let inString: '"' | "'" | "`" | null = null;
+	let escaped = false;
+
+	for (let i = braceStart; i < content.length; i++) {
+		const char = content[i];
+
+		if (escaped) {
+			escaped = false;
+			continue;
+		}
+
+		if (inString) {
+			if (char === "\\") {
+				escaped = true;
+				continue;
+			}
+			if (char === inString) {
+				inString = null;
+			}
+			continue;
+		}
+
+		if (char === '"' || char === "'" || char === "`") {
+			inString = char;
+			continue;
+		}
+
+		if (char === "{") {
+			depth++;
+		} else if (char === "}") {
+			depth--;
+			if (depth === 0) {
+				return { start: keyIndex, end: i + 1 };
+			}
+		}
+	}
+
+	return null;
 }
 
 export function resolveTargetChainIds(params: { networks?: string }): number[] {
@@ -164,34 +253,35 @@ export function resolveTargetChainIds(params: { networks?: string }): number[] {
 
 async function updateImplementationInConfig(chainId: number, implementationAddress: string) {
 	const configFilePath = path.join(process.cwd(), "scripts/config.ts");
-	let configContent = await fs.readFile(configFilePath, "utf-8");
-	const networkRegex = new RegExp(`(${chainId}:\\s*{[\\s\\S]*?)(},?)`, "g");
+	const configContent = await fs.readFile(configFilePath, "utf-8");
+	const block = findNetworkBlock(configContent, chainId);
 
-	if (!networkRegex.test(configContent)) {
+	if (!block) {
 		console.warn(`  config.ts: no block for chainId ${chainId}, skipping config update`);
 		return;
 	}
 
-	configContent = configContent.replace(networkRegex, (match) => {
-		const lines = match.split("\n");
-		let found = false;
-		const updatedLines = lines.map((line) => {
-			if (line.trim().startsWith("gatewayImplementation:")) {
-				found = true;
-				return line.replace(
-					/gatewayImplementation:.*/,
-					`gatewayImplementation: "${implementationAddress}",`,
-				);
-			}
-			return line;
-		});
-		if (!found) {
-			updatedLines.splice(-1, 0, `\t\tgatewayImplementation: "${implementationAddress}",`);
-		}
-		return updatedLines.join("\n");
-	});
+	const blockText = configContent.slice(block.start, block.end);
+	const gatewayImplLine = `\t\tgatewayImplementation: "${implementationAddress}",`;
+	let updatedBlock: string;
 
-	await fs.writeFile(configFilePath, configContent, "utf-8");
+	if (/^\s*gatewayImplementation:/m.test(blockText)) {
+		updatedBlock = blockText.replace(
+			/^\s*gatewayImplementation:.*$/m,
+			gatewayImplLine,
+		);
+	} else {
+		const closingBrace = blockText.lastIndexOf("}");
+		updatedBlock =
+			blockText.slice(0, closingBrace) +
+			`\n${gatewayImplLine}\n` +
+			blockText.slice(closingBrace);
+	}
+
+	const nextContent =
+		configContent.slice(0, block.start) + updatedBlock + configContent.slice(block.end);
+
+	await fs.writeFile(configFilePath, nextContent, "utf-8");
 	console.log(`  config.ts: updated gatewayImplementation for chainId ${chainId}`);
 }
 
@@ -212,11 +302,76 @@ async function setTokenFeeSettings(
 		const receipt = await tx.wait();
 		txHashes.push(receipt.hash);
 		console.log(
-			`  fees ${tokenName}: senderToTreasury=${tokenConfig.senderToTreasury} providerToTreasury=${tokenConfig.providerToTreasury} tx=${receipt.hash}`,
+			`[${CHAIN_NAMES[chainId] ?? chainId}] fees ${tokenName}: senderToTreasury=${tokenConfig.senderToTreasury} providerToTreasury=${tokenConfig.providerToTreasury} tx=${receipt.hash}`,
 		);
 	}
 
 	return txHashes;
+}
+
+async function executeUpgrade(
+	chainId: number,
+	provider: JsonRpcProvider,
+	wallet: Wallet,
+	base: UpgradeResult,
+	proxy: string,
+	proxyAdminAddress: string,
+	options: UpgradeOptions,
+): Promise<UpgradeResult> {
+	const artifact = loadGatewayArtifact();
+
+	const balance = await provider.getBalance(wallet.address);
+	if (balance === 0n) {
+		return {
+			...base,
+			proxy,
+			error: `Deployer ${wallet.address} has 0 native balance`,
+		};
+	}
+
+	const previousImplementation = await readStorageAddress(provider, proxy, IMPLEMENTATION_SLOT);
+	base.previousImplementation = previousImplementation;
+
+	const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
+	const implContract = await factory.deploy();
+	await implContract.waitForDeployment();
+	const newImplementation = await implContract.getAddress();
+
+	if (previousImplementation.toLowerCase() === newImplementation.toLowerCase()) {
+		return {
+			...base,
+			proxy,
+			newImplementation,
+			error: "New implementation address equals current implementation",
+		};
+	}
+
+	let upgradeTxHash = "";
+	const currentImpl = await readStorageAddress(provider, proxy, IMPLEMENTATION_SLOT);
+	if (currentImpl.toLowerCase() === newImplementation.toLowerCase()) {
+		chainLog(chainId, `proxy already upgraded to ${newImplementation}`);
+	} else if (currentImpl.toLowerCase() === previousImplementation.toLowerCase()) {
+		const proxyAdmin = new Contract(proxyAdminAddress, PROXY_ADMIN_ABI, wallet);
+		const upgradeTx = await proxyAdmin.upgrade(proxy, newImplementation);
+		const upgradeReceipt = await upgradeTx.wait();
+		upgradeTxHash = upgradeReceipt.hash;
+		chainLog(chainId, `upgraded: impl ${newImplementation} tx ${upgradeTxHash}`);
+	} else {
+		chainLog(chainId, `proxy at ${currentImpl}, skipping upgrade to ${newImplementation}`);
+	}
+
+	const gateway = new Contract(proxy, artifact.abi, wallet);
+	if (options.setFees) {
+		base.feeTxHashes = await setTokenFeeSettings(wallet, gateway, chainId);
+	}
+
+	return {
+		...base,
+		proxy,
+		newImplementation,
+		upgradeTxHash,
+		skipped: false,
+	};
 }
 
 export async function upgradeGatewayOnChain(
@@ -256,10 +411,10 @@ export async function upgradeGatewayOnChain(
 				};
 			});
 
-			console.log(`  [dry-run] would upgrade ${networkName} proxy ${proxy}`);
-			console.log(`  [dry-run] current implementation ${snapshot.previousImplementation}`);
-			console.log(`  [dry-run] proxy admin ${proxyAdminAddress}`);
-			console.log(`  [dry-run] deployer balance ${snapshot.deployerBalance} native`);
+			chainLog(chainId, `[dry-run] would upgrade ${networkName} proxy ${proxy}`);
+			chainLog(chainId, `[dry-run] current implementation ${snapshot.previousImplementation}`);
+			chainLog(chainId, `[dry-run] proxy admin ${proxyAdminAddress}`);
+			chainLog(chainId, `[dry-run] deployer balance ${snapshot.deployerBalance} native`);
 
 			return {
 				...base,
@@ -271,8 +426,8 @@ export async function upgradeGatewayOnChain(
 			};
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
-			console.log(`  [dry-run] would upgrade ${networkName} proxy ${proxy}`);
-			console.error(`  [dry-run] could not fetch on-chain state: ${message}`);
+			chainLog(chainId, `[dry-run] would upgrade ${networkName} proxy ${proxy}`);
+			console.error(`[${networkName}] [dry-run] could not fetch on-chain state: ${message}`);
 			return { ...base, proxy, skipped: true, error: message };
 		}
 	}
@@ -282,59 +437,21 @@ export async function upgradeGatewayOnChain(
 	}
 
 	try {
-		return await withRpcProvider(chainId, networkConfig.rpcUrl, async (provider) => {
+		const { provider } = await connectRpcProvider(chainId, networkConfig.rpcUrl);
+		try {
 			const wallet = new Wallet(privateKey, provider);
-			const artifact = loadGatewayArtifact();
-
-			const balance = await provider.getBalance(wallet.address);
-			if (balance === 0n) {
-				return {
-					...base,
-					proxy,
-					error: `Deployer ${wallet.address} has 0 native balance`,
-				};
-			}
-
-			const previousImplementation = await readStorageAddress(provider, proxy, IMPLEMENTATION_SLOT);
-			base.previousImplementation = previousImplementation;
-
-			const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
-			const implContract = await factory.deploy();
-			await implContract.waitForDeployment();
-			const newImplementation = await implContract.getAddress();
-
-			if (previousImplementation.toLowerCase() === newImplementation.toLowerCase()) {
-				return {
-					...base,
-					proxy,
-					newImplementation,
-					error: "New implementation address equals current implementation",
-				};
-			}
-
-			const proxyAdmin = new Contract(proxyAdminAddress, PROXY_ADMIN_ABI, wallet);
-			const upgradeTx = await proxyAdmin.upgrade(proxy, newImplementation);
-			const upgradeReceipt = await upgradeTx.wait();
-
-			console.log(`  upgraded: impl ${newImplementation} tx ${upgradeReceipt.hash}`);
-
-			const gateway = new Contract(proxy, artifact.abi, wallet);
-			if (options.setFees) {
-				base.feeTxHashes = await setTokenFeeSettings(wallet, gateway, chainId);
-			}
-
-			if (options.updateConfig) {
-				await updateImplementationInConfig(chainId, newImplementation);
-			}
-
-			return {
-				...base,
+			return await executeUpgrade(
+				chainId,
+				provider,
+				wallet,
+				base,
 				proxy,
-				newImplementation,
-				upgradeTxHash: upgradeReceipt.hash,
-				skipped: false,
-			};
-		});
+				proxyAdminAddress,
+				options,
+			);
+		} finally {
+			provider.destroy();
+		}
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		return { ...base, proxy, error: message };
@@ -350,43 +467,46 @@ export async function upgradeAllEvmNetworks(params: {
 	continueOnError?: boolean;
 }): Promise<UpgradeResult[]> {
 	const chainIds = resolveTargetChainIds({ networks: params.networks });
-	const results: UpgradeResult[] = [];
 
-	console.log(`\nUpgrading Gateway on ${chainIds.length} EVM network(s)...\n`);
+	console.log(`\nUpgrading Gateway on ${chainIds.length} EVM network(s) in parallel...\n`);
 
-	for (const chainId of chainIds) {
-		const name = CHAIN_NAMES[chainId] ?? String(chainId);
-		console.log(`========== ${name} (${chainId}) ==========`);
+	const results = await Promise.all(
+		chainIds.map(async (chainId) => {
+			const name = chainTag(chainId);
+			console.log(`========== ${name} (${chainId}) ==========`);
 
-		try {
-			const result = await upgradeGatewayOnChain(chainId, params.privateKey, {
-				dryRun: params.dryRun,
-				setFees: params.setFees,
-				updateConfig: params.updateConfig,
-			});
-			results.push(result);
-			if (result.error && !params.dryRun) {
-				console.error(`  failed: ${result.error}`);
-				if (!params.continueOnError) {
-					break;
+			try {
+				const result = await upgradeGatewayOnChain(chainId, params.privateKey, {
+					dryRun: params.dryRun,
+					setFees: params.setFees,
+					updateConfig: false,
+				});
+				if (result.error && !params.dryRun) {
+					console.error(`[${name}] failed: ${result.error}`);
 				}
+				return result;
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				console.error(`[${name}] failed: ${message}`);
+				return {
+					chainId,
+					networkName: name,
+					proxy: NETWORKS[chainId as keyof typeof NETWORKS]?.gatewayContract ?? "",
+					previousImplementation: "",
+					newImplementation: "",
+					upgradeTxHash: "",
+					feeTxHashes: [],
+					skipped: false,
+					error: message,
+				};
 			}
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			console.error(`  failed: ${message}`);
-			results.push({
-				chainId,
-				networkName: name,
-				proxy: NETWORKS[chainId as keyof typeof NETWORKS]?.gatewayContract ?? "",
-				previousImplementation: "",
-				newImplementation: "",
-				upgradeTxHash: "",
-				feeTxHashes: [],
-				skipped: false,
-				error: message,
-			});
-			if (!params.continueOnError) {
-				break;
+		}),
+	);
+
+	if (params.updateConfig && !params.dryRun) {
+		for (const result of results) {
+			if (!result.error && result.newImplementation) {
+				await updateImplementationInConfig(result.chainId, result.newImplementation);
 			}
 		}
 	}

@@ -1,12 +1,20 @@
-import dotenv from "dotenv";
 import {
 	upgradeAllEvmNetworks,
 	printUpgradeSummary,
 	resolveTargetChainIds,
 	CHAIN_NAMES,
 } from "../scripts/gatewayUpgradeCore.js";
+import readline from "readline";
 
-dotenv.config();
+async function waitForInput(query: string): Promise<string> {
+	const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+	return new Promise((resolve) => {
+		rl.question(query, (answer) => {
+			rl.close();
+			resolve(answer);
+		});
+	});
+}
 
 type TaskArgs = {
 	dryRun: boolean;
@@ -20,7 +28,7 @@ type TaskArgs = {
 export default async function upgradeAllEvmTask(taskArgs: TaskArgs) {
 	const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
 	if (!privateKey) {
-		throw new Error("Set DEPLOYER_PRIVATE_KEY in .env");
+		throw new Error("Set DEPLOYER_PRIVATE_KEY");
 	}
 
 	const networksFilter = taskArgs.networks?.trim() || undefined;
@@ -38,6 +46,14 @@ export default async function upgradeAllEvmTask(taskArgs: TaskArgs) {
 			setFees: taskArgs.setFees,
 		})),
 	);
+
+	if (!taskArgs.dryRun && !taskArgs.yes) {
+		const response = await waitForInput("\nProceed with upgrade on all listed networks? y/N\n");
+		if (response !== "y") {
+			console.log("Aborted.");
+			return;
+		}
+	}
 
 	const results = await upgradeAllEvmNetworks({
 		privateKey,

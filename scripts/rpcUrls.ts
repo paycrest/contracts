@@ -20,7 +20,7 @@ function isUsableShield3Url(url: string): boolean {
 	);
 }
 
-/** Ordered RPC candidates: env override → public fallbacks → Shield3 (if keyed). */
+/** Ordered RPC candidates: env override → Shield3/configured → public fallbacks. */
 export function rpcCandidates(chainId: number, configuredUrl: string): string[] {
 	const out: string[] = [];
 
@@ -29,14 +29,14 @@ export function rpcCandidates(chainId: number, configuredUrl: string): string[] 
 		out.push(envOverride);
 	}
 
-	for (const fallback of PUBLIC_RPC_FALLBACKS[chainId] ?? []) {
-		out.push(fallback);
-	}
-
 	if (isUsableShield3Url(configuredUrl)) {
 		out.push(configuredUrl);
 	} else if (configuredUrl && !configuredUrl.includes("undefined")) {
 		out.push(configuredUrl);
+	}
+
+	for (const fallback of PUBLIC_RPC_FALLBACKS[chainId] ?? []) {
+		out.push(fallback);
 	}
 
 	return [...new Set(out)];

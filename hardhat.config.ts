@@ -30,7 +30,7 @@ const upgradeAllEvm = task("upgrade-all-evm", "Upgrade Gateway proxy on all conf
     description: "Comma-separated chain IDs or names (e.g. base,8453)",
     defaultValue: "",
   })
-  .setAction(() => import("./tasks/upgradeAllEvm.js"))
+  .setAction(() => import("./tasks/upgradeAllEvmRunner.js"))
   .build();
 
 export default defineConfig({
