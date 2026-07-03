@@ -40,16 +40,38 @@ tronbox migrate -f 1 --to 1 --network <network>
 tronbox migrate -f 2 --to 2 --network <network>
 ```
 
-#### Upgrade proxy contract (legacy scripts)
+#### Upgrade all EVM gateways (recommended)
+
+Uses the same `DEPLOYER_PRIVATE_KEY` on every chain. Proxy addresses stay the same; only the implementation is replaced.
+
+```bash
+# Preview targets (no transactions)
+npx hardhat upgrade-all-evm --dry-run
+
+# Upgrade all EVM mainnets
+npx hardhat upgrade-all-evm
+
+# Re-apply unified fee settings after each upgrade
+npx hardhat upgrade-all-evm --set-fees --update-config
+
+# Subset of networks
+npx hardhat upgrade-all-evm --networks base,arbitrum,8453
+
+# npm shortcuts
+npm run upgrade:all-evm:dry-run
+npm run upgrade:all-evm
+```
+
+Flags: `--dry-run`, `--set-fees`, `--update-config`, `--networks`, `--fail-fast`, `--yes` (skip prompt).
+
+Tron is **not** included — use `tronbox migrate -f 2 --to 2` separately.
+
+**RPC:** `scripts/config.ts` uses Shield3 URLs (`SHIELD3_API_KEY`). If `rpc.shield3.com` is unreachable, the upgrade task falls back to public RPCs automatically. Override per chain with `RPC_URL_<chainId>` in `.env` (e.g. `RPC_URL_8453=https://mainnet.base.org`).
+
+#### Upgrade single network (legacy)
 
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
-
-# upgrade across all EVM chains
-npx hardhat run scripts/upgrade.ts --network arbitrumOne && npx hardhat run scripts/upgrade.ts --network base && npx hardhat run scripts/upgrade.ts --network bsc && npx hardhat run scripts/upgrade.ts --network polygon && npx hardhat run scripts/upgrade.ts --network optimisticEthereum && npx hardhat run scripts/upgrade.ts --network scroll
-
-# upgrade across all EVM testnet chains
-npx hardhat run scripts/upgrade.ts --network arbitrumSepolia && npx hardhat run scripts/upgrade.ts --network amoy && npx hardhat run scripts/upgrade.ts --network baseSepolia && npx hardhat run scripts/upgrade.ts --network sepolia
 ```
 
 #### Owner configurations
@@ -171,13 +193,17 @@ npx hardhat run scripts/tron/updateProtocolFee.ts
 	</thead>
 	<tbody>
 		<tr>
-			<td rowspan="2">Ethereum</td>
+			<td rowspan="3">Ethereum</td>
 			<td>Gateway Proxy</td>
 			<td>0x8d2C0D398832b814e3814802FF2dC8b8eF4381e5</td>
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
 			<td>0x0BC10d31B96838aD5783a0dd994fb16e14609e6E</td>
+		</tr>
+		<tr>
+			<td>Gateway Admin</td>
+			<td>0xfe12e3afaa5e3702eafb5929781441fc63d30381</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>

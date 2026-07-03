@@ -10,6 +10,8 @@
     "settleOrder": "npx hardhat test test/gateway/gateway.settleOrder.test.js",
     "createOrder": "npx hardhat test test/gateway/gateway.createorder.test.js",
     "compile": "npx hardhat compile",
+    "upgrade:all-evm": "npx hardhat upgrade-all-evm --yes",
+    "upgrade:all-evm:dry-run": "npx hardhat upgrade-all-evm --dry-run",
     "lint:sol": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
     "lint:sol:fix": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --write"
   },

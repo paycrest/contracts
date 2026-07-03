@@ -19,10 +19,23 @@ const flattenContracts = task("flat", "Flattens and prints contracts and their d
   .setAction(() => import("./tasks/flatten.js"))
   .build();
 
+const upgradeAllEvm = task("upgrade-all-evm", "Upgrade Gateway proxy on all configured EVM networks")
+  .addFlag({ name: "dryRun", description: "Print planned upgrades without sending transactions" })
+  .addFlag({ name: "setFees", description: "Call setTokenFeeSettings on each network after upgrade" })
+  .addFlag({ name: "updateConfig", description: "Write new gatewayImplementation addresses to scripts/config.ts" })
+  .addFlag({ name: "yes", description: "Skip confirmation prompt" })
+  .addFlag({ name: "failFast", description: "Stop on first network failure (default: continue)" })
+  .addOption({
+    name: "networks",
+    description: "Comma-separated chain IDs or names (e.g. base,8453)",
+    defaultValue: "",
+  })
+  .setAction(() => import("./tasks/upgradeAllEvm.js"))
+  .build();
 
 export default defineConfig({
 	plugins: [hardhatToolboxMochaEthers, hardhatVerify, hardhatEthers, hardhatTypechain, hardhatNetworkHelpers],
-	tasks: [printAccounts, flattenContracts],
+	tasks: [printAccounts, flattenContracts, upgradeAllEvm],
 	networks: {
 		// Mainnets
 		arbitrumOne: {

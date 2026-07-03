@@ -31,6 +31,7 @@ const NETWORKS = {
 			},
 		},
 		gatewayContract: "0xE8bc3B607CfE68F47000E3d200310D49041148Fc",
+		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
 	},
 
 	/**
@@ -52,6 +53,7 @@ const NETWORKS = {
 			}
 		},
 		gatewayContract: "0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F",
+		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
 	},
 
 	/**
@@ -77,6 +79,7 @@ const NETWORKS = {
 			}
 		},
 		gatewayContract: "0x1FA0EE7F9410F6fa49B7AD5Da72Cf01647090028",
+		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
 	},
 
 	/**
@@ -102,6 +105,7 @@ const NETWORKS = {
 			}
 		},
 		gatewayContract: "0xfB411Cc6385Af50A562aFCb441864E9d541CDA67",
+		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
 	},
 
 	/**
@@ -127,6 +131,7 @@ const NETWORKS = {
 			}
 		},
 		gatewayContract: "0x8d2C0D398832b814e3814802FF2dC8b8eF4381e5",
+		proxyAdmin: "0xfe12e3afaa5e3702eafb5929781441fc63d30381",
 	},
 
 	/**
@@ -162,6 +167,7 @@ const NETWORKS = {
 			},
 		},
 		gatewayContract: "0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338",
+		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
 	},
 
 	/**
@@ -203,6 +209,7 @@ const NETWORKS = {
 			},
 		},
 		gatewayContract: "0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b",
+		proxyAdmin: "0xc38D6817F736b1cb44785e14A8cb7152385d3210",
 	},
 	/**
 	 * @dev AssetChain Mainnet
@@ -238,8 +245,8 @@ const NETWORKS = {
 			},
 		},
 		gatewayContract: "0xff0E00E0110C1FBb5315D276243497b66D3a4d8a",
+		proxyAdmin: "0x8FD1f78d88Dd008E557273b5Cd517487C2A9A7de",
 	},
-
 	/////////////////////////////////
 	// Testnets
 	/////////////////////////////////
