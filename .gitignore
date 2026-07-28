@@ -4,15 +4,17 @@ node_modules
 coverage
 coverage.json
 typechain
+
 typechain-types
 
 privateKey.txt
 publicKey.txt
 # Hardhat files
 cache
-# artifacts
+artifacts
+types
 
 # Tron Package
 src/js/metacoin-config.js
-
-
+tron-deploy/build
+tron-deploy/node_modules

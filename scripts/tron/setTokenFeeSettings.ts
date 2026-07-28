@@ -14,10 +14,8 @@ async function main() {
       const tx = await gatewayInstance
         .setTokenFeeSettings(
           tokenConfig.address,
-          BigNumber.from(tokenConfig.local.senderToProvider),
-          BigNumber.from(tokenConfig.local.providerToAggregator),
-          BigNumber.from(tokenConfig.fx.senderToAggregator),
-          BigNumber.from(tokenConfig.fx.providerToAggregator)
+          BigNumber.from(tokenConfig.senderToTreasury),
+          BigNumber.from(tokenConfig.providerToTreasury)
         )
         .send({
           feeLimit: 100_000_000,
@@ -26,8 +24,7 @@ async function main() {
         });
       
       console.log(`✅ Set fee settings for ${tokenName} (${tokenConfig.address}): ${tx}`);
-      console.log(`   Local: senderToProvider=${tokenConfig.local.senderToProvider}, providerToAggregator=${tokenConfig.local.providerToAggregator}`);
-      console.log(`   FX: senderToAggregator=${tokenConfig.fx.senderToAggregator}, providerToAggregator=${tokenConfig.fx.providerToAggregator}`);
+      console.log(`   Treasury: senderToTreasury=${tokenConfig.senderToTreasury}, providerToTreasury=${tokenConfig.providerToTreasury}`);
     } catch (error) {
       console.error(`❌ Error setting fee settings for ${tokenName}:`, error);
     }

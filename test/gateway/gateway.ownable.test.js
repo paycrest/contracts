@@ -55,26 +55,22 @@ describe("Ownable settings", function () {
         .connect(admin)
         .setTokenFeeSettings(
           mockUSDTAddress,
-          50000n, // senderToProvider: 50%
-          50000n, // providerToAggregator: 50%
-          0n,     // senderToAggregator: 0%
-          500n    // providerToAggregatorFx: 0.5%
+          0n,  // senderToTreasury: 0%
+          500n // providerToTreasury: 0.5%
         )
     )
       .to.emit(gateway, Events.Gateway.TokenFeeSettingsUpdated)
       .withArgs(
         mockUSDTAddress,
-        50000n,
-        50000n,
         0n,
         500n
       );
 
     const settings = await gateway.getTokenFeeSettings(mockUSDTAddress);
-    expect(settings.senderToProvider).to.eq(50000n);
-    expect(settings.providerToAggregator).to.eq(50000n);
-    expect(settings.senderToAggregator).to.eq(0n);
-    expect(settings.providerToAggregatorFx).to.eq(500n);
+    expect(settings.senderToProvider).to.eq(0n);
+    expect(settings.providerToAggregator).to.eq(0n);
+    expect(settings.senderToTreasury).to.eq(0n);
+    expect(settings.providerToTreasury).to.eq(500n);
   });
 
   it("should not be able to set token fee settings by non-owner", async function () {
@@ -85,8 +81,6 @@ describe("Ownable settings", function () {
         .connect(hacker)
         .setTokenFeeSettings(
           await mockUSDT.getAddress(),
-          50000n,
-          50000n,
           0n,
           500n
         )

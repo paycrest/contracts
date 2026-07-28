@@ -15,7 +15,7 @@ export interface ITransparentUpgradeableProxy$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "npm/@openzeppelin/contracts@4.9.6/proxy/transparent/TransparentUpgradeableProxy.sol";
-  readonly buildInfoId: "solc-0_8_20-5932920006877773a4e6f81980380273c6f2fa80";
+  readonly buildInfoId: "solc-0_8_20-86f81c85ebc812d850fcd17cad1134e0618d89a9";
 };
 
 export interface TransparentUpgradeableProxy$Type {
@@ -29,7 +29,7 @@ export interface TransparentUpgradeableProxy$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "npm/@openzeppelin/contracts@4.9.6/proxy/transparent/TransparentUpgradeableProxy.sol";
-  readonly buildInfoId: "solc-0_8_20-5932920006877773a4e6f81980380273c6f2fa80";
+  readonly buildInfoId: "solc-0_8_20-86f81c85ebc812d850fcd17cad1134e0618d89a9";
 };
 
 import "hardhat/types/artifacts";
