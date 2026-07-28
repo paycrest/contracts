@@ -22,6 +22,7 @@ async function main() {
   let maxPriorityFeePerGas: bigint;
   let maxFeePerGas: bigint;
   if (chainId === 42220) {
+    // Celo: fall back to fixed 90/120 Gwei tips.
     maxPriorityFeePerGas = ethers.parseUnits("90", "gwei");
     maxFeePerGas = ethers.parseUnits("120", "gwei");
   } else {

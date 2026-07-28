@@ -1,3 +1,4 @@
+import { formatEther } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types/hre";
 
 interface AccountTaskArguments {
@@ -5,20 +6,15 @@ interface AccountTaskArguments {
 }
 
 export default async function (
-  taskArguments: AccountTaskArguments,
+  _taskArguments: AccountTaskArguments,
   hre: HardhatRuntimeEnvironment,
 ) {
   const accounts = await hre.ethers.getSigners();
   const provider = hre.ethers.provider;
 
   for (const account of accounts) {
-      console.log(
-          "%s (%i ETH)",
-          account.address,
-          // hre.ethers.utils.formatEther(
-              // getBalance returns wei amount, format to ETH amount
-              await provider.getBalance(account.address)
-          // )
-      );
+    // getBalance returns a wei amount, format it to ETH for readability.
+    const balance = await provider.getBalance(account.address);
+    console.log("%s (%s ETH)", account.address, formatEther(balance));
   }
 }

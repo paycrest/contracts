@@ -38,28 +38,27 @@ async function getContractAddress(contract: any): Promise<string> {
 }
 
 async function deployNewImplementation() {
-    const factory = await ethers.getContractFactory("Gateway");
-    const newImplementation = await factory.deploy();
-    await newImplementation.waitForDeployment?.();
+	const factory = await ethers.getContractFactory("Gateway");
+	const newImplementation = await factory.deploy();
+	await newImplementation.waitForDeployment?.();
 	const address = await getContractAddress(newImplementation);
-    console.log("✅ Deployed new implementation: ", address);
-    return address;
+	console.log("✅ Deployed new implementation: ", address);
+	return address;
 }
 
 async function upgradeProxy() {
 	await confirmContinue({
-			contract: "Gateway",
-			network: networkName,
-			chainId,
-		});
+		contract: "Gateway",
+		network: networkName,
+		chainId,
+	});
+
 	try {
-		const [signer] = await ethers.getSigners(); // Get the signer (the account performing the upgrade)
-		const balance = await signer.getBalance(); // Get the balance of the signer's address
+		const [signer] = await ethers.getSigners(); // Account performing the upgrade
+		const balance = await signer.getBalance();
 
 		if (balance === 0n) {
-			throw new Error(
-				`"Can't upgrade ${chainId} with 0 balance`
-			);
+			throw new Error(`Can't upgrade ${chainId} with 0 balance`);
 		}
 
 		const proxyContractAddress = networkConfig.gatewayContract;
@@ -78,7 +77,6 @@ async function upgradeProxy() {
 		} else {
 			console.error("❌ Upgrade failed: Unknown error occurred");
 		}
-
 	}
 }
 
@@ -90,52 +88,48 @@ async function manualUpgrade() {
 	});
 
 	try {
+		const [signer] = await ethers.getSigners(); // Account performing the upgrade
+		const balance = await signer.getBalance();
 
-		const [signer] = await ethers.getSigners(); // Get the signer (the account performing the upgrade)
-		const balance = await signer.getBalance(); // Get the balance of the signer's address
 		if (balance === 0n) {
 			throw new Error(`Can't upgrade ${chainId} with 0 balance`);
 		}
-		const proxyContractAddress = networkConfig.gatewayContract;
 
+		const proxyContractAddress = networkConfig.gatewayContract;
 		const currentImplAddress = await upgrades.erc1967.getImplementationAddress(proxyContractAddress);
 
-        // Deploy the new implementation contract
-        const newImplementationAddress = await deployNewImplementation();
+		// Deploy the new implementation contract
+		const newImplementationAddress = await deployNewImplementation();
 
-        // Check if the new implementation address is the same as the current one
-        if (currentImplAddress.toLowerCase() === newImplementationAddress.toLowerCase()) {
-            throw new Error("New implementation address is the same as the current implementation.");
-        }
+		// Check if the new implementation address is the same as the current one
+		if (currentImplAddress.toLowerCase() === newImplementationAddress.toLowerCase()) {
+			throw new Error("New implementation address is the same as the current implementation.");
+		}
 
-		const proxyAdminAddress = await upgrades.admin.getInstance().then((instance) =>
-            instance.getProxyAdmin(proxyContractAddress)
-        );
+		const proxyAdminAddress = await upgrades.admin
+			.getInstance()
+			.then((instance) => instance.getProxyAdmin(proxyContractAddress));
 
 		// Connect to the ProxyAdmin contract
-        const ProxyAdminABI = [
-            "function upgrade(address proxy, address implementation) public",
-        ];
-        const proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdminABI, signer);
+		const ProxyAdminABI = ["function upgrade(address proxy, address implementation) public"];
+		const proxyAdmin = new ethers.Contract(proxyAdminAddress, ProxyAdminABI, signer);
 
-        // Perform the upgrade
-        const tx = await proxyAdmin.upgrade(proxyContractAddress, newImplementationAddress);
-        await tx.wait();
+		// Perform the upgrade
+		const tx = await proxyAdmin.upgrade(proxyContractAddress, newImplementationAddress);
+		await tx.wait();
 
 		await hardhat.run("verify:verify", {
 			address: proxyContractAddress,
 		});
 
-        console.log("✅ Proxy upgraded successfully!");
-
+		console.log("✅ Proxy upgraded successfully!");
 	} catch (error) {
 		if (error instanceof Error) {
-		console.error("❌ Upgrade failed: ", error.message);
+			console.error("❌ Upgrade failed: ", error.message);
 		} else {
-		console.error("❌ Upgrade failed: Unknown error occurred");
+			console.error("❌ Upgrade failed: Unknown error occurred");
 		}
 	}
-
 }
 
 async function main() {

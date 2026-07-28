@@ -13,6 +13,8 @@ import {IGateway, IERC20} from './interfaces/IGateway.sol';
  */
 contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	using SafeERC20 for IERC20;
+
+	/// @dev Deprecated. Retained for storage/ABI stability of this upgradeable contract; do not use in new code.
 	struct fee {
 		uint256 protocolFee;
 		uint256 liquidityProviderAmount;

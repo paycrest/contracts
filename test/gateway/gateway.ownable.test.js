@@ -13,12 +13,13 @@ describe("Ownable settings", function () {
   let alice;
   let hacker;
   let sender;
-  let Mark;
+  let mark;
 
   async function setupAndResetFork() {
     ({ gateway, mockUSDT } = await gatewayFixture());
 
-    [admin, keeper, alice, hacker, sender, Mark, treasuryAddress, aggregator] = await ethers.getSigners();
+    [admin, keeper, alice, hacker, sender, mark, treasuryAddress, aggregator] =
+      await ethers.getSigners();
 
     const token = ethers.encodeBytes32String("token");
     const mockUSDTAddress = await mockUSDT.getAddress();
@@ -40,8 +41,8 @@ describe("Ownable settings", function () {
 
   it("should revert for unsupported token", async function () {
     await setupAndResetFork();
-    const Alice = await gateway.isTokenSupported(alice.address);
-    expect(Alice).to.eq(false);
+    const unsupportedToken = await gateway.isTokenSupported(alice.address);
+    expect(unsupportedToken).to.eq(false);
   });
 
   it("should be able to set token fee settings and emit events", async function () {

@@ -1,4 +1,4 @@
-import { defineConfig, task  } from "hardhat/config";
+import { defineConfig, task } from "hardhat/config";
 import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 import hardhatVerify from "@nomicfoundation/hardhat-verify";
 import hardhatEthers from "@nomicfoundation/hardhat-ethers";
@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 const dotEnvResult = dotenv.config();
 const env = (dotEnvResult.parsed ?? {}) as Record<string, string>;
 
-const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001"
+const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001";
 
 const printAccounts = task("accounts", "Print the accounts")
   .setAction(() => import("./tasks/accounts.js"))

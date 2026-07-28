@@ -15,13 +15,16 @@ async function main() {
 
   const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
   
-  const maxPriorityFeePerGas = chainId === 137 
-    ? ethers.parseUnits("90", "gwei")
-    : (await provider.getFeeData()).gasPrice
-  
-  const maxFeePerGas = chainId === 137 
-    ? ethers.parseUnits("120", "gwei")
-    : (await provider.getFeeData()).gasPrice
+  // Polygon: fall back to fixed 90/120 Gwei tips.
+  const maxPriorityFeePerGas =
+    chainId === 137
+      ? ethers.parseUnits("90", "gwei")
+      : (await provider.getFeeData()).gasPrice;
+
+  const maxFeePerGas =
+    chainId === 137
+      ? ethers.parseUnits("120", "gwei")
+      : (await provider.getFeeData()).gasPrice;
 
   // Get the current nonce
   let nonce = await wallet.getTransactionCount();

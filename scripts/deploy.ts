@@ -71,14 +71,14 @@ async function deployGateway(): Promise<any> {
 
   // const implementationAddress = await contract.implementation();
   await hardhat.run("verify:verify", {
-		address: deployment.address,
-	});
+    address: deployment.address,
+  });
 
   if (chainId !== undefined) {
     await updateConfigFile(chainId, deployment.address);
   }
 
-  console.log(`Proxy Contract Address: ${deployment.address}`);
+  console.log(`Contract Address: ${deployment.address}`);
 
   return contract;
 }
