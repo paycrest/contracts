@@ -1,8 +1,8 @@
 /** Public RPC fallbacks (aligned with hardhat.config.ts). Used when Shield3 is unavailable. */
 export const PUBLIC_RPC_FALLBACKS: Record<number, string[]> = {
 	1: ["https://ethereum.public.blockpi.network/v1/rpc/public", "https://cloudflare-eth.com"],
-	56: ["https://bsc.drpc.org", "https://bsc-dataseed.binance.org"],
-	137: ["https://1rpc.io/matic", "https://polygon.drpc.org"],
+	56: ["https://bsc-dataseed.binance.org", "https://bsc-dataseed1.binance.org", "https://bsc.drpc.org"],
+	137: ["https://polygon.drpc.org", "https://polygon-rpc.com", "https://polygon-bor-rpc.publicnode.com"],
 	42161: ["https://arb1.arbitrum.io/rpc", "https://arbitrum-one.publicnode.com", "https://1rpc.io/arb"],
 	8453: ["https://mainnet.base.org", "https://base.drpc.org", "https://base-public.nodies.app"],
 	10: ["https://optimism-rpc.publicnode.com", "https://mainnet.optimism.io"],

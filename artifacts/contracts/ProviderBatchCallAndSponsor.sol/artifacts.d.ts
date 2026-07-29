@@ -15,7 +15,7 @@ export interface ProviderBatchCallAndSponsor$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "project/contracts/ProviderBatchCallAndSponsor.sol";
-  readonly buildInfoId: "solc-0_8_20-86f81c85ebc812d850fcd17cad1134e0618d89a9";
+  readonly buildInfoId: "solc-0_8_20-72aee3dfacb652f8a240f6ece3f7b8b59ce9d844";
 };
 
 import "hardhat/types/artifacts";

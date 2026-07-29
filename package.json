@@ -12,6 +12,8 @@
     "compile": "npx hardhat compile",
     "upgrade:all-evm": "npx hardhat upgrade-all-evm --yes",
     "upgrade:all-evm:dry-run": "npx hardhat upgrade-all-evm --dry-run",
+    "transfer-ownership:all-evm": "npx hardhat transfer-ownership-all-evm --yes",
+    "transfer-ownership:all-evm:dry-run": "npx hardhat transfer-ownership-all-evm --dry-run",
     "lint:sol": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --check && solhint 'contracts/**/*.sol'",
     "lint:sol:fix": "prettier --loglevel warn --ignore-path .gitignore 'contracts/**/*.sol' --write"
   },

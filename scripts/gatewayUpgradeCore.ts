@@ -38,6 +38,8 @@ export type UpgradeOptions = {
 	dryRun?: boolean;
 	setFees?: boolean;
 	updateConfig?: boolean;
+	/** If set, skip impl deploy and ProxyAdmin.upgrade to this address. */
+	implementation?: string;
 };
 
 /** EVM mainnets with Gateway proxies in scripts/config.ts (excludes Tron). */
@@ -151,7 +153,52 @@ async function readStorageAddress(
 	return storageAddress(raw);
 }
 
-function loadGatewayArtifact(): { abi: unknown; bytecode: string } {
+async function waitForContractCode(
+	provider: JsonRpcProvider,
+	address: string,
+	label: string,
+): Promise<void> {
+	const maxAttempts = 15;
+	const pollDelayMs = 2000;
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		const code = await provider.getCode(address);
+		if (code !== "0x") {
+			return;
+		}
+		if (attempt === maxAttempts) {
+			throw new Error(`${label}: no contract code at ${address} after deploy`);
+		}
+		await new Promise((resolve) => setTimeout(resolve, pollDelayMs));
+	}
+}
+
+
+/** Strip CBOR/solc metadata suffix when present. */
+function stripMetadata(bytecode: string): string {
+	const hex = bytecode.startsWith("0x") ? bytecode.slice(2).toLowerCase() : bytecode.toLowerCase();
+	const marker = "a264697066735822";
+	const idx = hex.lastIndexOf(marker);
+	if (idx > 0) return hex.slice(0, idx);
+	return hex;
+}
+
+function normalizeRuntimeBytecode(bytecode: string): string {
+	return stripMetadata(bytecode);
+}
+
+function runtimeBytecodeMatches(onchain: string, expected: string): boolean {
+	if (!onchain || !expected) return false;
+	if (onchain === expected) return true;
+	const minLen = Math.min(onchain.length, expected.length);
+	if (minLen < 100) return false;
+	return (
+		onchain.slice(0, minLen) === expected.slice(0, minLen) ||
+		onchain.startsWith(expected) ||
+		expected.startsWith(onchain)
+	);
+}
+
+function loadGatewayArtifact(): { abi: unknown; bytecode: string; deployedBytecode?: string } {
 	const candidates = [
 		path.join(process.cwd(), "artifacts/contracts/Gateway.sol/Gateway.json"),
 		path.join(process.cwd(), "build/contracts/Gateway.json"),
@@ -162,6 +209,7 @@ function loadGatewayArtifact(): { abi: unknown; bytecode: string } {
 			const artifact = JSON.parse(readFileSync(artifactPath, "utf8")) as {
 				abi: unknown;
 				bytecode: string;
+				deployedBytecode?: string;
 			};
 			if (artifact.bytecode && artifact.bytecode !== "0x") {
 				return artifact;
@@ -332,10 +380,43 @@ async function executeUpgrade(
 	const previousImplementation = await readStorageAddress(provider, proxy, IMPLEMENTATION_SLOT);
 	base.previousImplementation = previousImplementation;
 
-	const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
-	const implContract = await factory.deploy();
-	await implContract.waitForDeployment();
-	const newImplementation = await implContract.getAddress();
+	let newImplementation: string;
+	if (options.implementation) {
+		newImplementation = getAddress(options.implementation);
+		const code = await provider.getCode(newImplementation);
+		if (!code || code === "0x") {
+			return {
+				...base,
+				proxy,
+				error: `No code at implementation ${newImplementation}`,
+			};
+		}
+		const expectedRuntime = normalizeRuntimeBytecode(artifact.deployedBytecode ?? "");
+		const onchainRuntime = normalizeRuntimeBytecode(code);
+		if (!expectedRuntime || !runtimeBytecodeMatches(onchainRuntime, expectedRuntime)) {
+			return {
+				...base,
+				proxy,
+				newImplementation,
+				error: `Implementation bytecode mismatch at ${newImplementation}`,
+			};
+		}
+		chainLog(chainId, `using existing implementation ${newImplementation}`);
+	} else {
+		const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
+		const implContract = await factory.deploy();
+		const deployReceipt = await implContract.deploymentTransaction()?.wait();
+		if (!deployReceipt || deployReceipt.status !== 1) {
+			return {
+				...base,
+				proxy,
+				error: `Gateway implementation deploy failed (tx status=${deployReceipt?.status ?? "unknown"})`,
+			};
+		}
+
+		newImplementation = await implContract.getAddress();
+		await waitForContractCode(provider, newImplementation, chainTag(chainId));
+	}
 
 	if (previousImplementation.toLowerCase() === newImplementation.toLowerCase()) {
 		return {
@@ -465,6 +546,8 @@ export async function upgradeAllEvmNetworks(params: {
 	setFees?: boolean;
 	updateConfig?: boolean;
 	continueOnError?: boolean;
+	/** Optional per-chain implementation addresses (skip deploy when set). */
+	implementations?: Record<number, string>;
 }): Promise<UpgradeResult[]> {
 	const chainIds = resolveTargetChainIds({ networks: params.networks });
 
@@ -480,6 +563,7 @@ export async function upgradeAllEvmNetworks(params: {
 					dryRun: params.dryRun,
 					setFees: params.setFees,
 					updateConfig: false,
+					implementation: params.implementations?.[chainId],
 				});
 				if (result.error && !params.dryRun) {
 					console.error(`[${name}] failed: ${result.error}`);

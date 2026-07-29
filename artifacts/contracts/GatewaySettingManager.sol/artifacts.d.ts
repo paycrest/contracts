@@ -15,7 +15,7 @@ export interface GatewaySettingManager$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "project/contracts/GatewaySettingManager.sol";
-  readonly buildInfoId: "solc-0_8_20-5d0fa5bee6c68deaf1194bec1fcae70b5c151fda";
+  readonly buildInfoId: "solc-0_8_20-72aee3dfacb652f8a240f6ece3f7b8b59ce9d844";
 };
 
 import "hardhat/types/artifacts";

@@ -25,13 +25,26 @@ type TaskArgs = {
 	networks: string;
 };
 
+/** settleIn-rebate Gateway implementations (see deployments/gateway-impl-settle-in-rebate.md). */
+const SETTLE_IN_REBATE_IMPLS: Record<number, string> = {
+	1: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
+	56: "0xe606919d10031A44A4ac3108815512E87d938EbF",
+	137: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+	42161: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+	8453: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+	42220: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
+	1135: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
+};
+
 export default async function upgradeAllEvmTask(taskArgs: TaskArgs) {
-	const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
+	const privateKey =
+		process.env.NEW_OWNER_PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY;
 	if (!privateKey) {
-		throw new Error("Set DEPLOYER_PRIVATE_KEY");
+		throw new Error("Set NEW_OWNER_PRIVATE_KEY or DEPLOYER_PRIVATE_KEY");
 	}
 
 	const networksFilter = taskArgs.networks?.trim() || undefined;
+	const useExistingImpl = process.env.USE_EXISTING_IMPL === "1";
 
 	const chainIds = resolveTargetChainIds({
 		networks: networksFilter,
@@ -44,6 +57,9 @@ export default async function upgradeAllEvmTask(taskArgs: TaskArgs) {
 			chainId,
 			mode: taskArgs.dryRun ? "dry-run" : "upgrade",
 			setFees: taskArgs.setFees,
+			impl: useExistingImpl
+				? SETTLE_IN_REBATE_IMPLS[chainId] ?? "(deploy new)"
+				: "(deploy new)",
 		})),
 	);
 
@@ -62,6 +78,7 @@ export default async function upgradeAllEvmTask(taskArgs: TaskArgs) {
 		setFees: taskArgs.setFees,
 		updateConfig: taskArgs.updateConfig,
 		continueOnError: !taskArgs.failFast,
+		implementations: useExistingImpl ? SETTLE_IN_REBATE_IMPLS : undefined,
 	});
 
 	printUpgradeSummary(results, taskArgs.dryRun);

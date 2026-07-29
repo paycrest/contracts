@@ -226,37 +226,24 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		address _senderFeeRecipient,
 		uint96 _senderFee,
 		address _recipient,
-		uint96 _rate
+		uint96 _rate,
+		uint64 _rebatePercent
 	) external whenNotPaused returns (bool) {
 		require(order[_orderId].sender == address(0), 'OrderAlreadyExists');
+		require(_rebatePercent <= MAX_BPS, 'InvalidRebatePercent');
 		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
 
 		IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount + _senderFee);
 
-		TokenFeeSettings memory settings = _tokenFeeSettings[_token];
-		uint256 treasuryFee;
-		uint256 amountToSettle;
-		if (settings.providerToTreasury > 0) {
-			treasuryFee = (_amount * settings.providerToTreasury) / MAX_BPS;
-			if (treasuryFee > 0) {
-				amountToSettle = _amount - treasuryFee;
-				IERC20(_token).safeTransfer(treasuryAddress, treasuryFee);
-			} else {
-				amountToSettle = _amount;
-			}
-		} else {
-			amountToSettle = _amount;
-		}
-
-		order[_orderId].sender = _recipient;
-		order[_orderId].token = _token;
-		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
-		order[_orderId].senderFee = _senderFee;
-		order[_orderId].protocolFee = treasuryFee;
-		order[_orderId].isFulfilled = true;
-		order[_orderId].amount = amountToSettle;
-
-		IERC20(_token).safeTransfer(_recipient, amountToSettle);
+		(uint256 grossTreasuryFee, uint256 amountToSettle) = _bookSettleInAndPayFees(
+			_orderId,
+			_token,
+			_amount,
+			_senderFeeRecipient,
+			_senderFee,
+			_recipient,
+			_rebatePercent
+		);
 
 		if (_senderFee != 0) {
 			_handleTransferFeeSplitting(_orderId, _token, _senderFeeRecipient, _senderFee);
@@ -268,11 +255,59 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			_recipient,
 			amountToSettle,
 			_token,
-			treasuryFee,
-			_rate
+			grossTreasuryFee,
+			_rate,
+			_rebatePercent
 		);
 
 		return true;
+	}
+
+	/**
+	 * @dev Books order state before fee/recipient transfers (CEI), then pays treasury/rebate/recipient.
+	 */
+	function _bookSettleInAndPayFees(
+		bytes32 _orderId,
+		address _token,
+		uint256 _amount,
+		address _senderFeeRecipient,
+		uint96 _senderFee,
+		address _recipient,
+		uint64 _rebatePercent
+	) internal returns (uint256 grossTreasuryFee, uint256 amountToSettle) {
+		uint256 treasuryFee;
+		uint256 rebateAmount;
+		amountToSettle = _amount;
+		TokenFeeSettings memory settings = _tokenFeeSettings[_token];
+		if (settings.providerToTreasury > 0) {
+			grossTreasuryFee = (_amount * settings.providerToTreasury) / MAX_BPS;
+			if (grossTreasuryFee > 0) {
+				amountToSettle = _amount - grossTreasuryFee;
+			}
+		}
+
+		treasuryFee = grossTreasuryFee;
+		if (treasuryFee > 0 && _rebatePercent > 0) {
+			rebateAmount = (treasuryFee * _rebatePercent) / MAX_BPS;
+			treasuryFee -= rebateAmount;
+		}
+
+		// Arm OrderAlreadyExists before external transfers.
+		order[_orderId].sender = _recipient;
+		order[_orderId].token = _token;
+		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
+		order[_orderId].senderFee = _senderFee;
+		order[_orderId].protocolFee = grossTreasuryFee;
+		order[_orderId].isFulfilled = true;
+		order[_orderId].amount = amountToSettle;
+
+		if (treasuryFee > 0) {
+			IERC20(_token).safeTransfer(treasuryAddress, treasuryFee);
+		}
+		if (rebateAmount > 0) {
+			IERC20(_token).safeTransfer(msg.sender, rebateAmount);
+		}
+		IERC20(_token).safeTransfer(_recipient, amountToSettle);
 	}
 
 	/** @dev See {refund-IGateway}. */
