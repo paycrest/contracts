@@ -94,7 +94,7 @@ async function sweepOne(
 			return;
 		}
 
-		const value = bal - reserve;
+		let value = bal - reserve;
 		const feeData = await provider.getFeeData();
 		const txRequest: {
 			to: string;
@@ -106,13 +106,41 @@ async function sweepOne(
 		} = {
 			to: fundAddress,
 			value,
-			gasLimit: 30_000n,
+			gasLimit: 0n,
 		};
+		let effectiveFee = 0n;
 		if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
 			txRequest.maxFeePerGas = feeData.maxFeePerGas * 2n;
 			txRequest.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas * 2n;
+			effectiveFee = txRequest.maxFeePerGas;
 		} else if (feeData.gasPrice) {
 			txRequest.gasPrice = feeData.gasPrice * 2n;
+			effectiveFee = txRequest.gasPrice;
+		} else {
+			console.log(`[${name}] SKIP — no usable fee data`);
+			return;
+		}
+
+		txRequest.gasLimit = await provider.estimateGas({
+			from: deployer.address,
+			to: fundAddress,
+			value,
+		});
+		const gasCost = txRequest.gasLimit * effectiveFee;
+		if (value + gasCost > bal) {
+			if (bal <= reserve + gasCost) {
+				console.log(
+					`[${name}] SKIP — balance ${formatEther(bal)} cannot cover gas ${formatEther(gasCost)} + reserve`,
+				);
+				return;
+			}
+			value = bal - reserve - gasCost;
+			txRequest.value = value;
+			txRequest.gasLimit = await provider.estimateGas({
+				from: deployer.address,
+				to: fundAddress,
+				value,
+			});
 		}
 
 		console.log(

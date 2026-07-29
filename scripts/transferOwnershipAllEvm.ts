@@ -83,10 +83,22 @@ export type OwnershipTransferOptions = {
 	networks?: string;
 	/** Run all chains concurrently (default true). */
 	parallel?: boolean;
+	/** Stop after first failure when sequential. */
+	failFast?: boolean;
 };
 
-const RPC_PROBE_TIMEOUT_MS = Number(process.env.RPC_PROBE_TIMEOUT_MS ?? 15_000);
-const RPC_OPERATION_TIMEOUT_MS = Number(process.env.RPC_OPERATION_TIMEOUT_MS ?? 300_000);
+function with0xKey(key: string): string {
+	const trimmed = key.trim();
+	return trimmed.startsWith("0x") || trimmed.startsWith("0X") ? trimmed : `0x${trimmed}`;
+}
+
+function positiveTimeoutMs(raw: string | undefined, fallback: number): number {
+	const n = Number(raw ?? fallback);
+	return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+const RPC_PROBE_TIMEOUT_MS = positiveTimeoutMs(process.env.RPC_PROBE_TIMEOUT_MS, 15_000);
+const RPC_OPERATION_TIMEOUT_MS = positiveTimeoutMs(process.env.RPC_OPERATION_TIMEOUT_MS, 300_000);
 
 async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
 	let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -138,18 +150,24 @@ async function resolveProxyAdmin(
 	chainId: number,
 	gateway: string,
 ): Promise<string> {
-	const envOverride = process.env[`PROXY_ADMIN_${chainId}`];
-	if (envOverride) return getAddress(envOverride);
-
-	const fromConfig = NETWORKS[chainId as keyof typeof NETWORKS]?.proxyAdmin;
-	if (fromConfig) return getAddress(fromConfig);
-
 	const raw = await provider.getStorage(gateway, ADMIN_SLOT);
-	const admin = storageAddress(raw);
-	if (admin === ZERO) {
-		throw new Error("Could not resolve ProxyAdmin (config missing and ERC1967 admin slot empty)");
+	const onchainAdmin = storageAddress(raw);
+	if (onchainAdmin === ZERO) {
+		throw new Error("Could not resolve ProxyAdmin (ERC1967 admin slot empty)");
 	}
-	return admin;
+
+	const envOverride = process.env[`PROXY_ADMIN_${chainId}`];
+	const fromConfig = NETWORKS[chainId as keyof typeof NETWORKS]?.proxyAdmin;
+	const configured = envOverride || fromConfig;
+	if (configured) {
+		const configuredAdmin = getAddress(configured);
+		if (configuredAdmin.toLowerCase() !== onchainAdmin.toLowerCase()) {
+			throw new Error(
+				`ProxyAdmin mismatch: on-chain ${onchainAdmin} vs configured ${configuredAdmin}`,
+			);
+		}
+	}
+	return onchainAdmin;
 }
 
 export function resolveChainIds(networksFilter?: string): number[] {
@@ -185,16 +203,28 @@ async function fundIfNeeded(
 	const shortfall = target - bal;
 	const fundWallet = new Wallet(fundKey.startsWith("0x") ? fundKey : `0x${fundKey}`, provider);
 	const fundBal = await provider.getBalance(fundWallet.address);
-	if (fundBal < shortfall) {
+	const feeData = await provider.getFeeData();
+	const effectiveFee = feeData.maxFeePerGas ?? feeData.gasPrice;
+	if (effectiveFee == null || effectiveFee === 0n) {
+		throw new Error(`FUND_ACCOUNT top-up failed: no usable fee data on ${networkName}`);
+	}
+	const gasLimit = await provider.estimateGas({
+		from: fundWallet.address,
+		to,
+		value: shortfall,
+	});
+	const gasCost = gasLimit * effectiveFee;
+	const need = shortfall + gasCost;
+	if (fundBal < need) {
 		throw new Error(
-			`FUND_ACCOUNT ${fundWallet.address} has ${formatEther(fundBal)}, need ${formatEther(shortfall)} to top up ${label}`,
+			`FUND_ACCOUNT ${fundWallet.address} has ${formatEther(fundBal)}, need ${formatEther(need)} (top-up ${formatEther(shortfall)} + gas) to fund ${label}`,
 		);
 	}
 
 	console.log(
 		`[${networkName}] funding ${label} ${to} +${formatEther(shortfall)} (have ${formatEther(bal)}, target ${formatEther(target)})`,
 	);
-	const tx = await fundWallet.sendTransaction({ to, value: shortfall });
+	const tx = await fundWallet.sendTransaction({ to, value: shortfall, gasLimit });
 	console.log(`[${networkName}] fund ${label} tx=${tx.hash}`);
 	await tx.wait();
 	return tx.hash;
@@ -332,7 +362,7 @@ async function transferOnChain(
 							);
 						}
 
-						const newOwnerWallet = new Wallet(opts.newOwnerPrivateKey, provider);
+						const newOwnerWallet = new Wallet(with0xKey(opts.newOwnerPrivateKey), provider);
 						if (newOwnerWallet.address.toLowerCase() !== newOwner.toLowerCase()) {
 							throw new Error(
 								`NEW_OWNER_PRIVATE_KEY derives ${newOwnerWallet.address}, expected ${newOwner}`,
@@ -352,14 +382,14 @@ async function transferOnChain(
 
 				// 3) ProxyAdmin (single-step)
 				if (opts.transferProxyAdmin) {
-					if (proxyAdminOwner.toLowerCase() !== wallet.address.toLowerCase()) {
-						throw new Error(
-							`Deployer is not ProxyAdmin owner (owner=${proxyAdminOwner}, deployer=${wallet.address})`,
-						);
-					}
 					if (proxyAdminOwner.toLowerCase() === newOwner.toLowerCase()) {
 						console.log(`[${networkName}] ProxyAdmin already owned by new owner — skip`);
 					} else {
+						if (proxyAdminOwner.toLowerCase() !== wallet.address.toLowerCase()) {
+							throw new Error(
+								`Deployer is not ProxyAdmin owner (owner=${proxyAdminOwner}, deployer=${wallet.address})`,
+							);
+						}
 						const tx = await proxyAdmin.transferOwnership(newOwner);
 						console.log(`[${networkName}] ProxyAdmin transferOwnership tx=${tx.hash}`);
 						await tx.wait();
@@ -385,6 +415,8 @@ export async function transferOwnershipAllEvm(
 	const transferGateway = options.transferGateway !== false;
 	const transferProxyAdmin = options.transferProxyAdmin !== false;
 	const parallel = options.parallel !== false;
+	const failFast =
+		options.failFast === true || process.argv.includes("--fail-fast");
 	const chainIds = resolveChainIds(options.networks);
 
 	if (!dryRun && transferGateway && !options.newOwnerPrivateKey) {
@@ -394,7 +426,7 @@ export async function transferOwnershipAllEvm(
 	}
 
 	if (!dryRun && options.newOwnerPrivateKey) {
-		const derived = new Wallet(options.newOwnerPrivateKey).address;
+		const derived = new Wallet(with0xKey(options.newOwnerPrivateKey)).address;
 		if (derived.toLowerCase() !== newOwner.toLowerCase()) {
 			throw new Error(
 				`NEW_OWNER_PRIVATE_KEY derives ${derived}, but --new-owner is ${newOwner}`,
@@ -448,7 +480,11 @@ export async function transferOwnershipAllEvm(
 
 	const results: OwnershipTransferResult[] = [];
 	for (const chainId of chainIds) {
-		results.push(await runOne(chainId));
+		const result = await runOne(chainId);
+		results.push(result);
+		if (failFast && result.error && !result.skipped) {
+			break;
+		}
 	}
 	return results;
 }

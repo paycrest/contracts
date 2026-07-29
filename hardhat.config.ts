@@ -11,6 +11,17 @@ const env = (dotEnvResult.parsed ?? {}) as Record<string, string>;
 
 const testPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001";
 
+/** Default Hardhat signers: deploy/upgradeProxy use DEPLOYER. Upgrade tasks opt into NEW_OWNER separately. */
+function networkAccounts(): string[] {
+	return [
+		process.env.DEPLOYER_PRIVATE_KEY ||
+			env.DEPLOYER_PRIVATE_KEY ||
+			process.env.NEW_OWNER_PRIVATE_KEY ||
+			env.NEW_OWNER_PRIVATE_KEY ||
+			testPrivateKey,
+	];
+}
+
 const printAccounts = task("accounts", "Print the accounts")
   .setAction(() => import("./tasks/accounts.js"))
   .build();
@@ -64,126 +75,60 @@ export default defineConfig({
 		arbitrumOne: {
 			type: "http",
 			url: `https://arb1.arbitrum.io/rpc`,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		base: {
 			type: "http",
 			url: `https://base-public.nodies.app`,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		bsc: {
 			type: "http",
 			url: `https://bsc.drpc.org`,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		polygon: {
 			type: "http",
 			url: `https://polygon.drpc.org`,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		mainnet: {
 			type: "http",
 			url: `https://ethereum.publicnode.com`,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		optimisticEthereum: {
 			type: "http",
 			url: `https://optimism-rpc.publicnode.com`,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		scroll: {
 			type: "http",
 			url: "https://scroll.drpc.org", // @note this is a public rpc
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		celo: {
 			type: "http",
 			url: "https://forno.celo.org", // @note this is a public rpc
 			chainId: 42220,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		assetChain: {
 			type: "http",
 			url: "https://mainnet-rpc.assetchain.org", // @note this is a public rpc
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 		lisk: {
 			type: "http",
 			url: "https://rpc.api.lisk.com",
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 
 		// Testnets
 		baseSepolia: {
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x14a34/${env.SHIELD3_API_KEY}/rpc`,
-			accounts: [
-				process.env.NEW_OWNER_PRIVATE_KEY ||
-					process.env.DEPLOYER_PRIVATE_KEY ||
-					env.NEW_OWNER_PRIVATE_KEY ||
-					env.DEPLOYER_PRIVATE_KEY ||
-					testPrivateKey,
-			],
+			accounts: networkAccounts(),
 		},
 	},
 	solidity: {

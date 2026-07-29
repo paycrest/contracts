@@ -1511,49 +1511,52 @@ describe("Gateway settle order", function () {
 			const rate = 750;
 			const orderId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["string"], ["test-order-zero-fx"]));
 			const rebatePercent = 50_000n;
+			const restoredProviderToTreasury = this.protocolFeePercent ?? 500n;
 
-			await gateway.connect(this.deployer).setTokenFeeSettings(mockUSDT.target, 0, 0);
+			try {
+				await gateway.connect(this.deployer).setTokenFeeSettings(mockUSDT.target, 0, 0);
 
-			const totalAmount = this.baseAmount;
-			const initialTreasuryBalance = await mockUSDT.balanceOf(this.treasuryAddress.address);
-			const initialProviderBalance = await mockUSDT.balanceOf(this.provider.address);
-			const initialRecipientBalance = await mockUSDT.balanceOf(this.recipient.address);
+				const totalAmount = this.baseAmount;
+				const initialTreasuryBalance = await mockUSDT.balanceOf(this.treasuryAddress.address);
+				const initialProviderBalance = await mockUSDT.balanceOf(this.provider.address);
+				const initialRecipientBalance = await mockUSDT.balanceOf(this.recipient.address);
 
-			await mockUSDT.connect(this.provider).approve(gateway.target, totalAmount + this.senderFee);
+				await mockUSDT.connect(this.provider).approve(gateway.target, totalAmount + this.senderFee);
 
-			await expect(
-				gateway
-					.connect(this.provider)
-					.settleIn(
+				await expect(
+					gateway
+						.connect(this.provider)
+						.settleIn(
+							orderId,
+							mockUSDT.target,
+							totalAmount,
+							this.sender.address,
+							this.senderFee,
+							this.recipient.address,
+							rate,
+							rebatePercent
+						)
+				)
+					.to.emit(gateway, Events.Gateway.SettleIn)
+					.withArgs(
 						orderId,
-						mockUSDT.target,
-						totalAmount,
-						this.sender.address,
-						this.senderFee,
+						this.provider.address,
 						this.recipient.address,
+						totalAmount,
+						mockUSDT.target,
+						0n,
 						rate,
 						rebatePercent
-					)
-			)
-				.to.emit(gateway, Events.Gateway.SettleIn)
-				.withArgs(
-					orderId,
-					this.provider.address,
-					this.recipient.address,
-					totalAmount,
-					mockUSDT.target,
-					0n,
-					rate,
-					rebatePercent
+					);
+
+				expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(initialRecipientBalance + totalAmount);
+				expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance);
+				expect(await mockUSDT.balanceOf(this.provider.address)).to.eq(
+					initialProviderBalance - (totalAmount + this.senderFee)
 				);
-
-			expect(await mockUSDT.balanceOf(this.recipient.address)).to.eq(initialRecipientBalance + totalAmount);
-			expect(await mockUSDT.balanceOf(this.treasuryAddress.address)).to.eq(initialTreasuryBalance);
-			expect(await mockUSDT.balanceOf(this.provider.address)).to.eq(
-				initialProviderBalance - (totalAmount + this.senderFee)
-			);
-
-			await gateway.connect(this.deployer).setTokenFeeSettings(mockUSDT.target, 0, 500);
+			} finally {
+				await gateway.connect(this.deployer).setTokenFeeSettings(mockUSDT.target, 0, restoredProviderToTreasury);
+			}
 		});
 	});
 });

@@ -158,19 +158,47 @@ async function waitForContractCode(
 	address: string,
 	label: string,
 ): Promise<void> {
-	for (let attempt = 1; attempt <= 15; attempt++) {
+	const maxAttempts = 15;
+	const pollDelayMs = 2000;
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		const code = await provider.getCode(address);
-		if (code !== "0x" && code.length > 2) {
+		if (code !== "0x") {
 			return;
 		}
-		if (attempt === 15) {
+		if (attempt === maxAttempts) {
 			throw new Error(`${label}: no contract code at ${address} after deploy`);
 		}
-		await new Promise((resolve) => setTimeout(resolve, 2000));
+		await new Promise((resolve) => setTimeout(resolve, pollDelayMs));
 	}
 }
 
-function loadGatewayArtifact(): { abi: unknown; bytecode: string } {
+
+/** Strip CBOR/solc metadata suffix when present. */
+function stripMetadata(bytecode: string): string {
+	const hex = bytecode.startsWith("0x") ? bytecode.slice(2).toLowerCase() : bytecode.toLowerCase();
+	const marker = "a264697066735822";
+	const idx = hex.lastIndexOf(marker);
+	if (idx > 0) return hex.slice(0, idx);
+	return hex;
+}
+
+function normalizeRuntimeBytecode(bytecode: string): string {
+	return stripMetadata(bytecode);
+}
+
+function runtimeBytecodeMatches(onchain: string, expected: string): boolean {
+	if (!onchain || !expected) return false;
+	if (onchain === expected) return true;
+	const minLen = Math.min(onchain.length, expected.length);
+	if (minLen < 100) return false;
+	return (
+		onchain.slice(0, minLen) === expected.slice(0, minLen) ||
+		onchain.startsWith(expected) ||
+		expected.startsWith(onchain)
+	);
+}
+
+function loadGatewayArtifact(): { abi: unknown; bytecode: string; deployedBytecode?: string } {
 	const candidates = [
 		path.join(process.cwd(), "artifacts/contracts/Gateway.sol/Gateway.json"),
 		path.join(process.cwd(), "build/contracts/Gateway.json"),
@@ -181,6 +209,7 @@ function loadGatewayArtifact(): { abi: unknown; bytecode: string } {
 			const artifact = JSON.parse(readFileSync(artifactPath, "utf8")) as {
 				abi: unknown;
 				bytecode: string;
+				deployedBytecode?: string;
 			};
 			if (artifact.bytecode && artifact.bytecode !== "0x") {
 				return artifact;
@@ -360,6 +389,16 @@ async function executeUpgrade(
 				...base,
 				proxy,
 				error: `No code at implementation ${newImplementation}`,
+			};
+		}
+		const expectedRuntime = normalizeRuntimeBytecode(artifact.deployedBytecode ?? "");
+		const onchainRuntime = normalizeRuntimeBytecode(code);
+		if (!expectedRuntime || !runtimeBytecodeMatches(onchainRuntime, expectedRuntime)) {
+			return {
+				...base,
+				proxy,
+				newImplementation,
+				error: `Implementation bytecode mismatch at ${newImplementation}`,
 			};
 		}
 		chainLog(chainId, `using existing implementation ${newImplementation}`);

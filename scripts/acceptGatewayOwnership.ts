@@ -3,7 +3,7 @@
  *
  * Usage:
  *   npx hardhat run scripts/acceptGatewayOwnership.ts --network base
- *   GATEWAY_PROXY=0x56dA... npx hardhat run scripts/acceptGatewayOwnership.ts --network base
+ *   GATEWAY_PROXY=0x30F6... npx hardhat run scripts/acceptGatewayOwnership.ts --network base
  */
 import "dotenv/config";
 import { Contract, JsonRpcProvider, Network, Wallet, getAddress } from "ethers";
@@ -24,7 +24,7 @@ async function main() {
 	const chainId = 8453;
 	const networkConfig = NETWORKS[chainId];
 	const proxy = getAddress(
-		process.env.GATEWAY_PROXY?.trim() || "0x56dA8fCE8FD64CaaE90D80DED55587b282bb4303",
+		process.env.GATEWAY_PROXY?.trim() || "0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F",
 	);
 	const expectedNewOwner = getAddress("0x285d6CBc1D7674ccEeC6C214Fed2fCbcd4b5ffaD");
 

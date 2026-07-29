@@ -123,7 +123,14 @@ async function estimateOne(chainId: number, signerKey: string, signerAddress: st
 			const wallet = new Wallet(signerKey, provider);
 			const balance = await provider.getBalance(wallet.address);
 			const fee = await provider.getFeeData();
-			const gasPrice = fee.gasPrice ?? fee.maxFeePerGas ?? 0n;
+			const gasPrice = fee.gasPrice ?? fee.maxFeePerGas;
+			if (gasPrice == null || gasPrice === 0n) {
+				return {
+					chainId,
+					name,
+					error: "getFeeData returned no usable gasPrice/maxFeePerGas",
+				};
+			}
 			const maxFee = fee.maxFeePerGas ?? gasPrice;
 
 			const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);

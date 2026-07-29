@@ -2,7 +2,7 @@
  * Upgrade a Gateway transparent proxy via ProxyAdmin using NEW_OWNER_PRIVATE_KEY.
  *
  * Usage:
- *   GATEWAY_PROXY=0x56dA... GATEWAY_IMPLEMENTATION=0x2F2E... \
+ *   GATEWAY_PROXY=0x30F6... GATEWAY_IMPLEMENTATION=0x2F2E... \
  *     npx hardhat run scripts/upgradeGatewayProxy.ts --network base
  */
 import "dotenv/config";
@@ -33,7 +33,7 @@ async function main() {
 	}
 
 	const proxy = getAddress(
-		process.env.GATEWAY_PROXY?.trim() || "0x56dA8fCE8FD64CaaE90D80DED55587b282bb4303",
+		process.env.GATEWAY_PROXY?.trim() || "0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F",
 	);
 	const implementation = getAddress(
 		process.env.GATEWAY_IMPLEMENTATION?.trim() || "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",

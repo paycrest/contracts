@@ -100,29 +100,28 @@ async function main() {
 			try {
 				const provider = await connect(chainId, cfg?.rpcUrl ?? "");
 				const gateway = getAddress(cfg!.gatewayContract!);
-				let proxyAdmin =
+				const proxyAdmin =
 					(cfg as { proxyAdmin?: string }).proxyAdmin ??
 					storageAddress(await provider.getStorage(gateway, ADMIN_SLOT));
-				if (proxyAdmin === ZERO) {
-					issues.push("ProxyAdmin unresolved");
-				}
 
 				const gw = new Contract(gateway, GATEWAY_ABI, provider);
-				const pa = new Contract(proxyAdmin, PROXY_ADMIN_ABI, provider);
-				const [gwOwner, pending, paOwner] = await Promise.all([
-					gw.owner(),
-					gw.pendingOwner(),
-					pa.owner(),
-				]);
+				const [gwOwner, pending] = await Promise.all([gw.owner(), gw.pendingOwner()]);
 
 				if (deployerAddr && gwOwner.toLowerCase() !== deployerAddr.toLowerCase()) {
 					issues.push(`Gateway owner ${gwOwner} != deployer`);
 				}
-				if (deployerAddr && paOwner.toLowerCase() !== deployerAddr.toLowerCase()) {
-					issues.push(`ProxyAdmin owner ${paOwner} != deployer`);
-				}
 				if (pending !== ZERO) {
 					warnings.push(`${name}: pendingOwner already ${pending}`);
+				}
+
+				if (proxyAdmin === ZERO) {
+					issues.push("ProxyAdmin unresolved");
+				} else {
+					const pa = new Contract(proxyAdmin, PROXY_ADMIN_ABI, provider);
+					const paOwner = await pa.owner();
+					if (deployerAddr && paOwner.toLowerCase() !== deployerAddr.toLowerCase()) {
+						issues.push(`ProxyAdmin owner ${paOwner} != deployer`);
+					}
 				}
 
 				const targets = GAS_TARGETS[chainId];
@@ -158,8 +157,7 @@ async function main() {
 	);
 
 	console.log("\n=== Also note (out of ready set) ===");
-	console.log("ethereum / optimism: FUND_ACCOUNT still empty on last check — excluded until funded");
-	console.log("assetchain: different owner (0xcb6E…) — needs that key, not current deployer");
+	console.log("Chains outside READY were not checked in this run; fund/ownership may still block them.");
 
 	console.log("\n=== BLOCKERS ===");
 	if (!blockers.length) console.log("(none)");
