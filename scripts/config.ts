@@ -32,13 +32,14 @@ const NETWORKS = {
 		},
 		gatewayContract: "0xE8bc3B607CfE68F47000E3d200310D49041148Fc",
 		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
-	},
+		gatewayImplementation: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+},
 
 	/**
 	 * @dev Base
 	 */
 	8453: {
-		gatewayImplementation: "0xd28da2E11FCd2A9F44D5a4952430CE8b4f3Ee05f",
+		gatewayImplementation: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
 		rpcUrl: `https://rpc.shield3.com/v3/0x2105/${SHIELD3_API_KEY}/rpc`,
 		supportedTokens: {
 			USDC: {
@@ -80,7 +81,9 @@ const NETWORKS = {
 		},
 		gatewayContract: "0x1FA0EE7F9410F6fa49B7AD5Da72Cf01647090028",
 		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
-	},
+	
+		gatewayImplementation: "0xe606919d10031A44A4ac3108815512E87d938EbF",
+},
 
 	/**
 	 * @dev Polygon Mainnet
@@ -106,7 +109,9 @@ const NETWORKS = {
 		},
 		gatewayContract: "0xfB411Cc6385Af50A562aFCb441864E9d541CDA67",
 		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
-	},
+	
+		gatewayImplementation: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+},
 
 	/**
 	 * @dev Ethereum Mainnet
@@ -189,7 +194,7 @@ const NETWORKS = {
 	 * @dev Celo Mainnet
 	 */
 	42220: {
-		gatewayImplementation: "0x8508c1C9f29BD1e73B5A9bD8FB87720927c681FA",
+		gatewayImplementation: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
 		rpcUrl: `https://forno.celo.org`,
 		supportedTokens: {
 			USDC: {
@@ -236,7 +241,7 @@ const NETWORKS = {
 	 */
 	1135: {
 		rpcUrl: `https://rpc.api.lisk.com`,
-		gatewayImplementation: "0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE",
+		gatewayImplementation: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
 		supportedTokens: {
 			USDT: {
 				address: "0x05D032ac25d322df992303dCa074EE7392C117b9",

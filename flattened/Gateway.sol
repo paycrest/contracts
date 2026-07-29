@@ -1409,7 +1409,8 @@ interface IGateway {
         uint256 amount,
         address token,
         uint256 aggregatorFee,
-		uint96 rate
+		uint96 rate,
+		uint64 rebatePercent
     );
 
 	/**
@@ -1524,6 +1525,7 @@ interface IGateway {
      * @param _senderFee Amount of fee to be paid to the sender fee recipient
      * @param _recipient Address of the recipient who will receive the tokens
      * @param _rate Quote rate metadata (informational; does not select fee behavior)
+     * @param _rebatePercent The percentage of the aggregator fee that is given back to the caller (LP)
      * @return success Boolean indicating if the operation was successful
      */
     function settleIn(
@@ -1533,7 +1535,8 @@ interface IGateway {
         address _senderFeeRecipient,
         uint96 _senderFee,
         address _recipient,
-        uint96 _rate
+        uint96 _rate,
+        uint64 _rebatePercent
     ) external returns (bool);
 
 	/**
@@ -1785,33 +1788,26 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		address _senderFeeRecipient,
 		uint96 _senderFee,
 		address _recipient,
-		uint96 _rate
+		uint96 _rate,
+		uint64 _rebatePercent
 	) external whenNotPaused returns (bool) {
 		require(order[_orderId].sender == address(0), 'OrderAlreadyExists');
+		require(_rebatePercent <= MAX_BPS, 'InvalidRebatePercent');
 		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
 
 		IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount + _senderFee);
 
-		TokenFeeSettings memory settings = _tokenFeeSettings[_token];
-		uint256 treasuryFee;
-		uint256 amountToSettle;
-		if (settings.providerToTreasury > 0) {
-			treasuryFee = (_amount * settings.providerToTreasury) / MAX_BPS;
-			if (treasuryFee > 0) {
-				amountToSettle = _amount - treasuryFee;
-				IERC20(_token).safeTransfer(treasuryAddress, treasuryFee);
-			} else {
-				amountToSettle = _amount;
-			}
-		} else {
-			amountToSettle = _amount;
-		}
+		(uint256 grossTreasuryFee, uint256 amountToSettle) = _distributeSettleInProtocolFee(
+			_token,
+			_amount,
+			_rebatePercent
+		);
 
 		order[_orderId].sender = _recipient;
 		order[_orderId].token = _token;
 		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
 		order[_orderId].senderFee = _senderFee;
-		order[_orderId].protocolFee = treasuryFee;
+		order[_orderId].protocolFee = grossTreasuryFee;
 		order[_orderId].isFulfilled = true;
 		order[_orderId].amount = amountToSettle;
 
@@ -1827,11 +1823,46 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 			_recipient,
 			amountToSettle,
 			_token,
-			treasuryFee,
-			_rate
+			grossTreasuryFee,
+			_rate,
+			_rebatePercent
 		);
 
 		return true;
+	}
+
+	/**
+	 * @dev Deducts protocol fee from `_amount`, optionally rebating a share to `msg.sender`.
+	 * @return grossTreasuryFee Pre-rebate protocol fee (stored / emitted).
+	 * @return amountToSettle Amount sent to the recipient (`_amount - grossTreasuryFee`).
+	 */
+	function _distributeSettleInProtocolFee(
+		address _token,
+		uint256 _amount,
+		uint64 _rebatePercent
+	) internal returns (uint256 grossTreasuryFee, uint256 amountToSettle) {
+		amountToSettle = _amount;
+		TokenFeeSettings memory settings = _tokenFeeSettings[_token];
+		if (settings.providerToTreasury > 0) {
+			grossTreasuryFee = (_amount * settings.providerToTreasury) / MAX_BPS;
+			if (grossTreasuryFee > 0) {
+				amountToSettle = _amount - grossTreasuryFee;
+			}
+		}
+
+		uint256 treasuryFee = grossTreasuryFee;
+		uint256 rebateAmount;
+		if (treasuryFee > 0 && _rebatePercent > 0) {
+			rebateAmount = (treasuryFee * _rebatePercent) / MAX_BPS;
+			treasuryFee -= rebateAmount;
+		}
+
+		if (treasuryFee > 0) {
+			IERC20(_token).safeTransfer(treasuryAddress, treasuryFee);
+		}
+		if (rebateAmount > 0) {
+			IERC20(_token).safeTransfer(msg.sender, rebateAmount);
+		}
 	}
 
 	/** @dev See {refund-IGateway}. */

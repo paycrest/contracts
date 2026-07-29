@@ -38,6 +38,8 @@ export type UpgradeOptions = {
 	dryRun?: boolean;
 	setFees?: boolean;
 	updateConfig?: boolean;
+	/** If set, skip impl deploy and ProxyAdmin.upgrade to this address. */
+	implementation?: string;
 };
 
 /** EVM mainnets with Gateway proxies in scripts/config.ts (excludes Tron). */
@@ -149,6 +151,23 @@ async function readStorageAddress(
 ): Promise<string> {
 	const raw = await provider.getStorage(proxy, slot);
 	return storageAddress(raw);
+}
+
+async function waitForContractCode(
+	provider: JsonRpcProvider,
+	address: string,
+	label: string,
+): Promise<void> {
+	for (let attempt = 1; attempt <= 15; attempt++) {
+		const code = await provider.getCode(address);
+		if (code !== "0x" && code.length > 2) {
+			return;
+		}
+		if (attempt === 15) {
+			throw new Error(`${label}: no contract code at ${address} after deploy`);
+		}
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+	}
 }
 
 function loadGatewayArtifact(): { abi: unknown; bytecode: string } {
@@ -332,10 +351,33 @@ async function executeUpgrade(
 	const previousImplementation = await readStorageAddress(provider, proxy, IMPLEMENTATION_SLOT);
 	base.previousImplementation = previousImplementation;
 
-	const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
-	const implContract = await factory.deploy();
-	await implContract.waitForDeployment();
-	const newImplementation = await implContract.getAddress();
+	let newImplementation: string;
+	if (options.implementation) {
+		newImplementation = getAddress(options.implementation);
+		const code = await provider.getCode(newImplementation);
+		if (!code || code === "0x") {
+			return {
+				...base,
+				proxy,
+				error: `No code at implementation ${newImplementation}`,
+			};
+		}
+		chainLog(chainId, `using existing implementation ${newImplementation}`);
+	} else {
+		const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
+		const implContract = await factory.deploy();
+		const deployReceipt = await implContract.deploymentTransaction()?.wait();
+		if (!deployReceipt || deployReceipt.status !== 1) {
+			return {
+				...base,
+				proxy,
+				error: `Gateway implementation deploy failed (tx status=${deployReceipt?.status ?? "unknown"})`,
+			};
+		}
+
+		newImplementation = await implContract.getAddress();
+		await waitForContractCode(provider, newImplementation, chainTag(chainId));
+	}
 
 	if (previousImplementation.toLowerCase() === newImplementation.toLowerCase()) {
 		return {
@@ -465,6 +507,8 @@ export async function upgradeAllEvmNetworks(params: {
 	setFees?: boolean;
 	updateConfig?: boolean;
 	continueOnError?: boolean;
+	/** Optional per-chain implementation addresses (skip deploy when set). */
+	implementations?: Record<number, string>;
 }): Promise<UpgradeResult[]> {
 	const chainIds = resolveTargetChainIds({ networks: params.networks });
 
@@ -480,6 +524,7 @@ export async function upgradeAllEvmNetworks(params: {
 					dryRun: params.dryRun,
 					setFees: params.setFees,
 					updateConfig: false,
+					implementation: params.implementations?.[chainId],
 				});
 				if (result.error && !params.dryRun) {
 					console.error(`[${name}] failed: ${result.error}`);

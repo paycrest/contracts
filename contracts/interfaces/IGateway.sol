@@ -56,7 +56,8 @@ interface IGateway {
 		uint256 amount,
 		address token,
 		uint256 aggregatorFee,
-		uint96 rate
+		uint96 rate,
+		uint64 rebatePercent
 	);
 
 	/**
@@ -171,6 +172,7 @@ interface IGateway {
 	 * @param _senderFee Amount of fee to be paid to the sender fee recipient.
 	 * @param _recipient Address of the recipient who will receive the tokens.
 	 * @param _rate Quote rate metadata (informational; does not select fee behavior).
+	 * @param _rebatePercent The percentage of the aggregator fee that is given back to the caller (LP).
 	 * @return success Boolean indicating if the operation was successful.
 	 */
 	function settleIn(
@@ -180,7 +182,8 @@ interface IGateway {
 		address _senderFeeRecipient,
 		uint96 _senderFee,
 		address _recipient,
-		uint96 _rate
+		uint96 _rate,
+		uint64 _rebatePercent
 	) external returns (bool);
 
 	/**

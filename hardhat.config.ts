@@ -33,68 +33,157 @@ const upgradeAllEvm = task("upgrade-all-evm", "Upgrade Gateway proxy on all conf
   .setAction(() => import("./tasks/upgradeAllEvmRunner.js"))
   .build();
 
+const transferOwnershipAllEvm = task(
+  "transfer-ownership-all-evm",
+  "Transfer Gateway (Ownable2Step) and/or ProxyAdmin ownership across EVM mainnets",
+)
+  .addFlag({ name: "dryRun", description: "Print planned transfers without sending transactions" })
+  .addFlag({ name: "yes", description: "Skip confirmation prompt" })
+  .addFlag({ name: "failFast", description: "Stop on first network failure (default: continue)" })
+  .addFlag({ name: "gatewayOnly", description: "Only transfer Gateway ownership" })
+  .addFlag({ name: "proxyAdminOnly", description: "Only transfer ProxyAdmin ownership" })
+  .addFlag({ name: "sequential", description: "Run chains one-by-one instead of in parallel" })
+  .addOption({
+    name: "newOwner",
+    description: "Address to transfer ownership to",
+    defaultValue: "",
+  })
+  .addOption({
+    name: "networks",
+    description: "Comma-separated chain IDs or names (e.g. base,8453)",
+    defaultValue: "",
+  })
+  .setAction(() => import("./tasks/transferOwnershipAllEvmRunner.js"))
+  .build();
+
 export default defineConfig({
 	plugins: [hardhatToolboxMochaEthers, hardhatVerify, hardhatEthers, hardhatTypechain, hardhatNetworkHelpers],
-	tasks: [printAccounts, flattenContracts, upgradeAllEvm],
+	tasks: [printAccounts, flattenContracts, upgradeAllEvm, transferOwnershipAllEvm],
 	networks: {
 		// Mainnets
 		arbitrumOne: {
 			type: "http",
-			url: `https://api.zan.top/arb-one`,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			url: `https://arb1.arbitrum.io/rpc`,
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		base: {
 			type: "http",
 			url: `https://base-public.nodies.app`,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		bsc: {
 			type: "http",
 			url: `https://bsc.drpc.org`,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		polygon: {
 			type: "http",
-			url: `https://1rpc.io/matic`,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			url: `https://polygon.drpc.org`,
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		mainnet: {
 			type: "http",
-			url: `https://ethereum.public.blockpi.network/v1/rpc/public`,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			url: `https://ethereum.publicnode.com`,
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		optimisticEthereum: {
 			type: "http",
 			url: `https://optimism-rpc.publicnode.com`,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		scroll: {
 			type: "http",
 			url: "https://scroll.drpc.org", // @note this is a public rpc
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		celo: {
 			type: "http",
 			url: "https://forno.celo.org", // @note this is a public rpc
 			chainId: 42220,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		assetChain: {
 			type: "http",
 			url: "https://mainnet-rpc.assetchain.org", // @note this is a public rpc
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 		lisk: {
 			type: "http",
-			url: "https://lisk.drpc.org", // @note this is a public rpc
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			url: "https://rpc.api.lisk.com",
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 
 		// Testnets
 		baseSepolia: {
 			type: "http",
 			url: `https://rpc.shield3.com/v3/0x14a34/${env.SHIELD3_API_KEY}/rpc`,
-			accounts: [env.DEPLOYER_PRIVATE_KEY || testPrivateKey],
+			accounts: [
+				process.env.NEW_OWNER_PRIVATE_KEY ||
+					process.env.DEPLOYER_PRIVATE_KEY ||
+					env.NEW_OWNER_PRIVATE_KEY ||
+					env.DEPLOYER_PRIVATE_KEY ||
+					testPrivateKey,
+			],
 		},
 	},
 	solidity: {
