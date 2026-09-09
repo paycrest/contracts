@@ -81,7 +81,7 @@ terms and a signature cannot be replayed on different terms. Signatures are veri
 - **P7 Terminal absorbing**: `Settled` and `Refunded` never transition; no further transfers for that orderId.
 - **P8 Pause/whitelist scope**: `paused` or a de-whitelisted token blocks only `lock`/`lockWithPermit`; only `owner` can unpause.
 - **P9 Uniqueness**: an orderId locks at most once, ever.
-- **P10 Admission**: `lock` reverts on a bad, expired, or foreign-domain `LockAuth` signature, on `msg.sender ≠ locker`, or on `disputeDelay` mismatch; `lockWithPermit` additionally reverts if the permit owner ≠ locker or permit value ≠ amount.
+- **P10 Admission**: `lock` reverts on a bad, expired, or foreign-domain `LockAuth` signature, on `msg.sender ≠ locker`, on `disputeDelay` mismatch, or when `payee` or `counterparty` equals `locker` (a counterparty that is also the locker could partial-settle alone); `lockWithPermit` submitted by anyone other than the locker succeeds only if the locker's permit for exactly `amount` was consumed in that call (a standing allowance is never usable by a third party).
 - **P11 Owner powerlessness**: no owner function changes any lock's fields or moves locked tokens; `disputeDelay` and `feeBps` are per-lock and immutable after lock.
 - **P12 Conservation**: `(payeeGross - fee) + fee + (amount - payeeGross) == amount` on every settle, settlePartial, and arbitrate.
 - **P13 Reentrancy**: a malicious token or receiver cannot re-enter any fund-moving function.
@@ -102,6 +102,7 @@ terms and a signature cannot be replayed on different terms. Signatures are veri
 | Blacklisted locker in `Locked` | Refund reverts until un-blacklisted; no third destination by design (accepted residual) |
 | Reverting / blacklisted treasury | Cannot block settlement (P15); fees accrue and are pulled |
 | Malicious owner | Immutable contract; owner has no fund powers (P11); can only stop new locks |
+| Compromised authSigner + someone holding a standing token allowance | Cannot pull that person's tokens: `lock` requires `msg.sender == locker`, `lockWithPermit` by a third party requires the locker's own permit (P10) |
 | Paycrest ops + arbiter Safe collusion | Can misdirect a lock to the bound counterparty after a public delay, never to Paycrest beyond `feeBps`. Mitigated organizationally (external arbiter signer before ceiling is raised). |
 
 ## 7. Verification method
@@ -121,9 +122,43 @@ Certora spec in v1. Candidates if a licence is added later: P1, P2, P4, P5, P7.
 
 ## 8. Traceability
 
-Filled in by `scripts/check-otc-traceability.sh` output in PR C2. Until `contracts/OTCGateway.sol` exists the
-check is skipped with a warning.
+Enforced by `scripts/check-otc-traceability.sh` (a property with no test whose name carries its id fails the gate).
 
-| Property | Test(s) |
-|---|---|
-| P1–P15 | pending (C2) |
+| Property | Unit / fuzz (`OTCGateway.t.sol`) | Invariant (`OTCGateway.invariants.t.sol`) | Symbolic (`OTCGateway.halmos.t.sol`) |
+|---|---|---|---|
+| P1 | `test_P1_solvencyHoldsAcrossMixedOutcomes` | `invariant_P1_solvency` | |
+| P2 | `test_P2_withdrawFeesOnlyToTreasuryByTreasuryOrOwner` | `invariant_P2_destination` | |
+| P3 | `testFuzz_P3_feeExactness` | | |
+| P4 | `test_P4_*` (7 tests: locker/co-signed/arbiter paths, ERC-1271, blacklisted payee/locker) | | `check_P4_settleNoSigOnlyLocker`, `check_P4_settleSigOnlyLocker`, `check_P4_arbitrateOnlyArbiterAfterDelay`, `check_P4_settlePartialNeedsBothParties` |
+| P5 | `test_P5_onlyCounterpartyEntersPaying`, `test_P5_lockerCannotExitPayingAlone`, `test_P5_tokensReturnFromPayingOnlyViaWaiveCoSignedPartialOrArbiter` | | `check_P5_onlyCounterpartyMarksPaying`, `check_P5_lockerCannotExitPaying`, `check_P5_waiveOnlyCounterparty` |
+| P6 | `test_P6_lockerCanAlwaysCancelWhileLocked`, `test_P6_refundExpiredByAnyoneAfterDeadlineAndNotBefore`, `test_P6_waiveWorksFromLocked` | | `check_P6_lockerCanAlwaysCancelWhileLocked`, `check_P6_refundExpiredIffPastDeadline`, `check_P6_noPayingAfterDeadline` |
+| P7 | `test_P7_terminalStatesAreAbsorbing` | `invariant_P7_terminalAbsorbing` | |
+| P8 | `test_P8_pauseAndDewhitelistBlockOnlyNewLocks` | | `check_P8_pauseBlocksOnlyLock` |
+| P9 | `test_P9_orderIdLocksAtMostOnceEver` | `invariant_P9_uniqueness` | |
+| P10 | `test_P10_lockRejectsBadAdmission`, `test_P10_lockRejectsForeignDomainSignature`, `test_P10_lockRejectsFeeOnTransferToken`, `testFuzz_P10_lockWithPermitIsRelayableOnlyForTheLockersOwnPermit` | | `check_P10_lockNeedsAuthSignerAndLocker` |
+| P11 | `test_P11_ownerCannotTouchAnExistingLock`, `test_P11_setterAccessControlAndBounds` | | |
+| P12 | `testFuzz_P12_conservation` | `invariant_P12_conservation` | |
+| P13 | `test_P13_reentrancyIntoFundMovingFunctionsIsBlocked` | | |
+| P14 | `test_P14_signaturesAreBoundToActionOrderAndTerms` | | `check_P14_releaseIsBoundToOrder`, `check_P14_actionsAreDistinct` |
+| P15 | `test_P15_settlementNeverDependsOnTreasury` | | |
+
+Cross-language: `OTCGateway.vectors.t.sol` proves local (test-side) EIP-712 hashing equals the contract's `hash*`
+views and writes `test/vectors/otc-eip712.json` for the Go encoder test.
+
+## 9. Halmos modelling notes (why the symbolic suite makes these assumptions)
+
+Halmos models `vm.sign`/`ecrecover`/`vm.addr` with uninterpreted functions. Three assumptions are added in the
+symbolic suite; each is true of real ECDSA and none weakens a property:
+
+- **Low-s and `v == 27`.** OpenZeppelin ECDSA rejects high-s; Foundry's real signer always emits low-s. `v` is
+  pinned to one representative because Halmos forks on it inside `ecrecover`, which would give `setUp` two
+  successful paths (Halmos requires exactly one). The suite never runs under Forge.
+- **`vm.addr(pk) != 0`.** No real key maps to the zero address; without it Halmos takes OpenZeppelin's ERC-1271
+  fallback for a "recovered zero address" and reports a spurious failure.
+- **Existential unforgeability (P14 only).** A signature over digest A, evaluated under a different digest B, is
+  assumed to recover to none of the parties. The assumption covers only the foreign digest, so a contract that
+  checked the wrong digest for an action would still be caught.
+
+Toolchain notes: Foundry's `dynamic_test_linking` must be off (it rewrites `new X()` into a `deployCode` cheatcode
+Halmos does not support), and Halmos needs artifacts built with `--ast` (`make otc-halmos` forces such a build
+because Foundry's cache does not key on that flag).

@@ -1,0 +1,51 @@
+{
+  "chainId": 31337,
+  "digests": {
+    "cancel": "0x6528e8b532c162b1b9468f0c2cf737548298e0ecfda00dfd1d63a9769ba2529b",
+    "lockAuth": "0xcbdf4db2b8040fbb21c7643b0c5d6c0b20dc5f72a7734ce807d50be28fba6c0a",
+    "paying": "0xcdae7090ad4ac8212d6e77fb8e9d6bb735f7eafbd6a84674578544444cb9f00b",
+    "release": "0x6873e365dc644e029c130483f7cceb3581da622010c1b8538a59531c621e05dc",
+    "releasePartial": "0xaa2bc95766324c6f725361d32d983509524ab7703c41d842a0065eff1eba7d28",
+    "releasePartialGross": 100000000000,
+    "waive": "0x7ac5c55c522e56d2be20e50266c6766232b9bd2817ca0682b83ca9dda8e5afad"
+  },
+  "domainSeparator": "0x5659272f29ffda3be3ea95deae0cf350adfa5062ad7bfc9945cd8d570ea5c086",
+  "lockAuth": {
+    "amount": 250000000000,
+    "counterparty": "0x252Dae0A4b9d9b80F504F6418acd2d364C0c59cD",
+    "deadline": 1800172800,
+    "disputeDelay": 259200,
+    "feeBps": 500,
+    "locker": "0xcf484269182Ac2388A4bFE6d19FB0687e3534B7f",
+    "orderId": "0x1c9e2e3076787f0e967b0efcdee9de6d66cb1c57913677a142848630eda0ed09",
+    "payee": "0xa9662e45507ACAb8473257649B93a4fa026abd90",
+    "quoteHash": "0x39e2638ff150f4fca2cf191e5f27a7af42f730a378fe07dc53819825c48c6a07",
+    "token": "0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f",
+    "validUntil": 1800000900
+  },
+  "name": "PaycrestOTCGateway",
+  "signatures": {
+    "cancelByLocker": "0x1a462c5e80cf5ff6861a70aa6c043b385613634fefd75033fb8567452a633d0a1b34980058c92ecd6c04c42e49b241bbc64e0db07960262c7efe40e1f619dd7d1c",
+    "lockAuthByAuthSigner": "0xb4b25da137caeb2ff194f94071d697b916dfe06c297b46029c9fd219932ce61121a8df78cee336d83603ab3a22e6f5454ff3a66f26dca6e65dcaaef9b60b3da71c",
+    "payingByCounterparty": "0xa037559f452e7846a0316e6e459e1274e98b424323cdb647efc156eee7aafdc13620acf0201f0eb03d1ed89a6be5c0ee50156b2a7ee39f2b9e1b5ed823ae7cf51b",
+    "releaseByLocker": "0xc845c386e7bbf60bc1ff4747f812d0684b03defd6cf4e36162818ffe18c227270d0466058c5af7e4f8710b80f93b76dad9fb29972475c7c91e6f0ceaec387b721b",
+    "releasePartialByCounterparty": "0x6e70e14b7a302852d532c7545f465064d60b8677cef0f57015e263d0f4e625810fe688769a398c637758253d4920b0f8bb2bd98b0b4dd2f55e2ffb4e75c364261c",
+    "releasePartialByLocker": "0x3f8a5ca6be1743862578d4856e76d1bc330948f78a84c10eabc198ad1d1891bf7962e85e9025deea63cbe0fa44d2c68351bfa36c3597620e4026b148da1351aa1c",
+    "waiveByCounterparty": "0x46b69482e503e5c28f1cd99ceb2a54c7f5920727da7221552c955e017a4546c043b033eb229252a73a72da9a28749729deb8bfe653a382f8092730fef4c7f3c41c"
+  },
+  "testPrivateKeys": {
+    "authSigner": 160,
+    "counterparty": 17,
+    "locker": 94
+  },
+  "typehashes": {
+    "Cancel": "0x3589b906c39550a1175894369d256ba605a480d39c5c9b6a961e6b0fa4fa950d",
+    "LockAuth": "0x988f8df4da8df43a8255422f885f941d01c22490d8e41887228fc9194c35a3b3",
+    "Paying": "0x9c34ae3816c60d0ba04d266e038d52691188a7cf5eb944bfc890a7be2c72a314",
+    "Release": "0x3f7e230f05a69fdd0b9c3403218c39928741b231ca3beb5ea928f6b9a8f54892",
+    "ReleasePartial": "0x18982c8360aec71e1467285bfc9f9e8c36be5399848ccfa9fb3441cd54623815",
+    "Waive": "0x599b8c9b0e6d7b3d2bfc358c5b0acad0b63c38e25cbebd9bb401d8034916698b"
+  },
+  "verifyingContract": "0x2e234DAe75C793f67A35089C9d99245E1C58470b",
+  "version": "1"
+}
