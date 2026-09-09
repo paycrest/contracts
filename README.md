@@ -407,3 +407,18 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ## License
 [Affero General Public License v3.0](https://choosealicense.com/licenses/agpl-3.0/)
+
+## OTCGateway verification harness
+
+`contracts/OTCGateway.sol` (non-custodial OTC escrow) ships behind a single gate that runs unit, fuzz and
+invariant tests (Foundry), bounded symbolic checks (Halmos), static analysis (Slither), a 100% coverage gate,
+and a property-to-test traceability check against `docs/otc-gateway-spec.md`.
+
+```bash
+make otc-tools     # one-time: forge on PATH, forge-std submodule, .venv with halmos + slither
+make otc-verify    # the required check (CI runs it with FOUNDRY_PROFILE=ci)
+```
+
+Foundry lives alongside Hardhat: Hardhat keeps ignition/typechain artifacts and `test/**/*.js`; Foundry owns
+`test/foundry/*.sol` (Hardhat's Solidity test runner is pointed at `test/hardhat-solidity`). Foundry output goes
+to `out/` and `cache_forge/`, never to Hardhat's `artifacts/` or `cache/`.

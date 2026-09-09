@@ -1,0 +1,67 @@
+name: OTCGateway verify
+
+# The single required check for anything under contracts/OTCGateway.sol, contracts/interfaces/IOTCGateway.sol,
+# test/foundry/**, docs/otc-gateway-spec.md, or the harness itself. Runs `make otc-verify` with the heavier
+# `ci` Foundry profile. Mutation testing is a separate, non-gating report (see Makefile `otc-mutation`).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: otc-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  otc-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FOUNDRY_PROFILE: ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install node modules (OpenZeppelin sources + Hardhat)
+        run: yarn install --frozen-lockfile
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install halmos + slither
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --quiet --upgrade pip
+          .venv/bin/pip install --quiet "halmos>=0.3" "slither-analyzer>=0.10"
+
+      - name: Toolchain versions
+        run: |
+          forge --version
+          .venv/bin/halmos --version
+          .venv/bin/slither --version
+
+      - name: make otc-verify
+        run: make otc-verify
+
+      - name: Upload coverage + summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: otc-verify-reports
+          path: |
+            coverage-summary.txt
+            lcov.info
+          if-no-files-found: ignore
