@@ -204,6 +204,14 @@ export default defineConfig({
 			},
 		},
 	},
+	// Foundry owns test/foundry/*.sol (OTCGateway verification harness). Keep Hardhat's own Solidity test
+	// runner pointed elsewhere so it never tries to compile forge-std based tests.
+	paths: {
+		tests: {
+			mocha: "test",
+			solidity: "test/hardhat-solidity",
+		},
+	},
 	test: {
 		solidity: {
 			timeout: 40000,

@@ -1,0 +1,46 @@
+# Foundry lives alongside Hardhat 3. Hardhat keeps ignition/typechain/abigen artifacts;
+# Foundry runs the OTCGateway verification suite (unit, fuzz, invariants, Halmos, coverage).
+# Output/cache paths are deliberately distinct from Hardhat's `artifacts/` and `cache/`.
+
+[profile.default]
+src = "contracts"
+test = "test/foundry"
+script = "script"
+out = "out"
+cache_path = "cache_forge"
+libs = ["lib", "node_modules"]
+remappings = [
+  "@openzeppelin/=node_modules/@openzeppelin/",
+  "forge-std/=lib/forge-std/src/",
+]
+# Match the Hardhat 0.8.20 compiler entry so Foundry-tested bytecode equals what ignition deploys.
+solc_version = "0.8.20"
+evm_version = "shanghai"
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+# Halmos executes `new X()` as a real CREATE; dynamic test linking would rewrite it into a deployCode cheatcode.
+dynamic_test_linking = false
+verbosity = 2
+fs_permissions = [{ access = "read-write", path = "./test/vectors" }]
+# Keep the legacy Hardhat/Truffle sources out of the Foundry build graph.
+skip = ["flattened/**", "migrations/**", "tron-deploy/**"]
+
+[fuzz]
+runs = 1000
+max_test_rejects = 65536
+
+[invariant]
+runs = 256
+depth = 64
+fail_on_revert = false
+call_override = false
+
+# `FOUNDRY_PROFILE=ci make otc-verify` — heavier fuzz/invariant budgets for the required check.
+[profile.ci]
+fuzz = { runs = 10000, max_test_rejects = 262144 }
+invariant = { runs = 1000, depth = 128, fail_on_revert = false }
+
+[fmt]
+tab_width = 4
+line_length = 120
