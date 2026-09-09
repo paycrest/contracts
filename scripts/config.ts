@@ -55,6 +55,7 @@ const NETWORKS = {
 		},
 		gatewayContract: "0x30F6A8457F8E42371E204a9c103f2Bd42341dD0F",
 		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
+		otcGatewayContract: "", // OTCGateway (immutable, CREATE2); empty until deployed
 	},
 
 	/**
@@ -320,6 +321,7 @@ const NETWORKS = {
 			}
 		},
 		gatewayContract: "0x847dfdAa218F9137229CF8424378871A1DA8f625",
+		otcGatewayContract: "", // OTCGateway (immutable, CREATE2); empty until deployed
 	},
 
 	/**
