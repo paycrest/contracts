@@ -420,7 +420,16 @@ repository rather than the contract. A green run here proves the toolchain works
 verified. Both gates become mandatory, and Slither narrows to the contract, the moment the source lands.
 
 Halmos and Slither are pinned in `requirements-otc.txt`, because a tool upgrade can change what the gate
-proves; bump them in their own PR with the full gate re-run.
+proves; bump them in their own PR with the full gate re-run. `requirements-otc.lock` is the fully resolved,
+hash-pinned expansion of that file, and CI installs it with `--require-hashes` so the environment that ran a
+given verification is reproducible. Regenerate it with:
+
+```bash
+uv pip compile --universal --generate-hashes -o requirements-otc.lock requirements-otc.txt
+```
+
+`make otc-tools` deliberately installs the loose file instead, so local setup works on whatever interpreter
+you have. CI is the authority; if a local run ever disagrees with it, compare the two environments.
 
 ```bash
 make otc-tools     # one-time: forge on PATH, forge-std submodule, .venv with halmos + slither
