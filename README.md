@@ -422,3 +422,27 @@ make otc-verify    # the required check (CI runs it with FOUNDRY_PROFILE=ci)
 Foundry lives alongside Hardhat: Hardhat keeps ignition/typechain artifacts and `test/**/*.js`; Foundry owns
 `test/foundry/*.sol` (Hardhat's Solidity test runner is pointed at `test/hardhat-solidity`). Foundry output goes
 to `out/` and `cache_forge/`, never to Hardhat's `artifacts/` or `cache/`.
+
+### Deploying OTCGateway
+
+OTCGateway is immutable (no proxy). Deploy it once per chain with the CREATE2 strategy so every chain gets the same
+address; the salt is in `hardhat.config.ts` and the constructor arguments must be identical per chain (see
+`ignition/params/README.md`).
+
+```bash
+npx hardhat ignition deploy ignition/modules/OTCGateway.ts --network baseSepolia --strategy create2 --parameters ignition/params/otc-baseSepolia.json
+npx hardhat ignition verify chain-84532
+```
+
+After deployment, from the owner Safe:
+
+1. `setTokenSupported(token, true)` for every token the aggregator serves on that chain (the aggregator's
+   pre-flight check compares the whitelist with its `tokens` table).
+2. Record the address in `scripts/config.ts` (`otcGatewayContract`) and in the table below, and insert the
+   `network_otc_gateways` row on the aggregator side.
+3. Do **not** enable `networks.otc_gateway_enabled` until the aggregator migration checklist is complete.
+
+| Network | OTCGateway |
+|---|---|
+| Base Sepolia | pending |
+| Base | pending |

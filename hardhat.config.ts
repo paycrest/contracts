@@ -71,6 +71,11 @@ export default defineConfig({
 	plugins: [hardhatToolboxMochaEthers, hardhatVerify, hardhatEthers, hardhatTypechain, hardhatNetworkHelpers],
 	tasks: [printAccounts, flattenContracts, upgradeAllEvm, transferOwnershipAllEvm],
 	networks: {
+		// In-process simulated chain (Hardhat 3 EDR) for local ignition dry-runs and scripts.
+		hardhatMainnet: {
+			type: "edr-simulated",
+			chainType: "l1",
+		},
 		// Mainnets
 		arbitrumOne: {
 			type: "http",
@@ -201,6 +206,15 @@ export default defineConfig({
 					url: "https://explorer.lisk.com/api",
 					apiUrl: "https://explorer.lisk.com",
 				},
+			},
+		},
+	},
+	// CREATE2 salt for `ignition deploy --strategy create2`; identical constructor args + salt => identical
+	// OTCGateway address on every chain. Never change once anything is deployed with it.
+	ignition: {
+		strategyConfig: {
+			create2: {
+				salt: "0x7061796372657374206f74632d67617465776179207631000000000000000000", // "paycrest otc-gateway v1"
 			},
 		},
 	},
