@@ -47,13 +47,15 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements-otc.txt
+          cache-dependency-path: requirements-otc.lock
 
       - name: Install halmos + slither
+        # --require-hashes: the gate runs against a byte-identical verifier environment every
+        # time, transitive dependencies included, so a result can be reproduced later.
         run: |
           python -m venv .venv
           .venv/bin/pip install --quiet --upgrade pip
-          .venv/bin/pip install --quiet -r requirements-otc.txt
+          .venv/bin/pip install --quiet --require-hashes -r requirements-otc.lock
 
       - name: Toolchain versions
         run: |
