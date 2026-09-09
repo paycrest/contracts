@@ -30,7 +30,7 @@ otc-tools: ## Install/verify local toolchain (forge on PATH, forge-std submodule
 	@test -f lib/forge-std/src/Test.sol || { echo "installing forge-std"; git submodule update --init --recursive; test -f lib/forge-std/src/Test.sol || $(FORGE) install foundry-rs/forge-std; }
 	@test -x $(VENV)/bin/pip || $(PY) -m venv $(VENV)
 	@$(VENV)/bin/pip install --quiet --upgrade pip
-	@$(VENV)/bin/pip install --quiet "halmos>=0.3" "slither-analyzer>=0.10"
+	@$(VENV)/bin/pip install --quiet -r requirements-otc.txt
 	@$(HALMOS) --version && $(SLITHER) --version
 
 otc-build: ## forge build (whole contracts/ tree, proves Hardhat + Foundry coexist)
@@ -54,7 +54,12 @@ otc-halmos: ## Bounded symbolic checks (functions prefixed check_)
 	$(HALMOS) --root . --match-test '^check_' --solver-timeout-assertion 60000 --loop 4
 
 otc-slither: ## Static analysis; fails on medium or high findings in OTCGateway sources
-	$(SLITHER) . --config-file slither.config.json --fail-medium
+	@if [ -f $(OTC_SRC) ]; then \
+	  $(SLITHER) $(OTC_SRC) --config-file slither.config.json --fail-medium; \
+	else \
+	  echo "slither: $(OTC_SRC) not present yet (lands in C2); analysing the repo so the toolchain is still exercised"; \
+	  $(SLITHER) . --config-file slither.config.json --fail-medium; \
+	fi
 
 otc-traceability: ## Every P-id in docs/otc-gateway-spec.md must have a named test
 	scripts/check-otc-traceability.sh
