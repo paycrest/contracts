@@ -420,8 +420,10 @@ traceability steps skip, with a message saying so, only while the source is abse
 
 Halmos and Slither are pinned in `requirements-otc.txt`, because a tool upgrade can change what the gate
 proves; bump them in their own PR with the full gate re-run. `requirements-otc.lock` is the fully resolved,
-hash-pinned expansion of that file, and CI installs it with `--require-hashes` so the environment that ran a
-given verification is reproducible. Regenerate it with:
+hash-pinned expansion of that file, and CI installs it with `--require-hashes` so the tools that decide the
+result, and all their transitive dependencies, are reproducible. That guarantee covers the verifier packages;
+pip itself and the runner image are not pinned. Foundry is pinned to a specific release in the workflow for
+the same reason. Regenerate it with:
 
 ```bash
 uv pip compile --universal --generate-hashes -o requirements-otc.lock requirements-otc.txt

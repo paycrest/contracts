@@ -41,7 +41,10 @@ jobs:
 
       - uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          # Pinned, not `stable`: a Foundry release can change fuzzing, coverage or symbolic
+          # results for an unchanged commit. This is the release the suite was developed
+          # against; bump it deliberately, in its own PR, with the gate re-run.
+          version: v1.8.1
 
       - uses: actions/setup-python@v5
         with:
@@ -50,8 +53,9 @@ jobs:
           cache-dependency-path: requirements-otc.lock
 
       - name: Install halmos + slither
-        # --require-hashes: the gate runs against a byte-identical verifier environment every
-        # time, transitive dependencies included, so a result can be reproduced later.
+        # --require-hashes pins the verifier packages and all their transitive dependencies, so
+        # the tools that decide the result are reproducible. It does not extend to pip itself or
+        # to the runner image, which are not pinned here.
         run: |
           python -m venv .venv
           .venv/bin/pip install --quiet --upgrade pip

@@ -1,7 +1,7 @@
 # Fully resolved, hash-pinned verifier environment. Generated; do not hand-edit.
 #
-# CI installs this with --require-hashes, so the environment that runs the gate is byte-identical
-# from run to run. requirements-otc.txt holds the two tools we actually choose; this file is what
+# CI installs this with --require-hashes, so the verifier packages and their transitive
+# dependencies are identical from run to run. pip itself and the runner image are not pinned. requirements-otc.txt holds the two tools we actually choose; this file is what
 # those two resolve to, transitive dependencies included.
 #
 # Regenerate after changing requirements-otc.txt:
