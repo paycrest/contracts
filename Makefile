@@ -30,6 +30,9 @@ otc-tools: ## Install/verify local toolchain (forge on PATH, forge-std submodule
 	@test -f lib/forge-std/src/Test.sol || { echo "installing forge-std"; git submodule update --init --recursive; test -f lib/forge-std/src/Test.sol || $(FORGE) install foundry-rs/forge-std; }
 	@test -x $(VENV)/bin/pip || $(PY) -m venv $(VENV)
 	@$(VENV)/bin/pip install --quiet --upgrade pip
+	@# Local convenience installs the two pinned tools and lets their dependencies resolve for
+	@# whatever interpreter you have. CI is the authority and installs requirements-otc.lock with
+	@# --require-hashes; if a local result ever disagrees with CI, trust CI and compare the two.
 	@$(VENV)/bin/pip install --quiet -r requirements-otc.txt
 	@$(HALMOS) --version && $(SLITHER) --version
 
