@@ -414,6 +414,14 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 invariant tests (Foundry), bounded symbolic checks (Halmos), static analysis (Slither), a 100% coverage gate,
 and a property-to-test traceability check against `docs/otc-gateway-spec.md`.
 
+**On this branch the gate is the harness only.** `contracts/OTCGateway.sol` does not exist yet, so the
+coverage and traceability steps announce that they are skipping and exit clean, and Slither analyses the
+repository rather than the contract. A green run here proves the toolchain works, not that OTCGateway is
+verified. Both gates become mandatory, and Slither narrows to the contract, the moment the source lands.
+
+Halmos and Slither are pinned in `requirements-otc.txt`, because a tool upgrade can change what the gate
+proves; bump them in their own PR with the full gate re-run.
+
 ```bash
 make otc-tools     # one-time: forge on PATH, forge-std submodule, .venv with halmos + slither
 make otc-verify    # the required check (CI runs it with FOUNDRY_PROFILE=ci)

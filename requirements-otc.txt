@@ -1,0 +1,9 @@
+# Verification toolchain for `make otc-verify` (see README "OTCGateway verification harness").
+#
+# Pinned deliberately. These two tools decide what the gate proves, so a silent upgrade could
+# weaken or change the result of a run that ships a contract holding other people's money.
+# Bump them in their own PR, with the full gate re-run and any changed findings reviewed.
+#
+# These are the versions the harness and its counterexample assumptions were developed against.
+halmos==0.3.3
+slither-analyzer==0.11.6

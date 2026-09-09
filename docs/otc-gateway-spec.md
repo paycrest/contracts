@@ -36,7 +36,7 @@ A separate arbiter Safe with an external signer is required before the liquidity
 
 ## 3. State machine
 
-```
+```text
 None ──lock──▶ Locked ──markPaying──▶ Paying ──settle/settlePartial/arbitrate──▶ Settled
                  │  │                    │
                  │  └──cancel(locker)    ├──waive(counterparty)──▶ Refunded
