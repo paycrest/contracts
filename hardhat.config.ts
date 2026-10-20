@@ -97,16 +97,6 @@ export default defineConfig({
 			url: `https://ethereum.publicnode.com`,
 			accounts: networkAccounts(),
 		},
-		optimisticEthereum: {
-			type: "http",
-			url: `https://optimism-rpc.publicnode.com`,
-			accounts: networkAccounts(),
-		},
-		scroll: {
-			type: "http",
-			url: "https://scroll.drpc.org", // @note this is a public rpc
-			accounts: networkAccounts(),
-		},
 		celo: {
 			type: "http",
 			url: "https://forno.celo.org", // @note this is a public rpc
@@ -175,16 +165,6 @@ export default defineConfig({
 					name: "celoscan",
 					url: "https://celoscan.io",
 					apiUrl: "https://api.etherscan.io/v2/api",
-				},
-			},
-		},
-		534352: {
-			name: "scroll",
-			blockExplorers: {
-				etherscan: {
-					name: "Scroll Explorer",
-					url: "https://api.scrollscan.com/api",
-					apiUrl: "https://scrollscan.com/",
 				},
 			},
 		},

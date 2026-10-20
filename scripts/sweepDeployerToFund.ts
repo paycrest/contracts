@@ -20,7 +20,6 @@ const NEW_OWNER = "0x285d6CBc1D7674ccEeC6C214Fed2fCbcd4b5ffaD";
 const CHAINS: Array<{ id: number; name: string }> = [
 	{ id: 42161, name: "arbitrum" },
 	{ id: 8453, name: "base" },
-	{ id: 534352, name: "scroll" },
 ];
 
 const GATEWAY_ABI = ["function owner() view returns (address)"];
@@ -81,7 +80,6 @@ async function sweepOne(
 			polygon: parseEther("0.02"),
 			arbitrum: parseEther("0.00008"),
 			base: parseEther("0.00008"),
-			scroll: parseEther("0.00015"),
 			celo: parseEther("0.02"),
 		};
 		const reserve = RESERVE[name] ?? parseEther("0.0001");

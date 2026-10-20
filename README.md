@@ -255,7 +255,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="3">Optimism Ethereum</td>
+			<td rowspan="3">Optimism (defunct)</td>
 			<td>Gateway Proxy</td>
 			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
 		</tr>
@@ -271,7 +271,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="3">Scroll</td>
+			<td rowspan="3">Scroll (defunct)</td>
 			<td>Gateway Proxy</td>
 			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
 		</tr>
@@ -300,7 +300,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
 		</tr>
 		<tr>
-			<td rowspan="3">Lisk (retired Oct 2026)</td>
+			<td rowspan="3">Lisk (defunct)</td>
 			<td>Gateway Proxy</td>
 			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
 		</tr>

@@ -6,11 +6,10 @@ import { Contract, JsonRpcProvider, Network, Wallet, formatEther, getAddress } f
 import { NETWORKS } from "./config";
 import { rpcCandidates } from "./rpcUrls";
 import { GAS_TARGETS, OWNERSHIP_CHAIN_IDS } from "./transferOwnershipAllEvm";
-import { CHAIN_NAMES as BASE } from "./gatewayUpgradeCore";
+import { CHAIN_NAMES } from "./gatewayUpgradeCore";
 
-const CHAIN_NAMES: Record<number, string> = { ...BASE, 10: "optimism" };
 const NEW_OWNER = "0x285d6CBc1D7674ccEeC6C214Fed2fCbcd4b5ffaD";
-const READY = ["bsc", "polygon", "arbitrum", "base", "scroll", "celo"];
+const READY = ["bsc", "polygon", "arbitrum", "base", "celo"];
 
 const GATEWAY_ABI = [
 	"function owner() view returns (address)",

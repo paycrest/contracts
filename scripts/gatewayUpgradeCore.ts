@@ -16,7 +16,6 @@ export const CHAIN_NAMES: Record<number, string> = {
 	137: "polygon",
 	8453: "base",
 	42161: "arbitrum",
-	534352: "scroll",
 	42220: "celo",
 };
 
@@ -43,7 +42,7 @@ export type UpgradeOptions = {
 
 /** EVM mainnets with Gateway proxies in scripts/config.ts (excludes Tron). */
 export const EVM_MAINNET_CHAIN_IDS = [
-	1, 56, 137, 42161, 8453, 534352, 42220,
+	1, 56, 137, 42161, 8453, 42220,
 ] as const;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";

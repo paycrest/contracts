@@ -13,7 +13,6 @@ import { CHAIN_NAMES as BASE_CHAIN_NAMES } from "./gatewayUpgradeCore";
 
 const CHAIN_NAMES: Record<number, string> = {
 	...BASE_CHAIN_NAMES,
-	10: "optimism",
 	42420: "assetchain",
 };
 
@@ -42,14 +41,12 @@ export const GAS_TARGETS: Record<
 	137: { deployer: parseEther("0.055"), newOwner: parseEther("0.03"), fundOverhead: parseEther("0.02") },
 	42161: { deployer: parseEther("0.0002"), newOwner: parseEther("0.0001"), fundOverhead: parseEther("0.0001") },
 	8453: { deployer: parseEther("0.0002"), newOwner: parseEther("0.0001"), fundOverhead: parseEther("0.0001") },
-	10: { deployer: parseEther("0.0002"), newOwner: parseEther("0.0001"), fundOverhead: parseEther("0.0001") },
-	534352: { deployer: parseEther("0.0003"), newOwner: parseEther("0.00015"), fundOverhead: parseEther("0.0001") },
 	42220: { deployer: parseEther("0.05"), newOwner: parseEther("0.025"), fundOverhead: parseEther("0.01") },
 };
 
 /** EVM mainnets with a Gateway proxy (excludes Tron / AssetChain different owner). */
 export const OWNERSHIP_CHAIN_IDS = [
-	1, 56, 137, 42161, 8453, 10, 534352, 42220,
+	1, 56, 137, 42161, 8453, 42220,
 ] as const;
 
 export type OwnershipTransferResult = {
