@@ -26,7 +26,6 @@ async function main() {
 		optimism: { symbol: "ETH", deployer: parseEther("0.0002"), newOwner: parseEther("0.0001") },
 		scroll: { symbol: "ETH", deployer: parseEther("0.0003"), newOwner: parseEther("0.00015") },
 		celo: { symbol: "CELO", deployer: parseEther("0.05"), newOwner: parseEther("0.025") },
-		lisk: { symbol: "ETH", deployer: parseEther("0.0002"), newOwner: parseEther("0.0001") },
 	};
 
 	const FUND_TX_OVERHEAD: Record<string, bigint> = {
@@ -38,7 +37,6 @@ async function main() {
 		optimism: parseEther("0.0001"),
 		scroll: parseEther("0.0001"),
 		celo: parseEther("0.01"),
-		lisk: parseEther("0.0001"),
 	};
 
 	const CHAINS = [
@@ -50,7 +48,6 @@ async function main() {
 		{ id: 10, name: "optimism", rpcs: ["https://mainnet.optimism.io", "https://optimism-rpc.publicnode.com"] },
 		{ id: 534352, name: "scroll", rpcs: ["https://rpc.scroll.io", "https://scroll.drpc.org"] },
 		{ id: 42220, name: "celo", rpcs: ["https://forno.celo.org"] },
-		{ id: 1135, name: "lisk", rpcs: ["https://rpc.api.lisk.com", "https://lisk.drpc.org"] },
 	];
 
 	async function connect(rpcs: string[], chainId: number) {

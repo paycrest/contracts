@@ -300,7 +300,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
 		</tr>
 		<tr>
-			<td rowspan="3">Lisk</td>
+			<td rowspan="3">Lisk (retired Oct 2026)</td>
 			<td>Gateway Proxy</td>
 			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
 		</tr>

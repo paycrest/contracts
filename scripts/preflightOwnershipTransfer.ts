@@ -10,7 +10,7 @@ import { CHAIN_NAMES as BASE } from "./gatewayUpgradeCore";
 
 const CHAIN_NAMES: Record<number, string> = { ...BASE, 10: "optimism" };
 const NEW_OWNER = "0x285d6CBc1D7674ccEeC6C214Fed2fCbcd4b5ffaD";
-const READY = ["bsc", "polygon", "arbitrum", "base", "scroll", "celo", "lisk"];
+const READY = ["bsc", "polygon", "arbitrum", "base", "scroll", "celo"];
 
 const GATEWAY_ABI = [
 	"function owner() view returns (address)",

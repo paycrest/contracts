@@ -236,22 +236,6 @@ const NETWORKS = {
 		},
 		gatewayContract: "0xff0E00E0110C1FBb5315D276243497b66D3a4d8a",
 	},
-	/**
-	 * @dev Lisk Mainnet
-	 */
-	1135: {
-		rpcUrl: `https://rpc.api.lisk.com`,
-		gatewayImplementation: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
-		supportedTokens: {
-			USDT: {
-				address: "0x05D032ac25d322df992303dCa074EE7392C117b9",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-		},
-		gatewayContract: "0xff0E00E0110C1FBb5315D276243497b66D3a4d8a",
-		proxyAdmin: "0x8FD1f78d88Dd008E557273b5Cd517487C2A9A7de",
-	},
 	/////////////////////////////////
 	// Testnets
 	/////////////////////////////////

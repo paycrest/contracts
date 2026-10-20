@@ -9,7 +9,6 @@ export const PUBLIC_RPC_FALLBACKS: Record<number, string[]> = {
 	534352: ["https://scroll.drpc.org", "https://rpc.scroll.io"],
 	42220: ["https://forno.celo.org"],
 	42420: ["https://mainnet-rpc.assetchain.org"],
-	1135: ["https://lisk.drpc.org", "https://rpc.api.lisk.com"],
 };
 
 function isUsableShield3Url(url: string): boolean {

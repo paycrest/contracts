@@ -118,11 +118,6 @@ export default defineConfig({
 			url: "https://mainnet-rpc.assetchain.org", // @note this is a public rpc
 			accounts: networkAccounts(),
 		},
-		lisk: {
-			type: "http",
-			url: "https://rpc.api.lisk.com",
-			accounts: networkAccounts(),
-		},
 
 		// Testnets
 		baseSepolia: {
@@ -190,16 +185,6 @@ export default defineConfig({
 					name: "Scroll Explorer",
 					url: "https://api.scrollscan.com/api",
 					apiUrl: "https://scrollscan.com/",
-				},
-			},
-		},
-		1135: {
-			name: "lisk",
-			blockExplorers: {
-				etherscan: {
-					name: "Lisk Explorer",
-					url: "https://explorer.lisk.com/api",
-					apiUrl: "https://explorer.lisk.com",
 				},
 			},
 		},
