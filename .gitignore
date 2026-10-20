@@ -18,3 +18,10 @@ types
 src/js/metacoin-config.js
 tron-deploy/build
 tron-deploy/node_modules
+
+# Foundry (OTC verification harness)
+out/
+cache_forge/
+.venv/
+lcov.info
+coverage-summary.txt

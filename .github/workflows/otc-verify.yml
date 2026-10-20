@@ -1,0 +1,81 @@
+name: OTCGateway verify
+
+# The single required check for anything under contracts/OTCGateway.sol, contracts/interfaces/IOTCGateway.sol,
+# test/foundry/**, docs/otc-gateway-spec.md, or the harness itself. Runs `make otc-verify` with the heavier
+# `ci` Foundry profile. Mutation testing is a separate, non-gating report (see Makefile `otc-mutation`).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The job only reads the repo and runs the verification gate; it publishes nothing.
+permissions:
+  contents: read
+
+concurrency:
+  group: otc-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  otc-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FOUNDRY_PROFILE: ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          # `make otc-verify` runs repository-controlled code (Makefile, scripts, solc plugins);
+          # don't leave a usable token in .git/config while it does.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install node modules (OpenZeppelin sources + Hardhat)
+        run: yarn install --frozen-lockfile
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          # Pinned, not `stable`: a Foundry release can change fuzzing, coverage or symbolic
+          # results for an unchanged commit. This is the release the suite was developed
+          # against; bump it deliberately, in its own PR, with the gate re-run.
+          version: v1.8.1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-otc.lock
+
+      - name: Install halmos + slither
+        # --require-hashes pins the verifier packages and all their transitive dependencies, so
+        # the tools that decide the result are reproducible. It does not extend to pip itself or
+        # to the runner image, which are not pinned here.
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --quiet --upgrade pip
+          .venv/bin/pip install --quiet --require-hashes -r requirements-otc.lock
+
+      - name: Toolchain versions
+        run: |
+          forge --version
+          .venv/bin/halmos --version
+          .venv/bin/slither --version
+
+      - name: make otc-verify
+        run: make otc-verify
+
+      - name: Upload coverage + summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: otc-verify-reports
+          path: |
+            coverage-summary.txt
+            lcov.info
+          if-no-files-found: ignore
