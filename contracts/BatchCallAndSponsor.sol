@@ -108,6 +108,8 @@ contract BatchCallAndSponsor {
 	receive() external payable {}
 
 	function _executeCall(uint256 index, Call calldata callItem) internal {
+		// `to` and `value` are fields the account signed (spec P1, P7): sending ETH to them is the point.
+		// slither-disable-next-line arbitrary-send-eth
 		(bool success, bytes memory reason) = callItem.to.call{value: callItem.value}(callItem.data);
 		if (!success) revert CallReverted(index, reason);
 		emit CallExecuted(msg.sender, callItem.to, callItem.value, callItem.data);
