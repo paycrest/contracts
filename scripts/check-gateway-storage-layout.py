@@ -193,21 +193,9 @@ def main():
         for impl in impls.values():
             addr = (impl.get("address") or "").lower()
             results[addr] = check(assign_slots(impl["layout"]), new, name)
-        if name in EXCEPTIONS:
-            n = sum(len(e) for e in results.values())
-            print(f"  {name}: EXCEPTION ({n} differences) - {EXCEPTIONS[name]}")
-            continue
-        checked += 1
         bad = []
-        for addr, errors in results.items():
-            if not errors:
-                continue
-            if addr in SUPERSEDED:
-                print(f"  {name}: {addr} superseded ({len(errors)} differences) - {SUPERSEDED[addr]}")
-                continue
-            bad.append(addr)
-            failures += [f"{e} (implementation {addr})" for e in errors]
         if name in rpcs:
+            # Live proxies are checked even for an exception: an explicit RPC asks about this chain's proxies.
             for proxy in manifest.get("proxies", []):
                 live = implementation_of(rpcs[name], proxy["address"])
                 if live not in results:
@@ -218,6 +206,19 @@ def main():
                     failures += [f"{e} (live implementation of proxy {proxy['address']})" for e in results[live]]
                 else:
                     print(f"  {name}: proxy {proxy['address']} -> {live} ok")
+        if name in EXCEPTIONS:
+            n = sum(len(e) for e in results.values())
+            print(f"  {name}: EXCEPTION ({n} differences) - {EXCEPTIONS[name]}")
+            continue
+        checked += 1
+        for addr, errors in results.items():
+            if not errors:
+                continue
+            if addr in SUPERSEDED:
+                print(f"  {name}: {addr} superseded ({len(errors)} differences) - {SUPERSEDED[addr]}")
+                continue
+            bad.append(addr)
+            failures += [f"{e} (implementation {addr})" for e in errors]
         print(f"  {name}: {'INCOMPATIBLE' if bad else 'ok'} ({len(results)} implementations)")
     for e in failures:
         print("    " + e)

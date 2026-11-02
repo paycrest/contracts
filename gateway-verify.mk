@@ -38,7 +38,7 @@ gw-slither: ## Static analysis of Gateway.sol + GatewaySettingManager.sol; fails
 GW_LAYOUT_RPC ?=
 
 gw-storage-layout: otc-build ## Gateway layout is upgrade-compatible with every implementation in .openzeppelin/
-	$(PY) scripts/check-gateway-storage-layout.py --forge $(FORGE) $(foreach r,$(GW_LAYOUT_RPC),--rpc $(r))
+	$(PY) scripts/check-gateway-storage-layout.py --forge $(FORGE) $(foreach r,$(GW_LAYOUT_RPC),--rpc '$(r)')
 
 gw-traceability: ## Every P-id in docs/gateway-spec.md has a named Gateway test
 	scripts/check-spec-traceability.sh $(GW_SPEC) '$(GW_TESTS).t.sol'
