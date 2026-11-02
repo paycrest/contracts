@@ -25,3 +25,4 @@ cache_forge/
 .venv/
 lcov.info
 coverage-summary.txt
+bcs-coverage-summary.txt

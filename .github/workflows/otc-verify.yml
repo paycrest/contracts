@@ -1,7 +1,8 @@
 name: OTCGateway verify
 
 # The single required check for anything under contracts/OTCGateway.sol, contracts/interfaces/IOTCGateway.sol,
-# test/foundry/**, docs/otc-gateway-spec.md, or the harness itself. Runs `make otc-verify` with the heavier
+# contracts/BatchCallAndSponsor.sol, test/foundry/**, docs/otc-gateway-spec.md,
+# docs/batch-call-and-sponsor-spec.md, or the harness itself. Runs `make otc-verify` with the heavier
 # `ci` Foundry profile. Mutation testing is a separate, non-gating report (see Makefile `otc-mutation`).
 
 on:
@@ -70,6 +71,11 @@ jobs:
       - name: make otc-verify
         run: make otc-verify
 
+      # BatchCallAndSponsor (EIP-7702 delegate, KAN-943): same toolchain and gates, against
+      # docs/batch-call-and-sponsor-spec.md.
+      - name: make bcs-verify
+        run: make bcs-verify
+
       - name: Upload coverage + summaries
         if: always()
         uses: actions/upload-artifact@v4
@@ -77,5 +83,6 @@ jobs:
           name: otc-verify-reports
           path: |
             coverage-summary.txt
+            bcs-coverage-summary.txt
             lcov.info
           if-no-files-found: ignore

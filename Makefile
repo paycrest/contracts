@@ -5,6 +5,10 @@
 #                     property traceability, hardhat artifact parity
 #
 # CI runs `FOUNDRY_PROFILE=ci make otc-verify` (see .github/workflows/otc-verify.yml).
+#
+# BatchCallAndSponsor (the EIP-7702 delegate, KAN-943) uses the same toolchain and gates:
+#   make bcs-verify   build, unit+fuzz, invariants, 100% coverage, halmos, slither, traceability, hardhat parity
+# against docs/batch-call-and-sponsor-spec.md. CI runs it in the same workflow.
 
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
@@ -17,9 +21,15 @@ SLITHER     := $(if $(wildcard $(VENV)/bin/slither),$(VENV)/bin/slither,slither)
 OTC_MATCH   ?= test/foundry/OTCGateway*
 OTC_SRC     := contracts/OTCGateway.sol
 COVERAGE_MIN?= 100
+BCS_SRC     := contracts/BatchCallAndSponsor.sol
+BCS_SPEC    := docs/batch-call-and-sponsor-spec.md
+BCS_TESTS   := test/foundry/BatchCallAndSponsor*
+# Everything but BatchCallAndSponsor.sol is excluded from its coverage figure.
+BCS_COVERAGE_EXCLUDE := (^test/|^lib/|contracts/mocks/|contracts/Gateway\.sol|contracts/GatewaySettingManager|contracts/ProviderBatchCallAndSponsor|contracts/OTCGateway)
 
 .PHONY: help otc-tools otc-build otc-test otc-invariants otc-coverage otc-halmos otc-slither \
-        otc-traceability otc-hardhat-parity otc-verify otc-mutation
+        otc-traceability otc-hardhat-parity otc-verify otc-mutation \
+        bcs-test bcs-invariants bcs-coverage bcs-halmos bcs-slither bcs-traceability bcs-verify bcs-mutation
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-20s %s\n", $$1, $$2}'
@@ -77,3 +87,34 @@ otc-mutation: otc-build ## Optional, non-gating: mutation testing report for OTC
 	@command -v gambit >/dev/null || { echo "gambit not installed; see https://github.com/Certora/gambit"; exit 0; }
 	gambit mutate --filename $(OTC_SRC) --solc_remappings "@openzeppelin/=node_modules/@openzeppelin/" && \
 	echo "mutants written to gambit_out/; run 'forge test' against each to measure kill rate"
+
+# ---------------------------------------------------------------------------------------------------------------
+# BatchCallAndSponsor (KAN-943)
+
+bcs-test: otc-build ## BatchCallAndSponsor unit + fuzz tests
+	$(FORGE) test --match-path '$(BCS_TESTS)' --no-match-path '*invariants*' -vv
+
+bcs-invariants: otc-build ## BatchCallAndSponsor handler-based invariant suite
+	$(FORGE) test --match-path 'test/foundry/BatchCallAndSponsor.invariants.t.sol' -vv
+
+bcs-coverage: otc-build ## 100% line+branch coverage gate on contracts/BatchCallAndSponsor.sol
+	$(FORGE) coverage --match-path '$(BCS_TESTS)' --no-match-coverage '$(BCS_COVERAGE_EXCLUDE)' --report summary | tee bcs-coverage-summary.txt
+	scripts/check-otc-coverage.sh bcs-coverage-summary.txt $(BCS_SRC) $(COVERAGE_MIN)
+
+bcs-halmos: ## BatchCallAndSponsor bounded symbolic checks (check_ functions in BatchCallAndSponsorHalmos)
+	$(FORGE) build --ast --force >/dev/null
+	$(HALMOS) --root . --match-contract '^BatchCallAndSponsorHalmos$$' --match-test '^check_' --solver-timeout-assertion 60000 --loop 4
+
+bcs-slither: ## Static analysis of BatchCallAndSponsor.sol; fails on medium or high findings
+	$(SLITHER) $(BCS_SRC) --config-file slither.config.json --fail-medium
+
+bcs-traceability: ## Every P-id in docs/batch-call-and-sponsor-spec.md has a named BatchCallAndSponsor test
+	scripts/check-spec-traceability.sh $(BCS_SPEC) '$(BCS_TESTS).sol'
+
+bcs-verify: otc-build bcs-test bcs-invariants bcs-coverage bcs-halmos bcs-slither bcs-traceability otc-hardhat-parity ## Full gate for BatchCallAndSponsor
+	@echo "bcs-verify: all gates green"
+
+bcs-mutation: otc-build ## Optional, non-gating: mutation report for BatchCallAndSponsor.sol (needs gambit on PATH)
+	@command -v gambit >/dev/null || { echo "gambit not installed; see https://github.com/Certora/gambit"; exit 0; }
+	gambit mutate --filename $(BCS_SRC) --solc_remappings "@openzeppelin/=node_modules/@openzeppelin/" && \
+	echo "mutants written to gambit_out/; run 'forge test --match-path $(BCS_TESTS)' against each to measure kill rate"
