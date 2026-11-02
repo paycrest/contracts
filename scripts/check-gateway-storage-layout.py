@@ -161,6 +161,9 @@ def main():
     if failures:
         print("storage layout: incompatible with a deployed implementation")
         return 1
+    if checked == 0:
+        print("storage layout: no manifest was checked (.openzeppelin/*.json missing, empty or all exceptions)")
+        return 1
     print(f"storage layout: compatible with the latest implementation in {checked} manifests")
     return 0
 

@@ -7,7 +7,8 @@ cd "$(dirname "$0")/.."
 
 SPEC=docs/otc-gateway-spec.md
 SRC=contracts/OTCGateway.sol
-TESTS=test/foundry
+# Only OTCGateway's suites count: the Gateway suites in the same directory use the same P-ids.
+TESTS=test/foundry/OTCGateway*.sol
 
 if [ ! -f "$SRC" ]; then
   echo "traceability: $SRC not present yet; skipping (becomes a hard gate once the contract lands)"
@@ -17,7 +18,8 @@ fi
 ids=$(grep -oE '^\- \*\*P[0-9]+' "$SPEC" | grep -oE 'P[0-9]+' | sort -u -V)
 missing=0
 for id in $ids; do
-  if grep -rqE "function (test|testFuzz|invariant|check)_${id}_" "$TESTS"; then
+  # shellcheck disable=SC2086 # the glob must expand
+  if grep -qsE "function (test|testFuzz|invariant|check)_${id}_" $TESTS; then
     echo "  ${id}: ok"
   else
     echo "  ${id}: NO TEST"

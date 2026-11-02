@@ -77,7 +77,7 @@ terms and a signature cannot be replayed on different terms. Signatures are veri
 - **P3 Fee exactness**: `accruedFees` grows by exactly `payeeGross * feeBps / MAX_BPS` per settlement, `feeBps` fixed at lock; no party can change it.
 - **P4 Settle authority**: the payee receives tokens only via (a) locker full `settle`, (b) locker+counterparty `settlePartial`, or (c) arbiter in `Paying` after `disputeDelay`. Any other caller or signature combination reverts.
 - **P5 Paying is sticky for the locker**: from `Paying`, the locker alone can only full-settle; tokens return to the locker only via counterparty `waive`, co-signed partial, or arbiter after delay. Only `counterparty` can enter `Paying`.
-- **P6 Locker liveness**: in `Locked`, `cancel` always succeeds for the locker (even paused, even with a de-whitelisted token); after `deadline`, `refundExpired` succeeds for anyone; `markPaying` after `deadline` reverts.
+- **P6 Locker liveness**: in `Locked`, nothing in the contract stops `cancel` by the locker (not pause, not a de-whitelisted token), and after `deadline` nothing stops `refundExpired` by anyone; `markPaying` after `deadline` reverts. Both pay the locker, so a token that refuses the transfer (e.g. a blacklisted locker, see the threat model) makes them revert until it accepts it.
 - **P7 Terminal absorbing**: `Settled` and `Refunded` never transition; no further transfers for that orderId.
 - **P8 Pause/whitelist scope**: `paused` or a de-whitelisted token blocks only `lock`/`lockWithPermit`; only `owner` can unpause.
 - **P9 Uniqueness**: an orderId locks at most once, ever.
