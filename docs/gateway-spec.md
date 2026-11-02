@@ -85,13 +85,16 @@ Fee settings are read when money moves (settlement time), not when the order was
   unknown setting key changes nothing.
 - **P15 Delisting does not strand orders.** After a token is unsupported (status 2), new orders and `settleIn`
   in it revert, but its open orders can still be settled or refunded.
-- **P16 Storage layout.** The layout matches every implementation recorded in `.openzeppelin/*.json`: every
-  deployed variable keeps its slot, offset and type, `IGateway.Order` keeps its members, and new variables only
-  consume the start of a `__gap` whose end slot is unchanged (`_tokenFeeSettings` took the first slot of the
-  `GatewaySettingManager` gap). `make gw-storage-layout` checks the manifests (the Tron manifests record no
-  slots, so it lays their variables out as solc does) and that no two variables share bytes; the test pins the
-  slots. `arbitrum-sepolia.json` is an older testnet proxy this code is not compatible with, reported as an
-  exception: never upgrade it to this code.
+- **P16 Storage layout.** The layout matches every current implementation recorded in `.openzeppelin/*.json`:
+  every deployed variable keeps its slot, offset and type, `IGateway.Order` keeps its members, and new variables
+  only consume the start of a `__gap` whose end slot is unchanged (`_tokenFeeSettings` took the first slot of the
+  `GatewaySettingManager` gap). `make gw-storage-layout` checks every recorded implementation (the Tron manifests
+  record no slots, so it lays their variables out as solc does) and that no two variables share bytes; the test
+  pins the slots. The pre-fee-model implementations recorded before the current layout are listed as superseded
+  and reported, not gated, and `arbitrum-sepolia.json` is an older testnet proxy this code is not compatible with,
+  reported as an exception: never upgrade it to this code. The manifests do not say which implementation each
+  proxy points at; `GW_LAYOUT_RPC="base.json=https://… …" make gw-storage-layout` reads each proxy's EIP-1967 slot
+  and fails unless it points at a recorded, compatible implementation. Run it before any upgrade.
 
 ## 5. Assumptions
 

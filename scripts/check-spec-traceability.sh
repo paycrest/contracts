@@ -14,8 +14,10 @@ ids=$(grep -oE '^\- \*\*P[0-9]+' "$SPEC" | grep -oE 'P[0-9]+' | sort -u -V)
 [ -n "$ids" ] || { echo "traceability: no property ids in $SPEC"; exit 1; }
 # shellcheck disable=SC2086 # the glob must expand
 files=$(ls $GLOB)
+# One left-to-right pass, so whichever of a string, a // comment or a /* comment starts first wins: a // comment
+# that mentions /* cannot open a block, and comment markers inside strings stay.
 # shellcheck disable=SC2086
-code=$(perl -0777 -pe 's{/\*.*?\*/}{}gs; s{//[^\n]*}{}g' $files)
+code=$(perl -0777 -pe 's{("(?:\\.|[^"\\\n])*"|'"'"'(?:\\.|[^'"'"'\\\n])*'"'"')|//[^\n]*|/\*.*?\*/}{defined $1 ? $1 : ""}gse' $files)
 missing=0
 for id in $ids; do
   if grep -qE "function (test|testFuzz|invariant|check)_${id}_" <<<"$code"; then
