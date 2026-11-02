@@ -22,7 +22,10 @@ COVERAGE_MIN?= 100
         otc-traceability otc-hardhat-parity otc-verify otc-mutation
 
 help:
-	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-20s %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-20s %s\n", $$1, $$2}'
+
+# Gateway + GatewaySettingManager (KAN-946): gw-* targets, `make gw-verify`.
+include gateway-verify.mk
 
 otc-tools: ## Install/verify local toolchain (forge on PATH, forge-std submodule, venv with halmos+slither)
 	@command -v $(FORGE) >/dev/null || { echo "forge not found: brew install foundry (or foundryup)"; exit 1; }

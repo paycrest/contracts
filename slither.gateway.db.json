@@ -1,0 +1,44 @@
+[
+  {
+    "id": "6b4c622725b39cea81c953c1a44ca85a5522673d0da602eb88228336f579bdb1",
+    "check": "divide-before-multiply",
+    "impact": "Medium",
+    "confidence": "Medium",
+    "description": "Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219) performs a multiplication on the result of a division:\n\t- liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / currentOrderBPS (contracts/Gateway.sol#190)\n\t- treasuryFee = (liquidityProviderAmount * settings.providerToTreasury) / MAX_BPS (contracts/Gateway.sol#195)\n"
+  },
+  {
+    "id": "96c01506ccb954a6b9533fbef477bce8746df0ab13dcd627b46da2803bbb3155",
+    "check": "divide-before-multiply",
+    "impact": "Medium",
+    "confidence": "Medium",
+    "description": "Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219) performs a multiplication on the result of a division:\n\t- treasuryFee = (liquidityProviderAmount * settings.providerToTreasury) / MAX_BPS (contracts/Gateway.sol#195)\n\t- rebateAmount = (treasuryFee * _rebatePercent) / MAX_BPS (contracts/Gateway.sol#198)\n"
+  },
+  {
+    "id": "bef7f1167290e56f9c11c69a85bfaafdadb5f6ada8a37539780a9187071ef025",
+    "check": "reentrancy-no-eth",
+    "impact": "Medium",
+    "confidence": "Medium",
+    "description": "Reentrancy in Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#314-342):\n\tExternal calls:\n\t- IERC20(order[_orderId].token).safeTransfer(treasuryAddress,_fee) (contracts/Gateway.sol#322)\n\tState variables written after the call(s):\n\t- order[_orderId].isRefunded = true (contracts/Gateway.sol#326)\n\tGateway.order (contracts/Gateway.sol#23) can be used in cross function reentrancies:\n\t- Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64) (contracts/Gateway.sol#269-311)\n\t- Gateway.createOrder(address,uint256,uint96,address,uint256,address,string) (contracts/Gateway.sol#70-125)\n\t- Gateway.getOrderInfo(bytes32) (contracts/Gateway.sol#348-350)\n\t- Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#314-342)\n\t- Gateway.settleIn(bytes32,address,uint256,address,uint96,address,uint96,uint64) (contracts/Gateway.sol#222-264)\n\t- Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219)\n\t- order[_orderId].currentBPS = 0 (contracts/Gateway.sol#327)\n\tGateway.order (contracts/Gateway.sol#23) can be used in cross function reentrancies:\n\t- Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64) (contracts/Gateway.sol#269-311)\n\t- Gateway.createOrder(address,uint256,uint96,address,uint256,address,string) (contracts/Gateway.sol#70-125)\n\t- Gateway.getOrderInfo(bytes32) (contracts/Gateway.sol#348-350)\n\t- Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#314-342)\n\t- Gateway.settleIn(bytes32,address,uint256,address,uint96,address,uint96,uint64) (contracts/Gateway.sol#222-264)\n\t- Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219)\n"
+  },
+  {
+    "id": "17287c5a7479d2fd5974eb907df156bef99fba4218cabf16a781e1a61e869fcd",
+    "check": "uninitialized-local",
+    "impact": "Medium",
+    "confidence": "Medium",
+    "description": "GatewaySettingManager.updateProtocolAddress(bytes32,address).updated (contracts/GatewaySettingManager.sol#69) is a local variable never initialized\n"
+  },
+  {
+    "id": "64f789fc7b2c35997d6bb06bbb96533ffae9eb00adc45e0f8028cd063a762675",
+    "check": "uninitialized-local",
+    "impact": "Medium",
+    "confidence": "Medium",
+    "description": "Gateway.createOrder(address,uint256,uint96,address,uint256,address,string)._protocolFee (contracts/Gateway.sol#97) is a local variable never initialized\n"
+  },
+  {
+    "id": "f0703aaa0e9293ee9121d4c9159c3ee18e352653027b915aa841c0d01bffdebf",
+    "check": "uninitialized-local",
+    "impact": "Medium",
+    "confidence": "Medium",
+    "description": "Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64).rebateAmount (contracts/Gateway.sol#279) is a local variable never initialized\n"
+  }
+]
