@@ -58,8 +58,8 @@ Fee settings are read when money moves (settlement time), not when the order was
   refund address, a sender fee without a recipient, or an empty message hash.
 - **P5 Order ids.** An order created by `sender` as its `n`-th order has id `keccak256(abi.encode(sender, n,
   chainid))`; a sender's nonce rises by exactly one per order, so `createOrder` ids never repeat. `createOrder`
-  never overwrites a booked id: if the id it computes is already booked (only `settleIn` can do that, see V1), it
-  reverts and the existing record, the sender's funds and the nonce are unchanged.
+  never overwrites an existing record: if the id it computes already holds an order, it reverts and the record,
+  the sender's funds and the nonce are unchanged.
 - **P6 Full settlement pays exactly.** Over any sequence of `settleOut` splits that settles an order, the
   provider(s) and treasury together receive exactly the order amount, the sender fee is paid exactly once (on
   the last split), and the order ends fulfilled with nothing left.
@@ -107,14 +107,8 @@ Fee settings are read when money moves (settlement time), not when the order was
 
 ## 6. Known violations (not gated)
 
-- **V1 `settleIn` can pre-book a future `createOrder` id.** `settleIn` is permissionless and books any unused
-  `_orderId` the caller chooses, while `createOrder` ids are predictable (P5). Anyone can call `settleIn` with
-  `keccak256(abi.encode(victim, nonce(victim) + 1, chainid))` for a supported token and a tiny amount sent to
-  their own recipient. The victim's next `createOrder` then reverts with `OrderAlreadyExists`, and since the
-  revert also undoes the nonce increment, every retry computes the same id: the address can never create an
-  order on that Gateway again. Test: `test_bug_V1_settleInSquatsTheNextCreateOrderId` in
-  `test/foundry/Gateway.bugs.t.sol`. It fails today, so it skips unless `GW_KNOWN_BUGS=true` and no gate runs it;
-  `make gw-known-bugs` does.
+None listed. A finding that affects deployed contracts is handled privately under the security policy and
+recorded here once the fix is deployed.
 
 ## 7. Static analysis triage
 

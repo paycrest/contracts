@@ -2,7 +2,6 @@
 #
 #   make gw-verify       build, unit+fuzz, invariants, coverage, halmos, slither, storage layout, traceability,
 #                        hardhat parity, against docs/gateway-spec.md
-#   make gw-known-bugs   the tests for the spec's known violations (§6); they fail until the contract is fixed
 #
 # Same toolchain as otc-verify (FORGE, HALMOS, SLITHER, COVERAGE_MIN). CI: .github/workflows/gateway-verify.yml.
 
@@ -14,7 +13,7 @@ GW_COVERAGE_SUMMARY := cache_forge/gw-coverage-summary.txt
 # Everything but the two Gateway sources is excluded from their coverage figure.
 GW_COVERAGE_EXCLUDE := (^test/|^lib/|contracts/mocks/|contracts/interfaces/|contracts/OTCGateway|contracts/BatchCallAndSponsor|contracts/ProviderBatchCallAndSponsor)
 
-.PHONY: gw-test gw-invariants gw-coverage gw-halmos gw-slither gw-storage-layout gw-traceability gw-verify gw-known-bugs
+.PHONY: gw-test gw-invariants gw-coverage gw-halmos gw-slither gw-storage-layout gw-traceability gw-verify
 
 gw-test: otc-build ## Gateway unit + fuzz tests
 	$(FORGE) test --match-path '$(GW_TESTS)' --no-match-path '*invariants*' -vv
@@ -44,5 +43,3 @@ gw-traceability: ## Every P-id in docs/gateway-spec.md has a named Gateway test
 gw-verify: otc-build gw-test gw-invariants gw-coverage gw-halmos gw-slither gw-storage-layout gw-traceability otc-hardhat-parity ## Full gate for Gateway + GatewaySettingManager
 	@echo "gw-verify: all gates green"
 
-gw-known-bugs: otc-build ## Non-gating: run the spec's known-violation tests (they fail until the fix lands)
-	GW_KNOWN_BUGS=true $(FORGE) test --match-path 'test/foundry/Gateway.bugs.t.sol' -vv

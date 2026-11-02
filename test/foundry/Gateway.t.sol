@@ -142,24 +142,23 @@ contract GatewayTest is GatewayBase {
 		assertTrue(a1 != a2 && a1 != b1 && a2 != b1);
 	}
 
-	/// `createOrder` never overwrites a booked id. Only `settleIn` can book an id `createOrder` will compute (that is
-	/// V1 in the spec); the record it wrote must survive, and the sender's funds and nonce stay where they were.
-	function test_P5_createOrderNeverOverwritesABookedId() public {
-		_fund(bob, 1);
-		vm.prank(bob);
-		gateway.settleIn(_orderId(alice, 1), address(token), 1, address(0), 0, bob, 1, 0);
-		IGateway.Order memory booked = _order(_orderId(alice, 1));
+	/// `createOrder` never overwrites an existing record. The record is written straight into storage here (the
+	/// `order` mapping is slot 255, `sender` is the struct's first word); it must survive the call, and the sender's
+	/// funds and nonce stay where they were.
+	function test_P5_createOrderNeverOverwritesAnExistingRecord() public {
+		bytes32 id = _orderId(alice, 1);
+		address holder = address(uint160(0x5107));
+		vm.store(address(gateway), keccak256(abi.encode(id, uint256(255))), bytes32(uint256(uint160(holder))));
+		assertEq(_order(id).sender, holder);
 
 		_fund(alice, 10);
 		vm.prank(alice);
 		vm.expectRevert('OrderAlreadyExists');
 		gateway.createOrder(address(token), 10, 1500, address(0), 0, refundTo, 'msg');
 
-		IGateway.Order memory after_ = _order(_orderId(alice, 1));
-		assertEq(after_.sender, booked.sender);
-		assertEq(after_.amount, booked.amount);
-		assertTrue(after_.isFulfilled);
+		assertEq(_order(id).sender, holder);
 		assertEq(_bal(alice), 10);
+		assertEq(uint256(vm.load(address(gateway), keccak256(abi.encode(alice, uint256(256))))), 0, 'nonce unchanged');
 	}
 
 	/* ==================================================================================== P6 */
