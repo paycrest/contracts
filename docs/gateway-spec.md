@@ -99,6 +99,11 @@ Fee settings are read when money moves (settlement time), not when the order was
   supports such tokens. P12 does not hold for a token that charges on transfer.
 - The owner and aggregator keys are honest; P1/P2 only say no one else holds their powers.
 - `settleOut` trusts the aggregator's `_liquidityProvider` and split; the contract only guarantees the amounts.
+- Halmos bounds amounts to `2^96` and proves P6 as its inductive step: any split, from any remaining amount and
+  `currentBPS`, conserves tokens exactly and closes the order only when it takes the rest. Two facts the
+  solver times out on (nonlinear 256-bit arithmetic) are left to fuzzing and the invariants rather than proved:
+  `amount·c/c = amount` on the last split (so nothing is left), and `protocolFee ≤ amount` (P4), which the
+  refund check assumes.
 
 ## 6. Known violations (not gated)
 

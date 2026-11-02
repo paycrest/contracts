@@ -64,28 +64,40 @@ contract GatewayHalmos is GatewayBase {
 
 	/* ==================================================================================== P6 */
 
-	/// Two splits that settle the order pay out exactly the amount plus the sender fee, and leave nothing.
-	function check_P6_twoSplitsPayExactly(
+	/// The inductive step of P6, for every split of every open order: whatever amount `a` remains at whatever
+	/// `currentBPS` c, a split of `p <= c` pays the provider and treasury exactly its gross `a*p/c` (plus the whole
+	/// sender fee when it is the last one), lowers the remaining amount by exactly that gross, leaves the Gateway
+	/// holding exactly the remaining amount (plus the sender fee while the order is open), and closes the order
+	/// exactly when `p == c`. The order's state is set directly, so this covers every reachable (a, c) and more.
+	/// By induction over any sequence of splits, everything paid out plus what the Gateway holds is always the
+	/// order's amount plus its sender fee. That the last split leaves nothing (`a*c/c == a`, true in checked
+	/// arithmetic whenever the call succeeds) is the one step not proved here: the solver times out on it. Fuzz
+	/// (P6) and the invariant suite (P12) cover it. A direct two-split check timed out at 60 s per assertion.
+	function check_P6_everySplitConservesAndOnlyTheLastCloses(
 		uint256 amount,
 		uint256 senderFee,
 		uint256 stt,
 		uint256 ptt,
-		uint64 first,
-		uint64 r1,
-		uint64 r2
+		uint96 currentBPS,
+		uint64 pct,
+		uint64 rebate
 	) public {
 		vm.assume(amount > 0 && amount < AMOUNT_BOUND && senderFee < AMOUNT_BOUND);
-		vm.assume(stt <= MAX_BPS && ptt <= MAX_BPS && r1 <= MAX_BPS && r2 <= MAX_BPS);
-		vm.assume(first > 0 && first < MAX_BPS);
+		vm.assume(stt <= MAX_BPS && ptt <= MAX_BPS && rebate <= MAX_BPS);
+		vm.assume(currentBPS > 0 && currentBPS <= MAX_BPS && pct > 0 && pct <= currentBPS);
 		_setFees(stt, ptt);
 		bytes32 id = _create(alice, amount, senderFee, feeRecipient, refundTo);
+		// IGateway.Order.currentBPS is member slot 6 of order[id]; `order` is slot 255 (P16).
+		vm.store(address(gateway), bytes32(uint256(keccak256(abi.encode(id, uint256(255)))) + 6), bytes32(uint256(currentBPS)));
 
-		_settleOut(id, provider, first, r1);
-		_settleOut(id, provider, uint64(MAX_BPS) - first, r2);
+		_settleOut(id, provider, pct, rebate);
 
-		assert(_bal(provider) + _bal(treasury) + _bal(feeRecipient) == amount + senderFee);
-		assert(_bal(address(gateway)) == 0);
-		assert(_order(id).isFulfilled && _order(id).amount == 0);
+		uint256 gross = (amount * pct) / currentBPS;
+		bool last = pct == currentBPS;
+		assert(_order(id).amount == amount - gross);
+		assert(_bal(provider) + _bal(treasury) + _bal(feeRecipient) == gross + (last ? senderFee : 0));
+		assert(_bal(address(gateway)) == _order(id).amount + (last ? 0 : senderFee));
+		assert(_order(id).isFulfilled == last);
 	}
 
 	/* ==================================================================================== P7 */
@@ -127,24 +139,29 @@ contract GatewayHalmos is GatewayBase {
 
 	/* ==================================================================================== P9 */
 
-	/// A refund pays out exactly what the order holds: the fee to the treasury, the rest and the sender fee to
-	/// the refund address; a fee above the order's protocol fee never succeeds.
+	/// A refund with any fee the order allows pays the treasury the fee and the refund address the rest plus the
+	/// sender fee, leaves nothing and marks the order refunded. The fee is also assumed to be at most the amount:
+	/// that `protocolFee <= amount` always holds is fuzzed in P4 but times out here (nonlinear), so it is assumed.
 	function check_P9_refundPaysWhatTheOrderHolds(uint256 amount, uint256 senderFee, uint256 ptt, uint256 fee) public {
 		vm.assume(amount > 0 && amount < AMOUNT_BOUND && senderFee < AMOUNT_BOUND && ptt <= MAX_BPS);
 		_setFees(0, ptt);
 		bytes32 id = _create(alice, amount, senderFee, feeRecipient, refundTo);
-		uint256 protocolFee = _order(id).protocolFee;
+		vm.assume(fee <= _order(id).protocolFee && fee <= amount);
 
-		bool ok = _call(aggregator, abi.encodeCall(gateway.refund, (fee, id)));
+		assert(_call(aggregator, abi.encodeCall(gateway.refund, (fee, id))));
+		assert(_bal(treasury) == fee);
+		assert(_bal(refundTo) == amount - fee + senderFee);
+		assert(_bal(address(gateway)) == 0);
+		assert(_order(id).isRefunded);
+	}
 
-		if (fee > protocolFee) {
-			assert(!ok);
-		} else {
-			assert(ok);
-			assert(_bal(treasury) == fee);
-			assert(_bal(refundTo) == amount - fee + senderFee);
-			assert(_bal(address(gateway)) == 0);
-		}
+	/// A refund fee above the order's protocol fee never succeeds.
+	function check_P9_feeAboveProtocolFeeReverts(uint256 amount, uint256 senderFee, uint256 ptt, uint256 fee) public {
+		vm.assume(amount > 0 && amount < AMOUNT_BOUND && senderFee < AMOUNT_BOUND && ptt <= MAX_BPS);
+		_setFees(0, ptt);
+		bytes32 id = _create(alice, amount, senderFee, feeRecipient, refundTo);
+		vm.assume(fee > _order(id).protocolFee);
+		assert(!_call(aggregator, abi.encodeCall(gateway.refund, (fee, id))));
 	}
 
 	/* ==================================================================================== P10 */
