@@ -14,8 +14,9 @@ SHELL := /bin/bash
 VENV        ?= .venv
 PY          ?= python3
 FORGE       ?= forge
-HALMOS      := $(if $(wildcard $(VENV)/bin/halmos),$(VENV)/bin/halmos,halmos)
-SLITHER     := $(if $(wildcard $(VENV)/bin/slither),$(VENV)/bin/slither,slither)
+# Recursive (=), so each recipe picks up tools that verify-tools installed earlier in the same make run.
+HALMOS      = $(if $(wildcard $(VENV)/bin/halmos),$(VENV)/bin/halmos,halmos)
+SLITHER     = $(if $(wildcard $(VENV)/bin/slither),$(VENV)/bin/slither,slither)
 COVERAGE_MIN?= 100
 
 .PHONY: help verify-tools verify-build hardhat-parity
@@ -29,6 +30,8 @@ verify-tools: ## Install/verify local toolchain (forge on PATH, forge-std submod
 	@test -f lib/forge-std/src/Test.sol || { echo "installing forge-std"; git submodule update --init --recursive; test -f lib/forge-std/src/Test.sol || $(FORGE) install foundry-rs/forge-std; }
 	@test -x $(VENV)/bin/pip || $(PY) -m venv $(VENV)
 	@$(VENV)/bin/pip install --quiet --upgrade pip
+	@# make expands this whole recipe before it runs, so the version check below names the venv
+	@# binaries directly instead of $(HALMOS)/$(SLITHER).
 	@# Local convenience installs the two pinned tools and lets their dependencies resolve for
 	@# whatever interpreter you have. CI is the authority and installs requirements-verify.lock with
 	@# --require-hashes; if a local result ever disagrees with CI, trust CI and compare the two.
