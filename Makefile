@@ -7,6 +7,8 @@
 # own CI workflow, which runs it with FOUNDRY_PROFILE=ci (heavier fuzz and invariant budgets).
 
 SHELL := /bin/bash
+# pipefail: a recipe like `forge coverage ... | tee FILE` fails when forge does, not when tee does.
+.SHELLFLAGS := -o pipefail -c
 .DEFAULT_GOAL := help
 
 VENV        ?= .venv
@@ -31,7 +33,7 @@ verify-tools: ## Install/verify local toolchain (forge on PATH, forge-std submod
 	@# whatever interpreter you have. CI is the authority and installs requirements-verify.lock with
 	@# --require-hashes; if a local result ever disagrees with CI, trust CI and compare the two.
 	@$(VENV)/bin/pip install --quiet -r requirements-verify.txt
-	@$(HALMOS) --version && $(SLITHER) --version
+	@$(VENV)/bin/halmos --version && $(VENV)/bin/slither --version
 
 verify-build: ## forge build (whole contracts/ tree, proves Hardhat + Foundry coexist)
 	$(FORGE) build
