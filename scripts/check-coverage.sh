@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Parses `forge coverage --report summary` output and enforces a minimum line+branch % for one file.
-# usage: check-otc-coverage.sh <summary.txt> <path/to/File.sol> <min-percent>
+# usage: check-coverage.sh <summary.txt> <path/to/File.sol> <min-percent>
 set -euo pipefail
 summary=$1; file=$2; min=$3
 row=$(grep -F "$file" "$summary" | head -1 || true)
 [ -n "$row" ] || { echo "coverage: no row for $file in $summary"; exit 1; }
-# Row shape: | contracts/OTCGateway.sol | 100.00% (120/120) | 100.00% (150/150) | 100.00% (40/40) | 100.00% (30/30) |
+# Row shape: | contracts/Gateway.sol | 100.00% (120/120) | 100.00% (150/150) | 100.00% (40/40) | 100.00% (30/30) |
 lines=$(echo "$row" | awk -F'|' '{print $3}' | grep -oE '[0-9]+\.[0-9]+' | head -1)
 branches=$(echo "$row" | awk -F'|' '{print $5}' | grep -oE '[0-9]+\.[0-9]+' | head -1)
 echo "coverage: $file lines=${lines}% branches=${branches}% (min ${min}%)"

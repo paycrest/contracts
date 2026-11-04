@@ -1,9 +1,8 @@
-name: OTCGateway verify
+name: BatchCallAndSponsor verify
 
-# The single required check for anything under contracts/OTCGateway.sol, contracts/interfaces/IOTCGateway.sol,
-# contracts/BatchCallAndSponsor.sol, test/foundry/**, docs/otc-gateway-spec.md,
-# docs/batch-call-and-sponsor-spec.md, or the harness itself. Runs `make otc-verify` with the heavier
-# `ci` Foundry profile. Mutation testing is a separate, non-gating report (see Makefile `otc-mutation`).
+# The verification gate for contracts/BatchCallAndSponsor.sol (KAN-943): runs `make bcs-verify`
+# (bcs-verify.mk) against docs/batch-call-and-sponsor-spec.md with the heavier `ci` Foundry profile.
+# Mutation testing is a separate, non-gating report (`make bcs-mutation`).
 
 on:
   push:
@@ -15,11 +14,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: otc-verify-${{ github.ref }}
+  group: bcs-verify-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  otc-verify:
+  bcs-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -28,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          # `make otc-verify` runs repository-controlled code (Makefile, scripts, solc plugins);
+          # `make bcs-verify` runs repository-controlled code (Makefile, scripts, solc plugins);
           # don't leave a usable token in .git/config while it does.
           persist-credentials: false
 
@@ -51,7 +50,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements-otc.lock
+          cache-dependency-path: requirements-verify.lock
 
       - name: Install halmos + slither
         # --require-hashes pins the verifier packages and all their transitive dependencies, so
@@ -60,7 +59,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install --quiet --upgrade pip
-          .venv/bin/pip install --quiet --require-hashes -r requirements-otc.lock
+          .venv/bin/pip install --quiet --require-hashes -r requirements-verify.lock
 
       - name: Toolchain versions
         run: |
@@ -68,11 +67,6 @@ jobs:
           .venv/bin/halmos --version
           .venv/bin/slither --version
 
-      - name: make otc-verify
-        run: make otc-verify
-
-      # BatchCallAndSponsor (EIP-7702 delegate, KAN-943): same toolchain and gates, against
-      # docs/batch-call-and-sponsor-spec.md.
       - name: make bcs-verify
         run: make bcs-verify
 
@@ -80,9 +74,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: otc-verify-reports
+          name: bcs-verify-reports
           path: |
-            coverage-summary.txt
-            bcs-coverage-summary.txt
-            lcov.info
+            cache_forge/bcs-coverage-summary.txt
           if-no-files-found: ignore

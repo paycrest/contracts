@@ -36,7 +36,7 @@ contract BatchCallAndSponsorHalmos is BatchCallAndSponsorBase {
 		vm.warp(1_800_000_000);
 	}
 
-	/// @dev Fix a representative encoding (`v == 27`, low `s`), as the OTC suite does: Halmos keeps `v` symbolic
+	/// @dev Fix a representative encoding (`v == 27`, low `s`): Halmos keeps `v` symbolic
 	/// and would otherwise fork inside ecrecover; malleability is checked separately (P12).
 	function signDigest(uint256 pk, bytes32 d) internal pure override returns (bytes memory) {
 		(uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, d);

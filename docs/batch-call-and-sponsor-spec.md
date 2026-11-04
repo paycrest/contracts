@@ -64,4 +64,4 @@ There is no owner, admin, upgrade path or pause.
 `make bcs-verify` runs: forge build; unit + fuzz tests; the handler invariant suite; 100% line and branch coverage
 of `contracts/BatchCallAndSponsor.sol`; Halmos bounded symbolic checks (`check_` functions in
 `test/foundry/BatchCallAndSponsor.halmos.t.sol`); Slither (fails on medium or high); traceability of this
-document's property ids; Hardhat compile parity. CI runs it with the pinned toolchain of the OTC harness.
+document's property ids; Hardhat compile parity. CI runs it (`.github/workflows/bcs-verify.yml`) with the pinned toolchain in `requirements-verify.lock`.
