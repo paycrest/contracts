@@ -169,7 +169,7 @@ export default defineConfig({
 			},
 		},
 	},
-	// Foundry owns test/foundry/*.sol (OTCGateway verification harness). Keep Hardhat's own Solidity test
+	// Foundry owns test/foundry/*.sol (the formal verification gates). Keep Hardhat's own Solidity test
 	// runner pointed elsewhere so it never tries to compile forge-std based tests.
 	paths: {
 		tests: {

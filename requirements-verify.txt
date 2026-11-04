@@ -1,0 +1,7 @@
+# Verification toolchain for the `make *-verify` gates (see README "Formal verification").
+#
+# Pinned deliberately. These two tools decide what the gates prove, so a silent upgrade could
+# weaken or change the result of a run that ships a contract holding other people's money.
+# Bump them in their own PR, with every gate re-run and any changed findings reviewed.
+halmos==0.3.3
+slither-analyzer==0.11.6

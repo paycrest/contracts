@@ -1,5 +1,5 @@
 # Foundry lives alongside Hardhat 3. Hardhat keeps ignition/typechain/abigen artifacts;
-# Foundry runs the OTCGateway verification suite (unit, fuzz, invariants, Halmos, coverage).
+# Foundry runs the formal verification gates (unit, fuzz, invariants, Halmos, coverage).
 # Output/cache paths are deliberately distinct from Hardhat's `artifacts/` and `cache/`.
 
 [profile.default]
@@ -36,7 +36,7 @@ depth = 64
 fail_on_revert = true
 call_override = false
 
-# `FOUNDRY_PROFILE=ci make otc-verify` — heavier fuzz/invariant budgets for the required check.
+# `FOUNDRY_PROFILE=ci make <name>-verify` — heavier fuzz/invariant budgets for the required check.
 [profile.ci]
 fuzz = { runs = 10000, max_test_rejects = 262144 }
 invariant = { runs = 1000, depth = 128, fail_on_revert = true }

@@ -2,7 +2,7 @@ name: Gateway verify
 
 # The verification gate for contracts/Gateway.sol and contracts/GatewaySettingManager.sol (KAN-946): runs
 # `make gw-verify` (gateway-verify.mk) against docs/gateway-spec.md with the heavier `ci` Foundry profile.
-# Same pinned toolchain as otc-verify. The known-violation tests (spec §6) are not part of the gate.
+# Toolchain pinned in requirements-verify.lock. The known-violation tests (spec §6) are not part of the gate.
 
 on:
   push:
@@ -50,7 +50,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements-otc.lock
+          cache-dependency-path: requirements-verify.lock
 
       - name: Install halmos + slither
         # --require-hashes pins the verifier packages and all their transitive dependencies, so
@@ -59,7 +59,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install --quiet --upgrade pip
-          .venv/bin/pip install --quiet --require-hashes -r requirements-otc.lock
+          .venv/bin/pip install --quiet --require-hashes -r requirements-verify.lock
 
       - name: Toolchain versions
         run: |

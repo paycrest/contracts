@@ -1,5 +1,5 @@
 {
-  "filter_paths": "node_modules|lib/|test/|flattened/|migrations/|tron-deploy/|contracts/mocks/|contracts/OTCGateway|contracts/BatchCallAndSponsor|contracts/ProviderBatchCallAndSponsor",
+  "filter_paths": "node_modules|lib/|test/|flattened/|migrations/|tron-deploy/|contracts/mocks/|contracts/BatchCallAndSponsor|contracts/ProviderBatchCallAndSponsor",
   "exclude_informational": true,
   "exclude_low": true,
   "exclude_optimization": true,
