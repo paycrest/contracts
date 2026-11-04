@@ -13,7 +13,8 @@ remappings = [
   "@openzeppelin/=node_modules/@openzeppelin/",
   "forge-std/=lib/forge-std/src/",
 ]
-# Match the Hardhat 0.8.20 compiler entry so Foundry-tested bytecode equals what ignition deploys.
+# Match the Hardhat 0.8.20 compiler settings (solc version, EVM version, optimizer runs). The bytecode can
+# still differ from the Hardhat artifact: Foundry passes remappings, and solc records them in the metadata hash.
 solc_version = "0.8.20"
 evm_version = "shanghai"
 optimizer = true
