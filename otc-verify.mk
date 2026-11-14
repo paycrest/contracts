@@ -24,10 +24,12 @@ OTC_COVERAGE_EXCLUDE := (^test/|^lib/|contracts/mocks/|contracts/interfaces/|con
 
 # Every gate shares one Foundry out/ and cache_forge/, so they must not run concurrently: under `make -j`
 # Slither's repository-wide analysis does a forced build that clears the artifacts (and excludes test
-# sources), which can leave Halmos unable to parse them or matching no tests. GNU Make 3.81 ships on macOS
-# and does not accept targets after .NOTPARALLEL, so this is the bare form and serialises the whole
-# makefile, bcs-verify included. That is intended while the gates share an artifact directory; giving each
-# gate its own `out/` would be the alternative.
+# sources), which can leave Halmos unable to parse them or matching no tests. This is the bare form, which
+# serialises the whole invocation, bcs-verify included — intended while the gates share an artifact
+# directory; giving each gate its own `out/` would be the alternative. Naming targets here would read as
+# per-gate serialisation but would not behave that way everywhere: GNU Make 3.81, which ships on macOS,
+# ignores prerequisites on .NOTPARALLEL and serialises everything regardless, while 4.4+ honours them and
+# would leave the other gate parallel. The bare form means the same thing on both.
 .NOTPARALLEL:
 
 otc-test: verify-build ## Harness + OTCGateway unit and fuzz tests
