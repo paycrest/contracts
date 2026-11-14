@@ -18,3 +18,9 @@ types
 src/js/metacoin-config.js
 tron-deploy/build
 tron-deploy/node_modules
+
+# Foundry (formal verification gates)
+out/
+cache_forge/
+.venv/
+lcov.info

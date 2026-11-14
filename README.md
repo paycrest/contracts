@@ -407,3 +407,33 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ## License
 [Affero General Public License v3.0](https://choosealicense.com/licenses/agpl-3.0/)
+
+## Formal verification
+
+Contracts that hold or move funds ship behind a verification gate: unit, fuzz and invariant tests (Foundry),
+bounded symbolic checks (Halmos), static analysis (Slither), a 100% line and branch coverage gate, and a
+property-to-test traceability check against the contract's spec in `docs/`. Each gate is a `make` target defined
+in its own `<name>-verify.mk` and run by its own CI workflow; `make help` lists them.
+
+```bash
+make verify-tools  # one-time: forge on PATH, forge-std submodule, .venv with halmos + slither
+make help          # every gate and its steps
+```
+
+Halmos and Slither are pinned in `requirements-verify.txt`, because a tool upgrade can change what a gate
+proves; bump them in their own PR with every gate re-run. `requirements-verify.lock` is the fully resolved,
+hash-pinned expansion of that file, and CI installs it with `--require-hashes` so the tools that decide the
+result, and all their transitive dependencies, are reproducible. That guarantee covers the verifier packages;
+pip itself and the runner image are not pinned. Foundry is pinned to a specific release in each workflow for
+the same reason. Regenerate the lock with:
+
+```bash
+uv pip compile --universal --generate-hashes -o requirements-verify.lock requirements-verify.txt
+```
+
+`make verify-tools` deliberately installs the loose file instead, so local setup works on whatever interpreter
+you have. CI is the authority; if a local run ever disagrees with it, compare the two environments.
+
+Foundry lives alongside Hardhat: Hardhat keeps ignition/typechain artifacts and `test/**/*.js`; Foundry owns
+`test/foundry/*.sol` (Hardhat's Solidity test runner is pointed at `test/hardhat-solidity`). Foundry output goes
+to `out/` and `cache_forge/`, never to Hardhat's `artifacts/` or `cache/`.
