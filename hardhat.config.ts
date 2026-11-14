@@ -102,16 +102,6 @@ export default defineConfig({
 			url: `https://ethereum.publicnode.com`,
 			accounts: networkAccounts(),
 		},
-		optimisticEthereum: {
-			type: "http",
-			url: `https://optimism-rpc.publicnode.com`,
-			accounts: networkAccounts(),
-		},
-		scroll: {
-			type: "http",
-			url: "https://scroll.drpc.org", // @note this is a public rpc
-			accounts: networkAccounts(),
-		},
 		celo: {
 			type: "http",
 			url: "https://forno.celo.org", // @note this is a public rpc
@@ -121,11 +111,6 @@ export default defineConfig({
 		assetChain: {
 			type: "http",
 			url: "https://mainnet-rpc.assetchain.org", // @note this is a public rpc
-			accounts: networkAccounts(),
-		},
-		lisk: {
-			type: "http",
-			url: "https://rpc.api.lisk.com",
 			accounts: networkAccounts(),
 		},
 
@@ -188,26 +173,6 @@ export default defineConfig({
 				},
 			},
 		},
-		534352: {
-			name: "scroll",
-			blockExplorers: {
-				etherscan: {
-					name: "Scroll Explorer",
-					url: "https://api.scrollscan.com/api",
-					apiUrl: "https://scrollscan.com/",
-				},
-			},
-		},
-		1135: {
-			name: "lisk",
-			blockExplorers: {
-				etherscan: {
-					name: "Lisk Explorer",
-					url: "https://explorer.lisk.com/api",
-					apiUrl: "https://explorer.lisk.com",
-				},
-			},
-		},
 	},
 	// CREATE2 salt for `ignition deploy --strategy create2`; identical constructor args + salt => identical
 	// OTCGateway address on every chain. Never change once anything is deployed with it.
@@ -218,7 +183,7 @@ export default defineConfig({
 			},
 		},
 	},
-	// Foundry owns test/foundry/*.sol (OTCGateway verification harness). Keep Hardhat's own Solidity test
+	// Foundry owns test/foundry/*.sol (the formal verification gates). Keep Hardhat's own Solidity test
 	// runner pointed elsewhere so it never tries to compile forge-std based tests.
 	paths: {
 		tests: {

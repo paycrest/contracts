@@ -14,7 +14,7 @@ import {
 /**
  * @title OTCGatewayTest
  * @notice Unit + fuzz coverage of docs/otc-gateway-spec.md. Test names carry the property id they claim
- * (`test_P4_…`, `testFuzz_P3_…`); scripts/check-otc-traceability.sh enforces that every P1..P15 is claimed.
+ * (`test_P4_…`, `testFuzz_P3_…`); scripts/check-spec-traceability.sh enforces that every P1..P15 is claimed.
  */
 contract OTCGatewayTest is OTCGatewayBase {
 	/* ==================================================================================== construction */

@@ -1,0 +1,158 @@
+Compiling 69 files with Solc 0.8.20
+Solc 0.8.20 finished in 2.29s
+Compiler run successful!
+Analysing contracts...
+Running tests...
+
+Ran 2 tests for test/foundry/OTCGateway.vectors.t.sol:OTCGatewayVectorsTest
+[PASS] test_vectors_localHashingMatchesContract() (gas: 616287)
+[PASS] test_vectors_writeEip712Fixture() (gas: 988596)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 78.36ms (73.91ms CPU time)
+
+Ran 3 tests for test/foundry/Harness.t.sol:HarnessTest
+[PASS] testFuzz_harness_signatureCheckerAcceptsSigner(uint256,bytes32) (runs: 1000, μ: 21052, ~: 21005)
+Logs:
+  Bound result 2397258750
+
+[PASS] testFuzz_harness_signatureCheckerRejectsOtherSigner(uint256,bytes32,address) (runs: 1000, μ: 29916, ~: 29873)
+Logs:
+  Bound result 878988813090054907497391871729457538374216817
+
+[PASS] test_harness_deploysRetailGatewayBehindTransparentProxy() (gas: 6176764)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 1.56s (3.11s CPU time)
+
+Ran 33 tests for test/foundry/OTCGateway.t.sol:OTCGatewayTest
+[PASS] testFuzz_P10_lockWithPermitIsRelayableOnlyForTheLockersOwnPermit(address) (runs: 1000, μ: 1465705, ~: 1465705)
+[PASS] testFuzz_P12_conservation(uint256,uint32,bool) (runs: 1000, μ: 760828, ~: 757679)
+Logs:
+  Bound result 1
+  Bound result 149547045884
+
+[PASS] testFuzz_P3_feeExactness(uint32,uint256) (runs: 1000, μ: 709332, ~: 714084)
+Logs:
+  Bound result 11
+  Bound result 13534
+
+[PASS] test_P10_lockRejectsBadAdmission() (gas: 3477494)
+[PASS] test_P10_lockRejectsFeeOnTransferToken() (gas: 2099897)
+[PASS] test_P10_lockRejectsForeignDomainSignature() (gas: 98255)
+[PASS] test_P11_ownerCannotTouchAnExistingLock() (gas: 1127897)
+[PASS] test_P11_setterAccessControlAndBounds() (gas: 1038259)
+[PASS] test_P13_reentrancyIntoFundMovingFunctionsIsBlocked() (gas: 3892891)
+[PASS] test_P14_signaturesAreBoundToActionOrderAndTerms() (gas: 7792022)
+[PASS] test_P15_settlementNeverDependsOnTreasury() (gas: 853725)
+[PASS] test_P1_solvencyHoldsAcrossMixedOutcomes() (gas: 2727959)
+[PASS] test_P2_withdrawFeesOnlyToTreasuryByTreasuryOrOwner() (gas: 781567)
+[PASS] test_P4_arbitrateOnlyArbiterOnlyPayingOnlyAfterDelay() (gas: 825207)
+[PASS] test_P4_arbitrateSplit() (gas: 699565)
+[PASS] test_P4_blacklistedLockerIsResolvedByArbiterFullSettle() (gas: 690490)
+[PASS] test_P4_blacklistedPayeeIsResolvedByArbiterRefund() (gas: 768825)
+[PASS] test_P4_payeePaidOnlyByLockerCoSignedPartialOrArbiter() (gas: 1086827)
+[PASS] test_P4_settleDirectlyByLockerFromLockedAndFromPaying() (gas: 1232091)
+[PASS] test_P4_settleViaERC1271LockerAndCounterparty() (gas: 2084226)
+[PASS] test_P5_lockerCannotExitPayingAlone() (gas: 936372)
+[PASS] test_P5_onlyCounterpartyEntersPaying() (gas: 883628)
+[PASS] test_P5_tokensReturnFromPayingOnlyViaWaiveCoSignedPartialOrArbiter() (gas: 1959816)
+[PASS] test_P6_lockerCanAlwaysCancelWhileLocked() (gas: 712185)
+[PASS] test_P6_refundExpiredByAnyoneAfterDeadlineAndNotBefore() (gas: 665210)
+[PASS] test_P6_waiveWorksFromLocked() (gas: 595044)
+[PASS] test_P7_terminalStatesAreAbsorbing() (gas: 1658737)
+[PASS] test_P8_pauseAndDewhitelistBlockOnlyNewLocks() (gas: 2776515)
+[PASS] test_P9_orderIdLocksAtMostOnceEver() (gas: 1350754)
+[PASS] test_constructor_rejectsZeroAddressesAndBadDelay() (gas: 4214617)
+[PASS] test_constructor_setsRolesAndDomain() (gas: 84798)
+[PASS] test_lock_happyPath_storesLockAndPullsTokens() (gas: 559885)
+[PASS] test_lock_onrampShape_lpLocksSenderPays() (gas: 683385)
+Suite result: ok. 33 passed; 0 failed; 0 skipped; finished in 2.15s (3.63s CPU time)
+
+Ran 1 test for test/foundry/OTCGateway.invariants.t.sol:OTCGatewayInvariantTest
+[PASS]
+OTCGatewayInvariantTest invariants:
+[PASS] invariant_P12_conservation
+[PASS] invariant_P1_solvency
+[PASS] invariant_P2_destination
+[PASS] invariant_P7_terminalAbsorbing
+[PASS] invariant_P9_uniqueness
+[PASS] invariant_walkIsNotVacuous
+ OTCGatewayInvariantTest invariants (runs: 256, calls: 16384, reverts: 0)
+
+╭-------------------+-----------------+-------+---------+----------╮
+| Contract          | Selector        | Calls | Reverts | Discards |
++==================================================================+
+| OTCGatewayHandler | arbitrate       | 1264  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | cancel          | 1272  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | lock            | 1222  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | markPaying      | 1372  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | refundExpired   | 1267  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | relock          | 1204  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | setDisputeDelay | 1245  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | settle          | 1273  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | settlePartial   | 1336  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | togglePause     | 1259  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | waive           | 1217  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | warp            | 1238  | 0       | 0        |
+|-------------------+-----------------+-------+---------+----------|
+| OTCGatewayHandler | withdrawFees    | 1215  | 0       | 0        |
+╰-------------------+-----------------+-------+---------+----------╯
+
+Logs:
+  Bound result 11364
+  Bound result 2508204
+  Bound result 4600
+  Bound result 2506441
+  Bound result 2521475
+  Bound result 1151282
+  Bound result 2117106
+  Bound result 19773
+  Bound result 1138
+  Bound result 5106
+  Bound result 4
+  Bound result 100
+  Bound result 705
+  Bound result 19725
+  Bound result 2527874
+  Bound result 31536000
+  Bound result 705
+  Bound result 287399
+  Bound result 222898
+  Bound result 5251
+  Bound result 700
+  Bound result 6560
+  Bound result 2524210
+  Bound result 11090
+  Bound result 1629
+  Bound result 8194
+  Bound result 7147
+  Bound result 13948
+  Bound result 15714
+  Bound result 5070
+  Bound result 15513
+  Bound result 1569
+  Bound result 86400
+  Bound result 709
+  Bound result 730
+  Bound result 3441
+
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 17.52s (17.51s CPU time)
+
+Ran 4 test suites in 17.53s (21.31s CPU time): 39 tests passed, 0 failed, 0 skipped (39 total tests)
+
+╭--------------------------+-------------------+-------------------+-----------------+-----------------╮
+| File                     | % Lines           | % Statements      | % Branches      | % Funcs         |
++======================================================================================================+
+| contracts/OTCGateway.sol | 100.00% (160/160) | 100.00% (141/141) | 100.00% (79/79) | 100.00% (35/35) |
+|--------------------------+-------------------+-------------------+-----------------+-----------------|
+| Total                    | 100.00% (160/160) | 100.00% (141/141) | 100.00% (79/79) | 100.00% (35/35) |
+╰--------------------------+-------------------+-------------------+-----------------+-----------------╯
+Wrote LCOV report.
