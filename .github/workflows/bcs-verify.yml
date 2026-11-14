@@ -1,0 +1,80 @@
+name: BatchCallAndSponsor verify
+
+# The verification gate for contracts/BatchCallAndSponsor.sol (KAN-943): runs `make bcs-verify`
+# (bcs-verify.mk) against docs/batch-call-and-sponsor-spec.md with the heavier `ci` Foundry profile.
+# Mutation testing is a separate, non-gating report (`make bcs-mutation`).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The job only reads the repo and runs the verification gate; it publishes nothing.
+permissions:
+  contents: read
+
+concurrency:
+  group: bcs-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bcs-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FOUNDRY_PROFILE: ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          # `make bcs-verify` runs repository-controlled code (Makefile, scripts, solc plugins);
+          # don't leave a usable token in .git/config while it does.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install node modules (OpenZeppelin sources + Hardhat)
+        run: yarn install --frozen-lockfile
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          # Pinned, not `stable`: a Foundry release can change fuzzing, coverage or symbolic
+          # results for an unchanged commit. This is the release the suite was developed
+          # against; bump it deliberately, in its own PR, with the gate re-run.
+          version: v1.8.1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-verify.lock
+
+      - name: Install halmos + slither
+        # --require-hashes pins the verifier packages and all their transitive dependencies, so
+        # the tools that decide the result are reproducible. It does not extend to pip itself or
+        # to the runner image, which are not pinned here.
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --quiet --upgrade pip
+          .venv/bin/pip install --quiet --require-hashes -r requirements-verify.lock
+
+      - name: Toolchain versions
+        run: |
+          forge --version
+          .venv/bin/halmos --version
+          .venv/bin/slither --version
+
+      - name: make bcs-verify
+        run: make bcs-verify
+
+      - name: Upload coverage + summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bcs-verify-reports
+          path: |
+            cache_forge/bcs-coverage-summary.txt
+          if-no-files-found: ignore
