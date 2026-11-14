@@ -439,10 +439,9 @@ you have. CI is the authority; if a local run ever disagrees with it, compare th
 `contracts/OTCGateway.sol` (non-custodial OTC escrow) is gated by `make otc-verify` against
 `docs/otc-gateway-spec.md`.
 
-**On this branch the gate is the harness only.** `contracts/OTCGateway.sol` does not exist yet, so the
-coverage and traceability steps announce that they are skipping and exit clean, and Slither analyses the
-repository rather than the contract. A green run here proves the toolchain works, not that OTCGateway is
-verified. Both gates become mandatory, and Slither narrows to the contract, the moment the source lands.
+Every step is mandatory once `contracts/OTCGateway.sol` exists: coverage must hit 100% on it, every property
+in the spec must have a test named after it, and Slither runs against the contract itself. The coverage and
+traceability steps skip, with a message saying so, only while the source is absent.
 
 ```bash
 make otc-verify    # the required check (CI runs it with FOUNDRY_PROFILE=ci)
