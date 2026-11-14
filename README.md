@@ -255,7 +255,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="3">Optimism Ethereum</td>
+			<td rowspan="3">Optimism (defunct)</td>
 			<td>Gateway Proxy</td>
 			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
 		</tr>
@@ -271,7 +271,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td colspan="3"></td>
 		</tr>
 		<tr>
-			<td rowspan="3">Scroll</td>
+			<td rowspan="3">Scroll (defunct)</td>
 			<td>Gateway Proxy</td>
 			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
 		</tr>
@@ -300,7 +300,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
 		</tr>
 		<tr>
-			<td rowspan="3">Lisk</td>
+			<td rowspan="3">Lisk (defunct)</td>
 			<td>Gateway Proxy</td>
 			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
 		</tr>
@@ -408,33 +408,43 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 ## License
 [Affero General Public License v3.0](https://choosealicense.com/licenses/agpl-3.0/)
 
-## OTCGateway verification harness
+## Formal verification
 
-`contracts/OTCGateway.sol` (non-custodial OTC escrow) ships behind a single gate that runs unit, fuzz and
-invariant tests (Foundry), bounded symbolic checks (Halmos), static analysis (Slither), a 100% coverage gate,
-and a property-to-test traceability check against `docs/otc-gateway-spec.md`.
+Contracts that hold or move funds ship behind a verification gate: unit, fuzz and invariant tests (Foundry),
+bounded symbolic checks (Halmos), static analysis (Slither), a 100% line and branch coverage gate, and a
+property-to-test traceability check against the contract's spec in `docs/`. Each gate is a `make` target defined
+in its own `<name>-verify.mk` and run by its own CI workflow; `make help` lists them.
+
+```bash
+make verify-tools  # one-time: forge on PATH, forge-std submodule, .venv with halmos + slither
+make help          # every gate and its steps
+```
+
+Halmos and Slither are pinned in `requirements-verify.txt`, because a tool upgrade can change what a gate
+proves; bump them in their own PR with every gate re-run. `requirements-verify.lock` is the fully resolved,
+hash-pinned expansion of that file, and CI installs it with `--require-hashes` so the tools that decide the
+result, and all their transitive dependencies, are reproducible. That guarantee covers the verifier packages;
+pip itself and the runner image are not pinned. Foundry is pinned to a specific release in each workflow for
+the same reason. Regenerate the lock with:
+
+```bash
+uv pip compile --universal --generate-hashes -o requirements-verify.lock requirements-verify.txt
+```
+
+`make verify-tools` deliberately installs the loose file instead, so local setup works on whatever interpreter
+you have. CI is the authority; if a local run ever disagrees with it, compare the two environments.
+
+### OTCGateway
+
+`contracts/OTCGateway.sol` (non-custodial OTC escrow) is gated by `make otc-verify` against
+`docs/otc-gateway-spec.md`.
 
 **On this branch the gate is the harness only.** `contracts/OTCGateway.sol` does not exist yet, so the
 coverage and traceability steps announce that they are skipping and exit clean, and Slither analyses the
 repository rather than the contract. A green run here proves the toolchain works, not that OTCGateway is
 verified. Both gates become mandatory, and Slither narrows to the contract, the moment the source lands.
 
-Halmos and Slither are pinned in `requirements-otc.txt`, because a tool upgrade can change what the gate
-proves; bump them in their own PR with the full gate re-run. `requirements-otc.lock` is the fully resolved,
-hash-pinned expansion of that file, and CI installs it with `--require-hashes` so the tools that decide the
-result, and all their transitive dependencies, are reproducible. That guarantee covers the verifier packages;
-pip itself and the runner image are not pinned. Foundry is pinned to a specific release in the workflow for
-the same reason. Regenerate it with:
-
 ```bash
-uv pip compile --universal --generate-hashes -o requirements-otc.lock requirements-otc.txt
-```
-
-`make otc-tools` deliberately installs the loose file instead, so local setup works on whatever interpreter
-you have. CI is the authority; if a local run ever disagrees with it, compare the two environments.
-
-```bash
-make otc-tools     # one-time: forge on PATH, forge-std submodule, .venv with halmos + slither
 make otc-verify    # the required check (CI runs it with FOUNDRY_PROFILE=ci)
 ```
 

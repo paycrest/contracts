@@ -15,6 +15,9 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * 1. With a signature: Any sponsor can submit the batch if it carries a valid signature.
  *
  * Replay protection is achieved by using a nonce that is included in the signed message.
+ *
+ * Superseded by BatchCallAndSponsor: this digest binds neither the chain id nor the account, and a
+ * signed batch never expires. Kept because existing EIP-7702 delegations point at deployed copies.
  */
 contract ProviderBatchCallAndSponsor {
     using ECDSA for bytes32;

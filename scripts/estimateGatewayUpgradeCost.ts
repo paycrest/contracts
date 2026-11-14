@@ -44,9 +44,7 @@ const BUFFER: Record<number, bigint> = {
 	137: parseEther("0.08"),
 	42161: parseEther("0.0005"),
 	8453: parseEther("0.0005"),
-	534352: parseEther("0.0008"),
 	42220: parseEther("0.08"),
-	1135: parseEther("0.0005"),
 };
 
 function loadGatewayArtifact() {

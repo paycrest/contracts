@@ -121,7 +121,7 @@ Certora spec in v1. Candidates if a licence is added later: P1, P2, P4, P5, P7.
 
 ## 8. Traceability
 
-Filled in by `scripts/check-otc-traceability.sh` output in PR C2. Until `contracts/OTCGateway.sol` exists the
+Filled in by `scripts/check-spec-traceability.sh` output in PR C2. Until `contracts/OTCGateway.sol` exists the
 check is skipped with a warning.
 
 | Property | Test(s) |

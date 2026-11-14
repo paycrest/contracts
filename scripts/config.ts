@@ -140,42 +140,6 @@ const NETWORKS = {
 	},
 
 	/**
-	 * @dev Optimism Mainnet
-	 */
-	10: {
-		rpcUrl: `https://rpc.shield3.com/v3/0xa/${SHIELD3_API_KEY}/rpc`,
-		supportedTokens: {
-			USDC: {
-				address: "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-			USDT: {
-				address: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-		},
-		gatewayContract: "0xD293fCd3dBc025603911853d893A4724CF9f70a0",
-	},
-
-	/**
-	 * @dev Scroll Mainnet
-	 */
-	534352: {
-		rpcUrl: `https://rpc.shield3.com/v3/0x82750/${SHIELD3_API_KEY}/rpc`,
-		supportedTokens: {
-			USDC: {
-				address: "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-		},
-		gatewayContract: "0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338",
-		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
-	},
-
-	/**
 	 * @dev Tron Mainnet
 	 * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
 	 */
@@ -235,22 +199,6 @@ const NETWORKS = {
 			}
 		},
 		gatewayContract: "0xff0E00E0110C1FBb5315D276243497b66D3a4d8a",
-	},
-	/**
-	 * @dev Lisk Mainnet
-	 */
-	1135: {
-		rpcUrl: `https://rpc.api.lisk.com`,
-		gatewayImplementation: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
-		supportedTokens: {
-			USDT: {
-				address: "0x05D032ac25d322df992303dCa074EE7392C117b9",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-		},
-		gatewayContract: "0xff0E00E0110C1FBb5315D276243497b66D3a4d8a",
-		proxyAdmin: "0x8FD1f78d88Dd008E557273b5Cd517487C2A9A7de",
 	},
 	/////////////////////////////////
 	// Testnets
