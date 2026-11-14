@@ -1,11 +1,11 @@
 # Fully resolved, hash-pinned verifier environment. Generated; do not hand-edit.
 #
 # CI installs this with --require-hashes, so the verifier packages and their transitive
-# dependencies are identical from run to run. pip itself and the runner image are not pinned. requirements-otc.txt holds the two tools we actually choose; this file is what
+# dependencies are identical from run to run. pip itself and the runner image are not pinned. requirements-verify.txt holds the two tools we actually choose; this file is what
 # those two resolve to, transitive dependencies included.
 #
-# Regenerate after changing requirements-otc.txt:
-#     uv pip compile --universal --generate-hashes -o requirements-otc.lock requirements-otc.txt
+# Regenerate after changing requirements-verify.txt:
+#     uv pip compile --universal --generate-hashes -o requirements-verify.lock requirements-verify.txt
 #
 # Universal resolution, so the hashes cover the wheels for every platform and Python version the
 # tools support, not just the machine that generated it.
@@ -911,7 +911,7 @@ frozenlist==1.8.0 \
 halmos==0.3.3 \
     --hash=sha256:2830f421fecea413919c52f499597d796d4d49f5a0f3f0741c2a8399e2bd6abf \
     --hash=sha256:3967291bdd4aaac96a4c42dd18bf25bd76215acad53697d98f02b986ac8d3f67
-    # via -r requirements-otc.txt
+    # via -r requirements-verify.txt
 hexbytes==2.0.0 \
     --hash=sha256:01312fcd5c57e8a8d2d7dd3274dcf84ea50422aff2abcc2d9fd89ad6a32498e5 \
     --hash=sha256:5425bd7ac83cdd9791c13a5bf97cfe9b9609a304b1ef3ab146adfd50de06cf0e
@@ -1626,7 +1626,7 @@ safe-pysha3==1.0.5 \
 slither-analyzer==0.11.6 \
     --hash=sha256:01f809198d3f171e2d768569c0054c96af5736614e183c64f42c9b51636c33c1 \
     --hash=sha256:72aff6c1924a8641c1c8e4d84f9a4e6c97b5bfb3221bf71a11ffaee46d2f7da2
-    # via -r requirements-otc.txt
+    # via -r requirements-verify.txt
 solc-select==1.2.0 \
     --hash=sha256:ad0a7afcae05061ce5e7632950b1fa0193ba9eaf05e4956f86effee024c6fb07 \
     --hash=sha256:dd00cab29229570c4399058852a4052f2120d87c7e341e35f04794a13cfdd1de

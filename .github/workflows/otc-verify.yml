@@ -1,8 +1,8 @@
 name: OTCGateway verify
 
 # The single required check for anything under contracts/OTCGateway.sol, contracts/interfaces/IOTCGateway.sol,
-# test/foundry/**, docs/otc-gateway-spec.md, or the harness itself. Runs `make otc-verify` with the heavier
-# `ci` Foundry profile. Mutation testing is a separate, non-gating report (see Makefile `otc-mutation`).
+# test/foundry/**, docs/otc-gateway-spec.md, or the harness itself. Runs `make otc-verify` (otc-verify.mk)
+# with the heavier `ci` Foundry profile. Mutation testing is a separate, non-gating report (`make otc-mutation`).
 
 on:
   push:
@@ -50,7 +50,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements-otc.lock
+          cache-dependency-path: requirements-verify.lock
 
       - name: Install halmos + slither
         # --require-hashes pins the verifier packages and all their transitive dependencies, so
@@ -59,7 +59,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install --quiet --upgrade pip
-          .venv/bin/pip install --quiet --require-hashes -r requirements-otc.lock
+          .venv/bin/pip install --quiet --require-hashes -r requirements-verify.lock
 
       - name: Toolchain versions
         run: |
@@ -76,6 +76,6 @@ jobs:
         with:
           name: otc-verify-reports
           path: |
-            coverage-summary.txt
+            cache_forge/otc-coverage-summary.txt
             lcov.info
           if-no-files-found: ignore

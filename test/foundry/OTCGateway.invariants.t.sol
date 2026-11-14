@@ -372,6 +372,12 @@ contract OTCGatewayHandler is Test {
  * @title OTCGatewayInvariantTest
  * @notice Handler-based invariants for P1, P2, P7, P9, P12 across random action sequences.
  */
+// The repo-wide [invariant] default is fail_on_revert = true (set for BatchCallAndSponsor's suite). This
+// random-walk handler deliberately makes calls that revert — wrong-state actions are how the state machine is
+// explored — and latches rule violations into ghost flags instead, so it opts out for itself rather than
+// loosening the global.
+/// forge-config: default.invariant.fail-on-revert = false
+/// forge-config: ci.invariant.fail-on-revert = false
 contract OTCGatewayInvariantTest is OTCGatewayBase {
 	OTCGatewayHandler internal handler;
 

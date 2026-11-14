@@ -122,7 +122,7 @@ Certora spec in v1. Candidates if a licence is added later: P1, P2, P4, P5, P7.
 
 ## 8. Traceability
 
-Enforced by `scripts/check-otc-traceability.sh` (a property with no test whose name carries its id fails the gate).
+Enforced by `scripts/check-spec-traceability.sh` (a property with no test whose name carries its id fails the gate).
 
 | Property | Unit / fuzz (`OTCGateway.t.sol`) | Invariant (`OTCGateway.invariants.t.sol`) | Symbolic (`OTCGateway.halmos.t.sol`) |
 |---|---|---|---|
