@@ -434,6 +434,20 @@ uv pip compile --universal --generate-hashes -o requirements-verify.lock require
 `make verify-tools` deliberately installs the loose file instead, so local setup works on whatever interpreter
 you have. CI is the authority; if a local run ever disagrees with it, compare the two environments.
 
+### OTCGateway
+
+`contracts/OTCGateway.sol` (non-custodial OTC escrow) is gated by `make otc-verify` against
+`docs/otc-gateway-spec.md`.
+
+**On this branch the gate is the harness only.** `contracts/OTCGateway.sol` does not exist yet, so the
+coverage and traceability steps announce that they are skipping and exit clean, and Slither analyses the
+repository rather than the contract. A green run here proves the toolchain works, not that OTCGateway is
+verified. Both gates become mandatory, and Slither narrows to the contract, the moment the source lands.
+
+```bash
+make otc-verify    # the required check (CI runs it with FOUNDRY_PROFILE=ci)
+```
+
 Foundry lives alongside Hardhat: Hardhat keeps ignition/typechain artifacts and `test/**/*.js`; Foundry owns
 `test/foundry/*.sol` (Hardhat's Solidity test runner is pointed at `test/hardhat-solidity`). Foundry output goes
 to `out/` and `cache_forge/`, never to Hardhat's `artifacts/` or `cache/`.
