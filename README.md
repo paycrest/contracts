@@ -197,7 +197,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x0BC10d31B96838aD5783a0dd994fb16e14609e6E</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td>Gateway Admin</td>
@@ -213,7 +213,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -225,7 +225,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd28da2E11FCd2A9F44D5a4952430CE8b4f3Ee05f</td>
+			<td>0x8c94DEA51127A1DBeBf74C5a833161857B2F7cbE</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -237,7 +237,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -249,7 +249,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x8fd1f78d88dd008e557273b5cd517487c2a9a7de</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -293,33 +293,11 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x8508c1C9f29BD1e73B5A9bD8FB87720927c681FA</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td>Gateway Admin</td>
 			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
-		</tr>
-		<tr>
-			<td rowspan="3">Lisk (defunct)</td>
-			<td>Gateway Proxy</td>
-			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE</td>
-		</tr>
-		<tr>
-			<td>Gateway Admin</td>
-			<td>0x8FD1f78d88Dd008E557273b5Cd517487C2A9A7de</td>
-		</tr>
-		<tr>
-			<td rowspan="2">Asset Chain</td>
-			<td>Gateway Proxy</td>
-			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>

@@ -6,7 +6,6 @@ export const PUBLIC_RPC_FALLBACKS: Record<number, string[]> = {
 	42161: ["https://arb1.arbitrum.io/rpc", "https://arbitrum-one.publicnode.com", "https://1rpc.io/arb"],
 	8453: ["https://mainnet.base.org", "https://base.drpc.org", "https://base-public.nodies.app"],
 	42220: ["https://forno.celo.org"],
-	42420: ["https://mainnet-rpc.assetchain.org"],
 };
 
 function isUsableShield3Url(url: string): boolean {

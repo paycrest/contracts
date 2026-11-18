@@ -180,26 +180,6 @@ const NETWORKS = {
 		gatewayContract: "0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b",
 		proxyAdmin: "0xc38D6817F736b1cb44785e14A8cb7152385d3210",
 	},
-	/**
-	 * @dev AssetChain Mainnet
-	 */
-	42420: {
-		rpcUrl: `https://mainnet-rpc.assetchain.org`,
-		gatewayImplementation: "0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE",
-		supportedTokens: {
-			USDC: {
-				address: "0x2B7C1342Cc64add10B2a79C8f9767d2667DE64B2",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-			cNGN: {
-				address: "0x7923C0f6FA3d1BA6EAFCAedAaD93e737Fd22FC4F",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			}
-		},
-		gatewayContract: "0xff0E00E0110C1FBb5315D276243497b66D3a4d8a",
-	},
 	/////////////////////////////////
 	// Testnets
 	/////////////////////////////////

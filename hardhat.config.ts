@@ -103,11 +103,6 @@ export default defineConfig({
 			chainId: 42220,
 			accounts: networkAccounts(),
 		},
-		assetChain: {
-			type: "http",
-			url: "https://mainnet-rpc.assetchain.org", // @note this is a public rpc
-			accounts: networkAccounts(),
-		},
 
 		// Testnets
 		baseSepolia: {
