@@ -15,7 +15,7 @@ export interface IGateway$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "project/contracts/interfaces/IGateway.sol";
-  readonly buildInfoId: "solc-0_8_20-ff8299f7a1fa8c84f8c18c30fcc2195339089a7e";
+  readonly buildInfoId: "solc-0_8_20-bc892cc4b90fc526fdf4526d2d0f9db81804af35";
 };
 
 import "hardhat/types/artifacts";

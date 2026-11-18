@@ -59,7 +59,8 @@ Fee settings are read when money moves (settlement time), not when the order was
 - **P5 Order ids.** An order created by `sender` as its `n`-th order has id `keccak256(abi.encode(sender, n,
   chainid))`; a sender's nonce rises by exactly one per order, so `createOrder` ids never repeat. `createOrder`
   never overwrites an existing record: if the id it computes already holds an order, it reverts and the record,
-  the sender's funds and the nonce are unchanged.
+  the sender's funds and the nonce are unchanged. `settleIn` stores its record under
+  `keccak256(abi.encode('SETTLE_IN', id))`, separate from `createOrder` ids.
 - **P6 Full settlement pays exactly.** Over any sequence of `settleOut` splits that settles an order, the
   provider(s) and treasury together receive exactly the order amount, the sender fee is paid exactly once (on
   the last split), and the order ends fulfilled with nothing left.
@@ -73,7 +74,9 @@ Fee settings are read when money moves (settlement time), not when the order was
   (exactly what the order still holds), marks the order refunded, and reverts when `fee > protocolFee`.
 - **P10 settleIn passes everything through.** `settleIn` pulls `amount + senderFee` and pays out exactly that
   much (recipient, treasury, rebate to the caller, sender fee split): the Gateway's balance is unchanged. The
-  order is booked fulfilled under the given id; an id already in use reverts; a rebate above `MAX_BPS` reverts.
+  order is booked fulfilled and an id already used by `createOrder` or `settleIn` reverts, while
+  `getOrderInfo(id)` returns the `createOrder` record if present and otherwise the `settleIn` record. A rebate
+  above `MAX_BPS` reverts.
 - **P11 Sender fee split.** The sender-fee recipient receives `f − ⌊f·senderToTreasury/MAX⌋` and the treasury
   the rest; together exactly `f`.
 - **P12 Token conservation.** At all times, for each token, the Gateway's balance equals the sum over open
@@ -95,6 +98,14 @@ Fee settings are read when money moves (settlement time), not when the order was
   reported as an exception: never upgrade it to this code. The manifests do not say which implementation each
   proxy points at; `GW_LAYOUT_RPC="base.json=https://… …" make gw-storage-layout` reads each proxy's EIP-1967 slot
   and fails unless it points at a recorded, compatible implementation. Run it before any upgrade.
+- **P17 settleIn ids are kept apart from createOrder ids.** `settleIn` is permissionless and takes the caller's
+  order id, so it books the order under `keccak256(abi.encode('SETTLE_IN', id))` and never at the raw id: no
+  `settleIn`, by anyone and with any id, can occupy a `createOrder` id or make a `createOrder` revert (the key
+  hashes a 128-byte preimage, a `createOrder` id a 96-byte one). An id is refused with `OrderAlreadyExists` if its
+  key is taken or its raw id holds a record (an order settled in before the upgrade, or a `createOrder` order); the
+  raw id is only read. Events carry the caller's raw id. `getOrderInfo(id)` returns the raw record when there is
+  one, else the `settleIn` record at the key, so a created order always reads as itself. No `settleIn` order, at
+  its key or at a pre-upgrade raw id, can be settled or refunded.
 
 ## 5. Assumptions
 

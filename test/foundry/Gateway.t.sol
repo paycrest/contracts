@@ -19,6 +19,20 @@ contract GatewayTest is GatewayBase {
 	address internal provider2 = address(uint160(0x9121));
 	address internal recipient = address(uint160(0x2EC1));
 
+	// IGateway's events, redeclared for vm.expectEmit (solc 0.8.20 cannot emit them qualified).
+	event SettleIn(
+		bytes32 indexed orderId,
+		address indexed liquidityProvider,
+		address indexed recipient,
+		uint256 amount,
+		address token,
+		uint256 aggregatorFee,
+		uint96 rate,
+		uint64 rebatePercent
+	);
+	event SenderFeeTransferred(bytes32 indexed orderId, address indexed sender, uint256 indexed amount);
+	event TransferFeeSplit(bytes32 indexed orderId, uint256 senderAmount, uint256 aggregatorAmount);
+
 	/* ==================================================================================== P1 */
 
 	function testFuzz_P1_settersRevertForNonOwner(address caller) public {
@@ -159,6 +173,35 @@ contract GatewayTest is GatewayBase {
 		assertEq(_order(id).sender, holder);
 		assertEq(_bal(alice), 10);
 		assertEq(uint256(vm.load(address(gateway), keccak256(abi.encode(alice, uint256(256))))), 0, 'nonce unchanged');
+	}
+
+	/// `settleIn` on a predicted `createOrder` id does not block `createOrder`.
+	function test_P5_settleInDoesNotBlockCreateOrder() public {
+		bytes32 predictedId = _orderId(alice, 1);
+		_fund(provider, 1);
+		vm.prank(provider);
+		assertTrue(gateway.settleIn(predictedId, address(token), 1, address(0), 0, provider, 0, 0));
+
+		IGateway.Order memory settleInOrder = _order(predictedId);
+		assertEq(settleInOrder.sender, provider);
+		assertTrue(settleInOrder.isFulfilled);
+
+		_fund(provider, 1);
+		vm.prank(provider);
+		vm.expectRevert('OrderAlreadyExists');
+		gateway.settleIn(predictedId, address(token), 1, address(0), 0, provider, 0, 0);
+
+		bytes32 createdId = _create(alice, 100e6, 0, address(0), refundTo);
+		assertEq(createdId, predictedId);
+		IGateway.Order memory o = _order(createdId);
+		assertEq(o.sender, alice);
+		assertEq(o.amount, 100e6);
+		assertFalse(o.isFulfilled);
+
+		assertTrue(_settleOut(createdId, provider, uint64(MAX_BPS), 0));
+		o = _order(createdId);
+		assertTrue(o.isFulfilled);
+		assertEq(o.amount, 0);
 	}
 
 	/* ==================================================================================== P6 */
@@ -529,5 +572,226 @@ contract GatewayTest is GatewayBase {
 		assertEq(uint256(vm.load(g, bytes32(uint256(o) + 6))), MAX_BPS, 'order.currentBPS');
 		assertEq(uint256(vm.load(g, bytes32(uint256(o) + 7))), 1000, 'order.amount');
 		assertEq(uint256(vm.load(g, keccak256(abi.encode(alice, uint256(256))))), 1, '_nonce @256');
+	}
+
+	/* ==================================================================================== P17 */
+
+	function _key(bytes32 id) internal pure returns (bytes32) {
+		return keccak256(abi.encode('SETTLE_IN', id));
+	}
+
+	function _rawSlot(bytes32 id) internal pure returns (bytes32) {
+		return keccak256(abi.encode(id, uint256(255)));
+	}
+
+	function _rawSender(bytes32 id) internal view returns (address) {
+		return address(uint160(uint256(vm.load(address(gateway), _rawSlot(id)))));
+	}
+
+	function _storeLegacySettleIn(bytes32 id, address to, uint256 amount) internal {
+		bytes32 o = _rawSlot(id);
+		vm.store(address(gateway), o, bytes32(uint256(uint160(to))));
+		vm.store(address(gateway), bytes32(uint256(o) + 1), bytes32(uint256(uint160(address(token)))));
+		vm.store(address(gateway), bytes32(uint256(o) + 5), bytes32(uint256(1)));
+		vm.store(address(gateway), bytes32(uint256(o) + 7), bytes32(amount));
+	}
+
+	/// Regression for the settleIn id-squatting report: a third party settles in for 1 unit, paid back to itself, at
+	/// the victim's next createOrder id. The victim's createOrder still gets exactly that id (P5), and the next one.
+	function test_P17_settleInCannotBlockTheNextCreateOrder() public {
+		address attacker = address(uint160(0xBAD));
+		address victim = address(uint160(0x71C71));
+		bytes32 next = keccak256(abi.encode(victim, uint256(1), block.chainid));
+		_fund(attacker, 1);
+		vm.prank(attacker);
+		gateway.settleIn(next, address(token), 1, address(0), 0, attacker, 1, 0);
+
+		_fund(victim, 2_000_000);
+		vm.startPrank(victim);
+		bytes32 first = gateway.createOrder(address(token), 1_000_000, 1500, address(0), 0, victim, 'msg');
+		bytes32 second = gateway.createOrder(address(token), 1_000_000, 1500, address(0), 0, victim, 'msg');
+		vm.stopPrank();
+		assertEq(first, next);
+		assertEq(second, _orderId(victim, 2));
+		assertEq(_order(first).sender, victim);
+		assertEq(_order(first).amount, 1_000_000);
+		assertEq(_order(_key(next)).sender, attacker, 'settleIn record kept apart at the key');
+	}
+
+	function testFuzz_P17_settleInNeverBlocksCreateOrder(
+		address caller,
+		address sender,
+		uint8 prior,
+		bytes32 id,
+		bool targetNext
+	) public {
+		vm.assume(caller != address(0) && sender != address(0));
+		vm.assume(caller != address(proxyAdmin) && sender != address(proxyAdmin));
+		vm.assume(caller != address(gateway) && sender != address(gateway));
+		prior = uint8(bound(prior, 0, 3));
+		for (uint256 i; i < prior; i++) _create(sender, 10, 0, address(0), refundTo);
+		bytes32 next = _orderId(sender, uint256(prior) + 1);
+		if (targetNext) id = next;
+		_fund(caller, 1);
+		vm.prank(caller);
+		gateway.settleIn(id, address(token), 1, address(0), 0, caller, 1, 0);
+		assertEq(_create(sender, 10, 0, address(0), refundTo), next);
+		assertEq(_order(next).sender, sender);
+	}
+
+	/// The settleIn key is a 128-byte preimage ('SETTLE_IN' is ABI-encoded as a dynamic string), a createOrder id a
+	/// 96-byte one, so no key is any (sender, nonce, chain id); and the Gateway books a settleIn order at that key.
+	function testFuzz_P17_settleInKeyIsNeverACreateOrderId(bytes32 id, address sender, uint256 nonce, uint64 chainId) public {
+		vm.chainId(chainId);
+		assertTrue(_key(id) != keccak256(abi.encode(sender, nonce, block.chainid)));
+		assertEq(abi.encode('SETTLE_IN', id).length, 128);
+		_fund(provider, 1);
+		vm.prank(provider);
+		gateway.settleIn(id, address(token), 1, address(0), 0, recipient, 1, 0);
+		assertEq(_order(_key(id)).sender, recipient, 'booked at the key');
+		assertEq(_rawSender(id), address(0), 'raw slot untouched');
+	}
+
+	function test_P17_settleInBooksUnderItsKeyAndEmitsTheRawId() public {
+		_setFees(20_000, 1000);
+		bytes32 id = keccak256('onramp-1');
+		bytes32 key = _key(id);
+		_fund(provider, 2 * (10_000 + 50));
+		vm.expectEmit(address(gateway));
+		emit SenderFeeTransferred(id, feeRecipient, 40);
+		vm.expectEmit(address(gateway));
+		emit TransferFeeSplit(id, 40, 10);
+		vm.expectEmit(address(gateway));
+		emit SettleIn(id, provider, recipient, 9_900, address(token), 100, 1500, 50_000);
+		vm.prank(provider);
+		gateway.settleIn(id, address(token), 10_000, feeRecipient, 50, recipient, 1500, 50_000);
+
+		assertEq(_bal(recipient), 9_900);
+		assertEq(_bal(provider), 2 * (10_000 + 50) - (10_000 + 50) + 50);
+		assertEq(_bal(treasury), 50 + 10);
+		assertEq(_bal(feeRecipient), 40);
+
+		IGateway.Order memory o = gateway.getOrderInfo(id); // fallback read path
+		assertEq(o.sender, recipient);
+		assertEq(o.token, address(token));
+		assertEq(o.senderFeeRecipient, feeRecipient);
+		assertEq(o.senderFee, 50);
+		assertEq(o.protocolFee, 100);
+		assertTrue(o.isFulfilled);
+		assertEq(o.refundAddress, address(0));
+		assertEq(o.amount, 9_900);
+		assertEq(keccak256(abi.encode(_order(key))), keccak256(abi.encode(o)), 'at the key');
+		for (uint256 i; i < 8; i++) {
+			assertEq(vm.load(address(gateway), bytes32(uint256(_rawSlot(id)) + i)), bytes32(0), 'raw slot untouched');
+		}
+		vm.prank(provider);
+		vm.expectRevert('OrderAlreadyExists');
+		gateway.settleIn(id, address(token), 10_000, feeRecipient, 50, recipient, 1500, 0);
+	}
+
+	function test_P17_legacySettleInIdStaysUsed() public {
+		bytes32 id = keccak256('legacy-onramp');
+		_storeLegacySettleIn(id, recipient, 777);
+		IGateway.Order memory o = gateway.getOrderInfo(id);
+		assertEq(o.sender, recipient);
+		assertEq(o.token, address(token));
+		assertTrue(o.isFulfilled);
+		assertEq(o.amount, 777);
+		_fund(provider, 10);
+		vm.prank(provider);
+		vm.expectRevert('OrderAlreadyExists');
+		gateway.settleIn(id, address(token), 10, address(0), 0, recipient, 1, 0);
+		assertEq(_order(_key(id)).sender, address(0), 'nothing booked at the key');
+		assertEq(_bal(provider), 10);
+	}
+
+	/// getOrderInfo returns the createOrder record (the raw slot wins), an unused id is empty, and a createOrder id
+	/// cannot then be settled in.
+	function test_P17_getOrderInfoPrefersCreateOrderRecords() public {
+		bytes32 id = _create(alice, 1000, 0, address(0), refundTo);
+		assertEq(gateway.getOrderInfo(id).sender, alice);
+		assertEq(gateway.getOrderInfo(keccak256('unused')).sender, address(0));
+		_fund(provider, 10);
+		vm.prank(provider);
+		vm.expectRevert('OrderAlreadyExists');
+		gateway.settleIn(id, address(token), 10, address(0), 0, recipient, 1, 0);
+	}
+
+	function test_P17_settleInOrdersCannotBeSettledOrRefunded() public {
+		bytes32 open = _create(alice, 1000, 10, feeRecipient, refundTo);
+		bytes32 id = keccak256('onramp-2');
+		_fund(provider, 500);
+		vm.prank(provider);
+		gateway.settleIn(id, address(token), 500, address(0), 0, recipient, 1, 0);
+		bytes32 key = _key(id);
+		bytes32 legacy = keccak256('legacy-onramp');
+		_storeLegacySettleIn(legacy, recipient, 500);
+		uint256 held = _bal(address(gateway));
+		assertEq(held, 1010);
+
+		vm.startPrank(aggregator);
+		vm.expectRevert('InvalidSettlePercent');
+		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), 0);
+		vm.expectRevert('FeeExceedsProtocolFee');
+		gateway.refund(1, id);
+		vm.expectRevert();
+		gateway.refund(0, id);
+		vm.expectRevert('OrderFulfilled');
+		gateway.settleOut(bytes32(0), key, provider, uint64(MAX_BPS), 0);
+		vm.expectRevert('OrderFulfilled');
+		gateway.refund(0, key);
+		vm.expectRevert('OrderFulfilled');
+		gateway.settleOut(bytes32(0), legacy, provider, uint64(MAX_BPS), 0);
+		vm.expectRevert('OrderFulfilled');
+		gateway.refund(0, legacy);
+		vm.stopPrank();
+
+		assertEq(_bal(address(gateway)), held, 'nothing moved');
+		assertEq(_rawSender(id), address(0), 'raw slot still empty');
+		assertTrue(_settleOut(open, provider, uint64(MAX_BPS), 0));
+		assertEq(_bal(address(gateway)), 0);
+	}
+
+	/// Before the victim's createOrder lands, getOrderInfo(predictedId) shows the squatter's fulfilled settleIn record;
+	/// after it lands, the createOrder record shadows it. Fail-safe for readers: before creation the id only ever reads as closed.
+	function test_P17_getOrderInfoFallbackUntilCreateOrderShadowsIt() public {
+		bytes32 next = _orderId(alice, 1);
+		_fund(provider, 1);
+		vm.prank(provider);
+		gateway.settleIn(next, address(token), 1, address(0), 0, provider, 1, 0);
+		assertTrue(gateway.getOrderInfo(next).isFulfilled, 'pre-create: squat record visible as fulfilled');
+		assertEq(gateway.getOrderInfo(next).sender, provider);
+		bytes32 id = _create(alice, 100, 0, address(0), refundTo);
+		assertEq(id, next);
+		assertFalse(gateway.getOrderInfo(next).isFulfilled, 'post-create: createOrder record wins');
+		assertEq(gateway.getOrderInfo(next).sender, alice);
+	}
+
+	/// An attacker-chosen settleIn id equal to another id's key: getOrderInfo(K) then reads the other order's record
+	/// (raw slot K), and settling in at Y after K is booked still works; the reverse order blocks K.
+	function test_P17_getOrderInfoRawSlotWinsForAnIdEqualToAnotherKey() public {
+		bytes32 y = keccak256('onramp-y');
+		bytes32 k = _key(y);
+		_fund(provider, 2);
+		vm.startPrank(provider);
+		gateway.settleIn(k, address(token), 1, address(0), 0, address(0xAAA1), 1, 0);
+		gateway.settleIn(y, address(token), 1, address(0), 0, address(0xBBB2), 1, 0);
+		vm.stopPrank();
+		assertEq(gateway.getOrderInfo(y).sender, address(0xBBB2));
+		assertEq(gateway.getOrderInfo(k).sender, address(0xBBB2), 'K reads Y record, not the one settled in as K');
+	}
+
+	/// No settleIn record, by raw id or key, ever makes getOrderInfo(createOrderId) fulfilled once created.
+	function testFuzz_P17_createdOrderNeverReadsAsFulfilledFromSettleIn(bytes32 id, bool targetNext) public {
+		bytes32 next = _orderId(alice, 1);
+		if (targetNext) id = next;
+		_fund(provider, 1);
+		vm.prank(provider);
+		gateway.settleIn(id, address(token), 1, address(0), 0, provider, 1, 0);
+		bytes32 created = _create(alice, 100, 0, address(0), refundTo);
+		IGateway.Order memory o = gateway.getOrderInfo(created);
+		assertEq(o.sender, alice);
+		assertFalse(o.isFulfilled);
+		assertEq(o.amount, 100);
 	}
 }

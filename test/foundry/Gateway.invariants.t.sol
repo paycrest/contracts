@@ -19,6 +19,8 @@ contract GatewayHandler is GatewayBase {
 
 	bytes32[] public ids;
 	mapping(bytes32 => bool) public closed; // fulfilled or refunded, by the handler's own record
+	mapping(address => uint256) public senderNonces;
+	bool public violationP17; // a createOrder failed with OrderAlreadyExists (a settleIn id blocked it)
 
 	uint256 public ghostIn; // pulled into the Gateway
 	uint256 public ghostOut; // paid out of the Gateway
@@ -66,9 +68,13 @@ contract GatewayHandler is GatewayBase {
 		try gateway.createOrder(address(token), amount, 1500, feeRecipient, senderFee, refundTo, 'm') returns (bytes32 id) {
 			if (paused) violationP13 = true;
 			if (!listed) violationP15 = true;
+			senderNonces[sender]++;
 			ids.push(id);
 			ghostIn += amount + senderFee;
 			ghostCreated++;
+		} catch Error(string memory reason) {
+			// Funded, approved and well-formed: only a pause or a delisting may stop it, never a taken id (P17).
+			if (!paused && listed && keccak256(bytes(reason)) == keccak256('OrderAlreadyExists')) violationP17 = true;
 		} catch {}
 	}
 
@@ -114,12 +120,16 @@ contract GatewayHandler is GatewayBase {
 		senderFee = uint96(bound(senderFee, 0, 1e24));
 		rebate = uint64(bound(rebate, 0, MAX_BPS));
 		address p = providers[seed % 2];
+		address s = senders[seed % senders.length];
+		bytes32 orderId = seed % 2 == 0
+			? _orderId(s, senderNonces[s] + 1)
+			: keccak256(abi.encode('in', seed));
 		_fund(p, amount + senderFee);
 		bool paused = gateway.paused();
 		bool listed = gateway.isTokenSupported(address(token));
 		uint256 before = token.balanceOf(address(gateway));
 		vm.prank(p);
-		try gateway.settleIn(keccak256(abi.encode('in', seed)), address(token), amount, feeRecipient, senderFee, recipient, 1, rebate) {
+		try gateway.settleIn(orderId, address(token), amount, feeRecipient, senderFee, recipient, 1, rebate) {
 			if (paused) violationP13 = true;
 			if (!listed) violationP15 = true;
 			// Pulled and paid out in the same call; the balance check is P10's, the totals stay balanced.
@@ -206,6 +216,11 @@ contract GatewayInvariants is GatewayBase {
 	/// P15: no money came in for a delisted token.
 	function invariant_P15_delistedTokenTakesNoNewMoney() public view {
 		assertFalse(handler.violationP15());
+	}
+
+	/// P17: settling in at senders' next createOrder ids never made a createOrder fail with OrderAlreadyExists.
+	function invariant_P17_settleInNeverBlocksCreateOrder() public view {
+		assertFalse(handler.violationP17());
 	}
 
 	/// Not vacuous: the walk creates, settles, refunds and settles in (see the counters with -vv).

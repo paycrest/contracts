@@ -218,6 +218,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		return true;
 	}
 
+	function _settleInOrderKey(bytes32 _orderId) internal pure returns (bytes32) {
+		return keccak256(abi.encode('SETTLE_IN', _orderId));
+	}
+
 	/** @dev See {settleIn-IGateway}. */
 	function settleIn(
 		bytes32 _orderId,
@@ -229,14 +233,15 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint96 _rate,
 		uint64 _rebatePercent
 	) external whenNotPaused returns (bool) {
-		require(order[_orderId].sender == address(0), 'OrderAlreadyExists');
+		bytes32 storageKey = _settleInOrderKey(_orderId);
+		require(order[storageKey].sender == address(0) && order[_orderId].sender == address(0), 'OrderAlreadyExists');
 		require(_rebatePercent <= MAX_BPS, 'InvalidRebatePercent');
 		_handler(_token, _amount, _recipient, _senderFeeRecipient, _senderFee);
 
 		IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount + _senderFee);
 
 		(uint256 grossTreasuryFee, uint256 amountToSettle) = _bookSettleInAndPayFees(
-			_orderId,
+			storageKey,
 			_token,
 			_amount,
 			_senderFeeRecipient,
@@ -267,7 +272,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	 * @dev Books order state before fee/recipient transfers (CEI), then pays treasury/rebate/recipient.
 	 */
 	function _bookSettleInAndPayFees(
-		bytes32 _orderId,
+		bytes32 _storageKey,
 		address _token,
 		uint256 _amount,
 		address _senderFeeRecipient,
@@ -293,13 +298,13 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		}
 
 		// Arm OrderAlreadyExists before external transfers.
-		order[_orderId].sender = _recipient;
-		order[_orderId].token = _token;
-		order[_orderId].senderFeeRecipient = _senderFeeRecipient;
-		order[_orderId].senderFee = _senderFee;
-		order[_orderId].protocolFee = grossTreasuryFee;
-		order[_orderId].isFulfilled = true;
-		order[_orderId].amount = amountToSettle;
+		order[_storageKey].sender = _recipient;
+		order[_storageKey].token = _token;
+		order[_storageKey].senderFeeRecipient = _senderFeeRecipient;
+		order[_storageKey].senderFee = _senderFee;
+		order[_storageKey].protocolFee = grossTreasuryFee;
+		order[_storageKey].isFulfilled = true;
+		order[_storageKey].amount = amountToSettle;
 
 		if (treasuryFee > 0) {
 			IERC20(_token).safeTransfer(treasuryAddress, treasuryFee);
@@ -346,7 +351,10 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
     ################################################################## */
 	/** @dev See {getOrderInfo-IGateway}. */
 	function getOrderInfo(bytes32 _orderId) external view returns (Order memory) {
-		return order[_orderId];
+		if (order[_orderId].sender != address(0)) {
+			return order[_orderId];
+		}
+		return order[_settleInOrderKey(_orderId)];
 	}
 
 	/** @dev See {isTokenSupported-IGateway}. */
