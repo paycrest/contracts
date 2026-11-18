@@ -208,7 +208,6 @@ npx hardhat run scripts/setTokenFeeSettings.ts --network <network>
 		<tr>
 			<td colspan="3"></td>
 		</tr>
-		
 		<tr>
 			<td rowspan="3">Celo</td>
 			<td>Gateway Proxy</td>
