@@ -73,7 +73,7 @@ def struct_members(types, t):
 
 def value_size(t):
     """Bytes a value type takes, or None for a type that always starts and ends a slot."""
-    if t in ("t_address", "t_contract"):
+    if t in ("t_address", "t_address_payable") or t.startswith("t_contract("):
         return 20
     if t == "t_bool":
         return 1
@@ -83,10 +83,23 @@ def value_size(t):
     return None
 
 
+def full_slot_type(t):
+    """Types that start a new slot and take exactly one slot (or a uint256 gap's length)."""
+    return t.startswith("t_mapping(") or t in ("t_string_storage", "t_bytes_storage") or gap_slots(t) is not None
+
+
 def assign_slots(layout):
-    """Manifests that record no slots: lay the variables out the way solc does."""
+    """Manifests that record no slots: lay the variables out the way solc does.
+
+    Only value types in value_size, mappings, dynamic string/bytes and uint256 gaps are laid out;
+    any other type (structs, other arrays, enums, user-defined value types) is rejected rather
+    than guessed, so a slotless manifest with one must be regenerated with slots."""
     if all("slot" in e for e in layout["storage"]):
         return layout
+    unsupported = [f"{e['label']} ({e['type']})" for e in layout["storage"]
+                   if value_size(e["type"]) is None and not full_slot_type(e["type"])]
+    if unsupported:
+        raise ValueError("slotless manifest has types this script cannot lay out: " + ", ".join(unsupported))
     slot, off = 0, 0
     for e in layout["storage"]:
         size = value_size(e["type"])
@@ -190,7 +203,10 @@ def main():
         results = {}
         for impl in impls.values():
             addr = (impl.get("address") or "").lower()
-            results[addr] = check(assign_slots(impl["layout"]), new, name)
+            try:
+                results[addr] = check(assign_slots(impl["layout"]), new, name)
+            except ValueError as err:
+                results[addr] = [f"{name}: {addr}: {err}"]
         bad = []
         if name in rpcs:
             # Live proxies are checked even for an exception: an explicit RPC asks about this chain's proxies.
