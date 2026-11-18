@@ -91,8 +91,9 @@ Fee settings are read when money moves (settlement time), not when the order was
 - **P16 Storage layout.** The layout matches every current implementation recorded in `.openzeppelin/*.json`:
   every deployed variable keeps its slot, offset and type, `IGateway.Order` keeps its members, and new variables
   only consume the start of a `__gap` whose end slot is unchanged (`_tokenFeeSettings` took the first slot of the
-  `GatewaySettingManager` gap). `make gw-storage-layout` checks every recorded implementation (the Tron manifests
-  record no slots, so it lays their variables out as solc does) and that no two variables share bytes; the test
+  `GatewaySettingManager` gap). `make gw-storage-layout` checks every recorded implementation and that no two variables share bytes
+  (a manifest that records no slots is laid out as solc does when it holds only value types, mappings, dynamic
+  `string`/`bytes` and `uint256` gaps, and rejected otherwise; every current manifest records slots); the test
   pins the slots. The pre-fee-model implementations recorded before the current layout are listed as superseded
   and reported, not gated, and `arbitrum-sepolia.json` is an older testnet proxy this code is not compatible with,
   reported as an exception: never upgrade it to this code. The manifests do not say which implementation each

@@ -25,7 +25,7 @@ dynamic_test_linking = false
 verbosity = 2
 fs_permissions = [{ access = "read-write", path = "./test/vectors" }]
 # Keep the legacy Hardhat/Truffle sources out of the Foundry build graph.
-skip = ["flattened/**", "migrations/**", "tron-deploy/**"]
+skip = ["flattened/**"]
 
 [fuzz]
 runs = 1000

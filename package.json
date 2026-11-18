@@ -22,7 +22,6 @@
   "license": "MIT",
   "type": "module",
   "devDependencies": {
-    "@daochild/tronweb-typescript": "^1.1.2",
     "@ethersproject/providers": "^5.7.2",
     "@nomicfoundation/hardhat-ethers": "4.0.7",
     "@nomicfoundation/hardhat-ethers-chai-matchers": "3.0.4",
@@ -35,7 +34,6 @@
     "@nomicfoundation/hardhat-typechain": "3.0.1",
     "@nomicfoundation/hardhat-verify": "3.0.9",
     "@nomicfoundation/ignition-core": "3.0.9",
-    "@openzeppelin/truffle-upgrades": "^1.21.0",
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "chai": "^6.2.2",
@@ -50,7 +48,6 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.5",
     "@openzeppelin/contracts-upgradeable": "^4.9.5",
-    "crypto-js": "^4.1.1",
-    "tronweb": "^5.3.1"
+    "crypto-js": "^4.1.1"
   }
 }

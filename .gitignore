@@ -14,10 +14,6 @@ cache
 artifacts
 types
 
-# Tron Package
-src/js/metacoin-config.js
-tron-deploy/build
-tron-deploy/node_modules
 
 # Foundry (formal verification gates)
 out/

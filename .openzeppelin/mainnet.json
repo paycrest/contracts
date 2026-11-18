@@ -1,22 +1,20 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0x3bECd7DD69DcDe95d03a1e27d93ea9D9f8c06708",
-    "txHash": "0xc9c7eefad983da68fad0338b447cfc925b1bd508f762467a9ffa574c18cd0360"
+    "address": "0xfe12E3AfAA5E3702eaFB5929781441FC63D30381"
   },
   "proxies": [
     {
-      "address": "0xBe6dE889795677736919A7880324A71Dc7dFa162",
-      "txHash": "0xb0bec39077a8a67df2f0f61830a56677017fac026009ff11576faec0340fd699",
+      "address": "0x8d2C0D398832b814e3814802FF2dC8b8eF4381e5",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "845d5fbd026630944b1c5aefed90760eff97550d40b8982548deafb809b1f206": {
-      "address": "0x9519D63fbF9717Fa3419846eBA92B01Cd1d1D131",
-      "txHash": "0xf9b53fde29323110e1f3c1a75362c6ac682010e863587dd6607b56a7190babb5",
+    "043f9b32d8decff518331cc4300f65be1fbd826aa21f570833ac18d16dbc6e5d": {
+      "address": "0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798",
+      "txHash": "0x2f6b106bbbfd21569df69254bff99c8025820cdbdc3bc6ba5b11c54407d79fb8",
       "layout": {
-        "solcVersion": "0.8.18",
+        "solcVersion": "0.8.20",
         "storage": [
           {
             "label": "_initialized",
@@ -116,12 +114,20 @@
             "src": "contracts/GatewaySettingManager.sol:16"
           },
           {
-            "label": "__gap",
+            "label": "_tokenFeeSettings",
             "offset": 0,
             "slot": "155",
-            "type": "t_array(t_uint256)50_storage",
+            "type": "t_mapping(t_address,t_struct(TokenFeeSettings)6534_storage)",
             "contract": "GatewaySettingManager",
-            "src": "contracts/GatewaySettingManager.sol:19"
+            "src": "contracts/GatewaySettingManager.sol:26"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "GatewaySettingManager",
+            "src": "contracts/GatewaySettingManager.sol:28"
           },
           {
             "label": "_paused",
@@ -143,9 +149,9 @@
             "label": "order",
             "offset": 0,
             "slot": "255",
-            "type": "t_mapping(t_bytes32,t_struct(Order)1827_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(Order)7069_storage)",
             "contract": "Gateway",
-            "src": "contracts/Gateway.sol:19"
+            "src": "contracts/Gateway.sol:23"
           },
           {
             "label": "_nonce",
@@ -153,7 +159,7 @@
             "slot": "256",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "Gateway",
-            "src": "contracts/Gateway.sol:20"
+            "src": "contracts/Gateway.sol:24"
           },
           {
             "label": "__gap",
@@ -161,39 +167,19 @@
             "slot": "257",
             "type": "t_array(t_uint256)50_storage",
             "contract": "Gateway",
-            "src": "contracts/Gateway.sol:21"
+            "src": "contracts/Gateway.sol:25"
           }
         ],
         "types": {
-          "t_address": {
-            "label": "address",
-            "numberOfBytes": "20"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]",
-            "numberOfBytes": "1568"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]",
-            "numberOfBytes": "1600"
-          },
-          "t_bool": {
-            "label": "bool",
-            "numberOfBytes": "1"
+          "t_mapping(t_bytes32,t_struct(Order)7069_storage)": {
+            "label": "mapping(bytes32 => struct IGateway.Order)",
+            "numberOfBytes": "32"
           },
           "t_bytes32": {
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_uint256)": {
-            "label": "mapping(address => uint256)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(Order)1827_storage)": {
-            "label": "mapping(bytes32 => struct IGateway.Order)",
-            "numberOfBytes": "32"
-          },
-          "t_struct(Order)1827_storage": {
+          "t_struct(Order)7069_storage": {
             "label": "struct IGateway.Order",
             "members": [
               {
@@ -259,21 +245,75 @@
             ],
             "numberOfBytes": "256"
           },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
           "t_uint256": {
             "label": "uint256",
             "numberOfBytes": "32"
           },
-          "t_uint64": {
-            "label": "uint64",
-            "numberOfBytes": "8"
-          },
-          "t_uint8": {
-            "label": "uint8",
+          "t_bool": {
+            "label": "bool",
             "numberOfBytes": "1"
           },
           "t_uint96": {
             "label": "uint96",
             "numberOfBytes": "12"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_mapping(t_address,t_struct(TokenFeeSettings)6534_storage)": {
+            "label": "mapping(address => struct GatewaySettingManager.TokenFeeSettings)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(TokenFeeSettings)6534_storage": {
+            "label": "struct GatewaySettingManager.TokenFeeSettings",
+            "members": [
+              {
+                "label": "senderToProvider",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "providerToAggregator",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "senderToTreasury",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "providerToTreasury",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
           }
         },
         "namespaces": {}

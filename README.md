@@ -30,16 +30,6 @@ npx hardhat ignition deploy ./ignition/modules/Gateway.ts --network <network> --
 npx hardhat verify --network <network> <contract_address>
 ```
 
-#### Tron network
-
-```bash
-# deploy
-tronbox migrate -f 1 --to 1 --network <network>
-
-# upgrade
-tronbox migrate -f 2 --to 2 --network <network>
-```
-
 #### Upgrade all EVM gateways (recommended)
 
 Uses the same `DEPLOYER_PRIVATE_KEY` on every chain. Proxy addresses stay the same; only the implementation is replaced.
@@ -64,8 +54,6 @@ npm run upgrade:all-evm
 
 Flags: `--dry-run`, `--set-fees`, `--update-config`, `--networks`, `--fail-fast`, `--yes` (skip prompt).
 
-Tron is **not** included — use `tronbox migrate -f 2 --to 2` separately.
-
 **RPC:** `scripts/config.ts` uses Shield3 URLs (`SHIELD3_API_KEY`). If `rpc.shield3.com` is unreachable, the upgrade task falls back to public RPCs automatically. Override per chain with `RPC_URL_<chainId>` in `.env` (e.g. `RPC_URL_8453=https://mainnet.base.org`).
 
 #### Upgrade single network (legacy)
@@ -85,12 +73,6 @@ npx hardhat run scripts/updateProtocolAddresses.ts --network <network>
 
 npx hardhat run scripts/setTokenFeeSettings.ts --network <network>
 
-# for Tron network,
-npx hardhat run scripts/tron/setSupportedTokens.ts
-
-npx hardhat run scripts/tron/updateProtocolAddresses.ts
-
-npx hardhat run scripts/tron/setTokenFeeSettings.ts
 ```
 ## Testnet Contracts
 
@@ -148,34 +130,6 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 			<td>Gateway Implementation</td>
 			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
 		</tr>
-		<tr>
-			<td colspan="3"></td>
-		</tr>
-		<tr>
-			<td rowspan="2">Asset Chain Testnet</td>
-			<td>Gateway Proxy</td>
-			<td>0xBe6dE889795677736919A7880324A71Dc7dFa162</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>0x9519D63fbF9717Fa3419846eBA92B01Cd1d1D131</td>
-		</tr>
-		<tr>
-			<td colspan="3"></td>
-		</tr>
-		<tr>
-			<td rowspan="3">Tron Shasta</td>
-			<td>Gateway Proxy</td>
-			<td>TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>TSGr6Ri7NZ7FxN1gCiWkn8cPA2qtF6ctdF</td>
-		</tr>
-		<tr>
-			<td>Gateway Admin</td>
-			<td>TNcogTDoWxpuv77WtsiNTRhqjRbZmmDLTR</td>
-		</tr>
 	</tbody>
 </table>
 
@@ -197,7 +151,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x0BC10d31B96838aD5783a0dd994fb16e14609e6E</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td>Gateway Admin</td>
@@ -213,7 +167,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -225,7 +179,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd28da2E11FCd2A9F44D5a4952430CE8b4f3Ee05f</td>
+			<td>0x8c94DEA51127A1DBeBf74C5a833161857B2F7cbE</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -237,7 +191,7 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
@@ -249,43 +203,12 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x8fd1f78d88dd008e557273b5cd517487c2a9a7de</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td colspan="3"></td>
 		</tr>
-		<tr>
-			<td rowspan="3">Optimism (defunct)</td>
-			<td>Gateway Proxy</td>
-			<td>0xD293fCd3dBc025603911853d893A4724CF9f70a0</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>0xd2d97002Ec87ba57FCf3f6b510f20d5A80A6C33a</td>
-		</tr>
-		<tr>
-			<td>Gateway Admin</td>
-			<td>0xb9B5280AB99E48a9662D4740B1e1398abdf87b6D</td>
-		</tr>
-		<tr>
-			<td colspan="3"></td>
-		</tr>
-		<tr>
-			<td rowspan="3">Scroll (defunct)</td>
-			<td>Gateway Proxy</td>
-			<td>0x663C5BfE7d44bA946C2dd4b2D1Cf9580319F9338</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>0xd2d97002ec87ba57fcf3f6b510f20d5a80a6c33a</td>
-		</tr>
-		<tr>
-			<td>Gateway Admin</td>
-			<td>0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B</td>
-		</tr>
-		<tr>
-			<td colspan="3"></td>
-		</tr>
+		
 		<tr>
 			<td rowspan="3">Celo</td>
 			<td>Gateway Proxy</td>
@@ -293,49 +216,11 @@ npx hardhat run scripts/tron/setTokenFeeSettings.ts
 		</tr>
 		<tr>
 			<td>Gateway Implementation</td>
-			<td>0x8508c1C9f29BD1e73B5A9bD8FB87720927c681FA</td>
+			<td>0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798</td>
 		</tr>
 		<tr>
 			<td>Gateway Admin</td>
 			<td>0xc38D6817F736b1cb44785e14A8cb7152385d3210</td>
-		</tr>
-		<tr>
-			<td rowspan="3">Lisk (defunct)</td>
-			<td>Gateway Proxy</td>
-			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE</td>
-		</tr>
-		<tr>
-			<td>Gateway Admin</td>
-			<td>0x8FD1f78d88Dd008E557273b5Cd517487C2A9A7de</td>
-		</tr>
-		<tr>
-			<td rowspan="2">Asset Chain</td>
-			<td>Gateway Proxy</td>
-			<td>0xff0E00E0110C1FBb5315D276243497b66D3a4d8a</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE</td>
-		</tr>
-		<tr>
-			<td colspan="3"></td>
-		</tr>
-		<tr>
-			<td rowspan="3">Tron</td>
-			<td>Gateway Proxy</td>
-			<td>THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU</td>
-		</tr>
-		<tr>
-			<td>Gateway Implementation</td>
-			<td>TDhBvHbnF8nN7YctokpdZAVPcmBx2Jrn2d</td>
-		</tr>
-		<tr>
-			<td>Gateway Admin</td>
-			<td>TLw6AW9khfwLVq5gq9uV71wTVZEPxKjoiZ</td>
 		</tr>
 	</tbody>
 </table>

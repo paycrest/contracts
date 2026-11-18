@@ -32,14 +32,14 @@ const NETWORKS = {
 		},
 		gatewayContract: "0xE8bc3B607CfE68F47000E3d200310D49041148Fc",
 		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
-		gatewayImplementation: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+		gatewayImplementation: "0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798",
 },
 
 	/**
 	 * @dev Base
 	 */
 	8453: {
-		gatewayImplementation: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+		gatewayImplementation: "0x8c94DEA51127A1DBeBf74C5a833161857B2F7cbE",
 		rpcUrl: `https://rpc.shield3.com/v3/0x2105/${SHIELD3_API_KEY}/rpc`,
 		supportedTokens: {
 			USDC: {
@@ -82,7 +82,7 @@ const NETWORKS = {
 		gatewayContract: "0x1FA0EE7F9410F6fa49B7AD5Da72Cf01647090028",
 		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
 	
-		gatewayImplementation: "0xe606919d10031A44A4ac3108815512E87d938EbF",
+		gatewayImplementation: "0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798",
 },
 
 	/**
@@ -110,7 +110,7 @@ const NETWORKS = {
 		gatewayContract: "0xfB411Cc6385Af50A562aFCb441864E9d541CDA67",
 		proxyAdmin: "0x16c9C78Dbb224889E3e2ADef991C8c4438ea797B",
 	
-		gatewayImplementation: "0x2F2EfBe73F7C0287337F2F9D0dBa5ABC24414A21",
+		gatewayImplementation: "0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798",
 },
 
 	/**
@@ -137,28 +137,14 @@ const NETWORKS = {
 		},
 		gatewayContract: "0x8d2C0D398832b814e3814802FF2dC8b8eF4381e5",
 		proxyAdmin: "0xfe12e3afaa5e3702eafb5929781441fc63d30381",
+		gatewayImplementation: "0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798",
 	},
 
-	/**
-	 * @dev Tron Mainnet
-	 * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
-	 */
-	12001: {
-		rpcUrl: `https://api.trongrid.io`,
-		supportedTokens: {
-			USDT: {
-				address: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-		},
-		gatewayContract: "THyFP5ST9YyLZn6EzjKjFhZti6aKPgEXNU",
-	},
 	/**
 	 * @dev Celo Mainnet
 	 */
 	42220: {
-		gatewayImplementation: "0x18f209a96682662b58A7764e18a45d2413AEDE6A",
+		gatewayImplementation: "0x8D3737e3D51f62cCD6D2E1d247A55417eA4fC798",
 		rpcUrl: `https://forno.celo.org`,
 		supportedTokens: {
 			USDC: {
@@ -179,26 +165,6 @@ const NETWORKS = {
 		},
 		gatewayContract: "0xF418217E3f81092eF44b81C5C8336e6A6fDB0E4b",
 		proxyAdmin: "0xc38D6817F736b1cb44785e14A8cb7152385d3210",
-	},
-	/**
-	 * @dev AssetChain Mainnet
-	 */
-	42420: {
-		rpcUrl: `https://mainnet-rpc.assetchain.org`,
-		gatewayImplementation: "0x3Dc80272cE93cBFF3351913bB089B59C4a9141DE",
-		supportedTokens: {
-			USDC: {
-				address: "0x2B7C1342Cc64add10B2a79C8f9767d2667DE64B2",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-			cNGN: {
-				address: "0x7923C0f6FA3d1BA6EAFCAedAaD93e737Fd22FC4F",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			}
-		},
-		gatewayContract: "0xff0E00E0110C1FBb5315D276243497b66D3a4d8a",
 	},
 	/////////////////////////////////
 	// Testnets
@@ -295,41 +261,6 @@ const NETWORKS = {
 		gatewayContract: "0xCAD53Ff499155Cc2fAA2082A85716322906886c2",
 	},
 
-	/**
-	 * @dev Tron Shasta
-	 * @Note This is a placeholder network as Tron chainID will interfere with ETH chainID
-	 */
-	12002: {
-		rpcUrl: `https://api.shasta.trongrid.io`,
-		supportedTokens: {
-			USDT: {
-				address: "TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-		},
-		gatewayContract: "TYA8urq7nkN2yU7rJqAgwDShCusDZrrsxZ",
-	},
-	/**
-	 * @dev AssetChain Testnet
-	 */
-	42421: {
-		gatewayImplementation: "0x9519D63fbF9717Fa3419846eBA92B01Cd1d1D131",
-		rpcUrl: `https://enugu-rpc.assetchain.org/`,
-		supportedTokens: {
-			USDC: {
-				address: "0x04f868C5b3F0A100a207c7e9312946cC2c48a7a3",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			},
-			cNGN: {
-				address: "0x069404d2F76Aa4519819a41B4E385074A9F4E8eA",
-				senderToTreasury: SENDER_TO_TREASURY_FEE,
-				providerToTreasury: PROVIDER_TO_TREASURY_FEE,
-			}
-		},
-		gatewayContract: "0xBe6dE889795677736919A7880324A71Dc7dFa162",
-	},
 };
 
 export { NETWORKS };
