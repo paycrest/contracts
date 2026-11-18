@@ -38,8 +38,6 @@ EXCEPTIONS = {
 SUPERSEDED = {
     "0xb97d36fe253ee3653765df54e043a5ad72440b96": "first Sepolia implementation (21 variables, _aggregator @ 154)",
     "0xd293fcd3dbc025603911853d893a4724cf9f70a0": "pre-fee-model implementation (GatewaySettingManager gap ends at 203)",
-    "0x86af88ccb34ec32aa4e22ebbba8c989058550f3c": "pre-fee-model Tron implementation",
-    "0x1b038c55f8718961445c15f07ca350a4b09ddea6": "pre-fee-model Tron implementation",
 }
 
 # keccak256("eip1967.proxy.implementation") - 1
@@ -86,7 +84,7 @@ def value_size(t):
 
 
 def assign_slots(layout):
-    """Older manifests (the Tron ones) record no slots: lay the variables out the way solc does."""
+    """Manifests that record no slots: lay the variables out the way solc does."""
     if all("slot" in e for e in layout["storage"]):
         return layout
     slot, off = 0, 0

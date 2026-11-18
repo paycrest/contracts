@@ -40,7 +40,7 @@ export type UpgradeOptions = {
 	implementation?: string;
 };
 
-/** EVM mainnets with Gateway proxies in scripts/config.ts (excludes Tron). */
+/** EVM mainnets with Gateway proxies in scripts/config.ts. */
 export const EVM_MAINNET_CHAIN_IDS = [
 	1, 56, 137, 42161, 8453, 42220,
 ] as const;

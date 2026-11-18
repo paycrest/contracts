@@ -43,7 +43,7 @@ export const GAS_TARGETS: Record<
 	42220: { deployer: parseEther("0.05"), newOwner: parseEther("0.025"), fundOverhead: parseEther("0.01") },
 };
 
-/** EVM mainnets with a Gateway proxy (excludes Tron). */
+/** EVM mainnets with a Gateway proxy. */
 export const OWNERSHIP_CHAIN_IDS = [
 	1, 56, 137, 42161, 8453, 42220,
 ] as const;
