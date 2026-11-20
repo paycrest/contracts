@@ -1,0 +1,612 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
+
+import '@openzeppelin/contracts/proxy/Clones.sol';
+import {TreasuryGuard} from '../../contracts/TreasuryGuard.sol';
+import {TreasurySetup} from '../../contracts/TreasurySetup.sol';
+import {ISafeSetup, ISafeView, ISafeGuard, IERC165, IDelay, Operation} from '../../contracts/interfaces/ISafe.sol';
+import {TreasuryBase, ISafe, MockPasskey, TestToken} from './TreasuryBase.sol';
+
+/// @notice A contract that registers a co-signer but is not a Safe: it has no (or a broken) getTransactionHash.
+contract FakeSafe {
+	uint256 public nonce = 1;
+	uint256 public threshold = 2;
+	bytes public hashReturn;
+	bool public hashReverts = true;
+
+	function getThreshold() external view returns (uint256) {
+		return threshold;
+	}
+
+	function isOwner(address) external pure returns (bool) {
+		return true;
+	}
+
+	function setHashReturn(bytes memory r) external {
+		hashReturn = r;
+		hashReverts = false;
+	}
+
+	function setNonce(uint256 n) external {
+		nonce = n;
+	}
+
+	function register(TreasuryGuard g, address c) external {
+		g.setCosigner(c);
+	}
+
+	function check(TreasuryGuard g, bytes memory sigs) external view {
+		g.checkTransaction(address(0), 0, '', Operation.Call, 0, 0, 0, address(0), payable(address(0)), sigs, address(0));
+	}
+
+	fallback(bytes calldata) external returns (bytes memory) {
+		require(!hashReverts, 'no hash');
+		return hashReturn;
+	}
+}
+
+contract TreasuryGuardTest is TreasuryBase {
+	event CosignerSet(address indexed safe, address indexed cosigner);
+
+	/* ==================================================================================== fixtures */
+
+	/// The fixtures are the canonical Safe v1.4.1 deployments (code hashes from safe-deployments).
+	function test_fixturesMatchCanonicalCodeHashes() public view {
+		assertEq(keccak256(safeL2.code), 0xb1f926978a0f44a2c0ec8fe822418ae969bd8c3f18d61e5103100339894f81ff, 'SafeL2');
+		assertEq(keccak256(safeL1.code), 0x1fe2df852ba3299d6534ef416eefa406e56ced995bca886ab7a553e6d0c5e1c4, 'Safe');
+		assertEq(keccak256(address(factory).code), 0x50c3cdc4074750a7a974204a716c999edd37482f907608d960b2b025ee0b3317, 'factory');
+		assertEq(keccak256(fallbackHandler.code), 0x7c6007a5d711cea8dfd5d91f5940ec29c7f200fe511eb1fc1397b367af3c42f9, 'handler');
+		assertEq(keccak256(multiSendCallOnly.code), 0xecd5bd14a08c5d2122379900b2f272bdf107a7e92423c10dd5fe3254386c9939, 'multisend');
+	}
+
+	/* ==================================================================================== P1 */
+
+	function test_P1_memberAndCosignerMoveFunds() public {
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, _transferData(recipient, 500e6), Operation.Call));
+		assertEq(token.balanceOf(recipient), 500e6);
+	}
+
+	function test_P1_membersWithoutCosignerRevert() public {
+		bytes memory data = _transferData(recipient, 500e6);
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(address(passkey))), address(token), 0, data, Operation.Call);
+		vm.expectRevert(_missing(address(treasury)));
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+		assertEq(token.balanceOf(recipient), 0);
+	}
+
+	function test_P1_cosignerEthSignCounts() public {
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner, Kind.EthSign)), recipient, 1 ether, '', Operation.Call));
+		assertEq(recipient.balance, 1 ether);
+	}
+
+	function test_P1_cosignerApprovedHashCounts() public {
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner, Kind.Approved)), recipient, 1 ether, '', Operation.Call));
+		assertEq(recipient.balance, 1 ether);
+	}
+
+	/// The co-signer submitting the transaction itself (`v == 1`, `r` = co-signer, no prior approveHash).
+	function test_P1_cosignerSubmittingCounts() public {
+		bytes32 h = _hash(treasury, recipient, 1 ether, '', Operation.Call);
+		(uint8 v, bytes32 r, bytes32 s) = vm.sign(memberPk, h);
+		bytes memory m = bytes.concat(r, s, bytes1(v));
+		bytes memory c = bytes.concat(bytes32(uint256(uint160(cosigner))), bytes32(0), bytes1(0x01));
+		bytes memory sigs = member < cosigner ? bytes.concat(m, c) : bytes.concat(c, m);
+		vm.prank(cosigner);
+		assertTrue(treasury.execTransaction(recipient, 1 ether, '', Operation.Call, 0, 0, 0, address(0), payable(address(0)), sigs));
+		assertEq(recipient.balance, 1 ether);
+	}
+
+	/// Any two-or-more subset of {member, passkey, co-signer} executes exactly when it includes the co-signer.
+	function testFuzz_P1_onlyCosignedSubsetsExecute(uint8 mask, uint96 amount) public {
+		mask = uint8(bound(mask, 0, 7));
+		uint256 amt = bound(amount, 1, 1_000_000e6);
+		address[3] memory all = [member, address(passkey), cosigner];
+		uint256 n;
+		for (uint256 i = 0; i < 3; ++i) if (mask & (1 << i) != 0) ++n;
+		vm.assume(n >= 2);
+		Signer[] memory signers = new Signer[](n);
+		uint256 k;
+		for (uint256 i = 0; i < 3; ++i) if (mask & (1 << i) != 0) signers[k++] = _s(all[i]);
+		bytes memory data = _transferData(recipient, amt);
+		bytes memory sigs = _sign(treasury, signers, address(token), 0, data, Operation.Call);
+		bool withCosigner = mask & 4 != 0;
+		if (!withCosigner) vm.expectRevert(_missing(address(treasury)));
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+		assertEq(token.balanceOf(recipient), withCosigner ? amt : 0);
+	}
+
+	/* ==================================================================================== P2 */
+
+	/// With threshold 2, the co-signer's signature alone is not enough for Safe (GS020), let alone the guard.
+	function test_P2_cosignerAloneCannotExecute() public {
+		bytes memory sigs = _sign(treasury, _signers(_s(cosigner)), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(bytes('GS020'));
+		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
+	}
+
+	/// Lowering the threshold to 1 (even co-signed) freezes the normal path instead of letting one key act; the
+	/// admins' recovery restores it.
+	function test_P2_thresholdBelowTwoFreezesNormalPath() public {
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), address(treasury), 0, abi.encodeCall(ISafe.changeThreshold, (1)), Operation.Call));
+		assertEq(treasury.getThreshold(), 1);
+
+		bytes memory sigs = _sign(treasury, _signers(_s(cosigner)), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.ThresholdTooLow.selector, 1));
+		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
+
+		sigs = _sign(treasury, _signers(_s(member)), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.ThresholdTooLow.selector, 1));
+		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
+
+		_queueRecovery(_signers(_s(admin1), _s(admin2)), address(treasury), 0, abi.encodeCall(ISafe.changeThreshold, (2)), Operation.Call);
+		vm.warp(block.timestamp + COOLDOWN);
+		delay.executeNextTx(address(treasury), 0, abi.encodeCall(ISafe.changeThreshold, (2)), Operation.Call);
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), recipient, 1 ether, '', Operation.Call));
+	}
+
+	/* ==================================================================================== P3 */
+
+	/// A co-signer signature appended after the `threshold` counted ones (Safe never checks it) does not count.
+	function test_P3_cosignerSignatureBeyondThresholdIgnored() public {
+		ISafe t = ISafe(_createTreasury(_owners3(member, admin1, cosigner), 2, _admins(), 2, 7, safeL2));
+		vm.deal(address(t), 1 ether);
+		bytes memory sigs = _sign(t, _signers(_s(member), _s(admin1)), recipient, 1 ether, '', Operation.Call);
+		(uint8 v, bytes32 r, bytes32 s) = vm.sign(cosignerPk, _hash(t, recipient, 1 ether, '', Operation.Call));
+		sigs = bytes.concat(sigs, r, s, bytes1(v));
+		vm.expectRevert(_missing(address(t)));
+		_exec(t, recipient, 1 ether, '', Operation.Call, sigs);
+	}
+
+	/* ==================================================================================== P4 */
+
+	struct Tx {
+		address to;
+		uint256 value;
+		bytes data;
+		Operation op;
+		uint256 safeTxGas;
+		uint256 baseGas;
+		uint256 gasPrice;
+		address gasToken;
+		address refundReceiver;
+	}
+
+	function _sigsFor(bytes32 h) internal view returns (bytes memory) {
+		(uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(memberPk, h);
+		(uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(cosignerPk, h);
+		bytes memory a = bytes.concat(r1, s1, bytes1(v1));
+		bytes memory b = bytes.concat(r2, s2, bytes1(v2));
+		return member < cosigner ? bytes.concat(a, b) : bytes.concat(b, a);
+	}
+
+	function _safeHash(ISafe safe, Tx memory t, uint256 n) internal view returns (bytes32) {
+		return safe.getTransactionHash(t.to, t.value, t.data, t.op, t.safeTxGas, t.baseGas, t.gasPrice, t.gasToken, t.refundReceiver, n);
+	}
+
+	function _guardCheck(ISafe safe, Tx memory t, bytes memory sigs) internal {
+		vm.prank(address(safe));
+		guard.checkTransaction(t.to, t.value, t.data, t.op, t.safeTxGas, t.baseGas, t.gasPrice, t.gasToken, payable(t.refundReceiver), sigs, keeper);
+	}
+
+	/// Differential: for any transaction fields, the guard accepts the co-signer's signature over Safe's own hash
+	/// for `nonce - 1` (the transaction in flight), and rejects it once any field differs.
+	function testFuzz_P4_guardChecksSafesOwnHash(Tx memory t, uint8 field, uint256 delta) public {
+		t.op = Operation(bound(uint8(t.op), 0, 1));
+		delta = bound(delta, 1, type(uint64).max);
+		// Advance the nonce once so `nonce - 1` exists, as it does inside execTransaction.
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), recipient, 0, '', Operation.Call));
+		bytes32 h = _safeHash(treasury, t, treasury.nonce() - 1);
+		_guardCheck(treasury, t, _sigsFor(h));
+
+		field = uint8(bound(field, 0, 9));
+		Tx memory u = Tx(t.to, t.value, t.data, t.op, t.safeTxGas, t.baseGas, t.gasPrice, t.gasToken, t.refundReceiver);
+		if (field == 0) u.to = address(uint160(t.to) ^ uint160(delta));
+		else if (field == 1) u.value = t.value ^ delta;
+		else if (field == 2) u.data = bytes.concat(t.data, bytes1(0x01));
+		else if (field == 3) u.op = t.op == Operation.Call ? Operation.DelegateCall : Operation.Call;
+		else if (field == 4) u.safeTxGas = t.safeTxGas ^ delta;
+		else if (field == 5) u.baseGas = t.baseGas ^ delta;
+		else if (field == 6) u.gasPrice = t.gasPrice ^ delta;
+		else if (field == 7) u.gasToken = address(uint160(t.gasToken) ^ uint160(delta));
+		else if (field == 8) u.refundReceiver = address(uint160(t.refundReceiver) ^ uint160(delta));
+		if (field <= 8) {
+			// Signatures over `t`, transaction `u`.
+			vm.expectRevert(_missing(address(treasury)));
+			_guardCheck(treasury, u, _sigsFor(h));
+		} else {
+			// Signatures over the next nonce's hash.
+			bytes memory next = _sigsFor(_safeHash(treasury, t, treasury.nonce()));
+			vm.expectRevert(_missing(address(treasury)));
+			_guardCheck(treasury, t, next);
+		}
+	}
+
+	/// A co-signature made for another treasury (or another chain: the hash includes the chain id) does not count.
+	function test_P4_cosignatureForAnotherSafeOrChainRejected() public {
+		ISafe other = ISafe(_createTreasury(_owners3(member, address(passkey), cosigner), 2, _admins(), 2, 1, safeL2));
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), recipient, 0, '', Operation.Call));
+		assertTrue(_signAndExec(other, _signers(_s(member), _s(cosigner)), recipient, 0, '', Operation.Call));
+		Tx memory t = Tx(recipient, 1, '', Operation.Call, 0, 0, 0, address(0), address(0));
+		bytes memory forOther = _sigsFor(_safeHash(other, t, other.nonce() - 1));
+		vm.expectRevert(_missing(address(treasury)));
+		_guardCheck(treasury, t, forOther);
+
+		uint256 id = block.chainid;
+		vm.chainId(id + 1);
+		bytes memory otherChain = _sigsFor(_safeHash(treasury, t, treasury.nonce() - 1));
+		vm.chainId(id);
+		vm.expectRevert(_missing(address(treasury)));
+		_guardCheck(treasury, t, otherChain);
+		_guardCheck(treasury, t, _sigsFor(_safeHash(treasury, t, treasury.nonce() - 1)));
+	}
+
+	/* ==================================================================================== P5 */
+
+	/// A Safe that installs the guard without registering a co-signer can't use the normal path at all.
+	function test_P5_guardWithoutCosignerFreezesSafe() public {
+		address[] memory owners = new address[](2);
+		owners[0] = member;
+		owners[1] = cosigner;
+		bytes memory init = abi.encodeCall(
+			ISafeSetup.setup,
+			(owners, 2, address(0), bytes(''), fallbackHandler, address(0), 0, payable(address(0)))
+		);
+		ISafe plain = ISafe(factory.createProxyWithNonce(safeL2, init, 99));
+		vm.deal(address(plain), 1 ether);
+		assertTrue(_signAndExec(plain, _signers(_s(member), _s(cosigner)), address(plain), 0, abi.encodeCall(ISafeSetup.setGuard, (address(guard))), Operation.Call));
+		bytes memory sigs = _sign(plain, _signers(_s(member), _s(cosigner)), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.CosignerNotSet.selector, address(plain)));
+		_exec(plain, recipient, 1 ether, '', Operation.Call, sigs);
+	}
+
+	/// A caller that registered a co-signer but is not a Safe gets no pass.
+	function test_P5_nonSafeCallerRejected() public {
+		FakeSafe fake = new FakeSafe();
+		fake.register(guard, cosigner);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		fake.check(guard, new bytes(130));
+
+		fake.setHashReturn(new bytes(64));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		fake.check(guard, new bytes(130));
+
+		fake.setHashReturn(abi.encode(bytes32(uint256(1))));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
+		fake.check(guard, new bytes(130));
+
+		// Too-short signatures never pass.
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
+		fake.check(guard, new bytes(64));
+
+		// nonce 0: there is no transaction in flight.
+		fake.setNonce(0);
+		vm.expectRevert();
+		fake.check(guard, new bytes(130));
+	}
+
+	/* ==================================================================================== P6 */
+
+	function test_P6_setCosignerRules() public {
+		// An EOA (no isOwner) can't register.
+		vm.prank(member);
+		vm.expectRevert();
+		guard.setCosigner(cosigner);
+
+		vm.prank(address(treasury));
+		vm.expectRevert(TreasuryGuard.ZeroCosigner.selector);
+		guard.setCosigner(address(0));
+
+		vm.prank(address(treasury));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.CosignerNotOwner.selector, address(treasury), newCosigner));
+		guard.setCosigner(newCosigner);
+
+		// The treasury can re-register one of its own owners; another treasury's entry is untouched.
+		ISafe other = ISafe(_createTreasury(_owners3(member, address(passkey), cosigner), 2, _admins(), 2, 2, safeL2));
+		vm.expectEmit(true, true, false, false, address(guard));
+		emit CosignerSet(address(treasury), member);
+		vm.prank(address(treasury));
+		guard.setCosigner(member);
+		assertEq(guard.cosignerOf(address(treasury)), member);
+		assertEq(guard.cosignerOf(address(other)), cosigner);
+		assertEq(guard.cosignerOf(address(0xdead)), address(0));
+	}
+
+	/* ==================================================================================== P7 */
+
+	/// The admins move funds through the timelock, without the co-signer, while the normal path would refuse.
+	function test_P7_recoveryMovesFundsWithoutCosigner() public {
+		bytes memory data = _transferData(recipient, 250_000e6);
+		_queueRecovery(_signers(_s(admin1), _s(admin3)), address(token), 0, data, Operation.Call);
+		vm.warp(block.timestamp + COOLDOWN);
+		vm.prank(address(0x1234));
+		delay.executeNextTx(address(token), 0, data, Operation.Call);
+		assertEq(token.balanceOf(recipient), 250_000e6);
+	}
+
+	/// Recovery can remove the guard and replace the co-signer: Paycrest can't hold the treasury hostage.
+	function test_P7_recoveryRemovesGuardAndReplacesCosigner() public {
+		address[] memory tos = new address[](2);
+		bytes[] memory datas = new bytes[](2);
+		tos[0] = address(treasury);
+		datas[0] = abi.encodeCall(ISafe.swapOwner, (address(passkey), cosigner, newCosigner));
+		tos[1] = address(treasury);
+		datas[1] = abi.encodeCall(ISafeSetup.setGuard, (address(0)));
+		bytes memory ms = _multi(tos, datas);
+		_queueRecovery(_signers(_s(admin2), _s(admin3)), multiSendCallOnly, 0, ms, Operation.DelegateCall);
+		vm.warp(block.timestamp + COOLDOWN);
+		delay.executeNextTx(multiSendCallOnly, 0, ms, Operation.DelegateCall);
+		assertEq(uint256(vm.load(address(treasury), GUARD_SLOT)), 0);
+		assertFalse(treasury.isOwner(cosigner));
+		// Without the guard, two members (no Paycrest) can now act.
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(address(passkey))), recipient, 1 ether, '', Operation.Call));
+	}
+
+	/* ==================================================================================== P8 */
+
+	function test_P8_supportsInterface() public view {
+		bytes4 guardId = bytes4(keccak256('checkTransaction(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,bytes,address)')) ^
+			bytes4(keccak256('checkAfterExecution(bytes32,bool)'));
+		assertEq(bytes32(guardId), bytes32(bytes4(0xe6d7a83a)), 'Safe v1.4.1 Guard interface id');
+		assertEq(bytes32(type(ISafeGuard).interfaceId), bytes32(guardId));
+		assertTrue(guard.supportsInterface(guardId));
+		assertTrue(guard.supportsInterface(type(IERC165).interfaceId));
+		assertFalse(guard.supportsInterface(0xffffffff));
+		// Safe accepted it at setup (setGuard checks supportsInterface).
+		assertEq(address(uint160(uint256(vm.load(address(treasury), GUARD_SLOT)))), address(guard));
+	}
+
+	function testFuzz_P8_otherInterfacesUnsupported(bytes4 id) public view {
+		vm.assume(id != 0xe6d7a83a && id != type(IERC165).interfaceId);
+		assertFalse(guard.supportsInterface(id));
+	}
+
+	/* ==================================================================================== P9 */
+
+	function test_P9_hooksWriteNoStorage() public {
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), recipient, 1 ether, '', Operation.Call);
+		vm.record();
+		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
+		(, bytes32[] memory writes) = vm.accesses(address(guard));
+		assertEq(writes.length, 0);
+	}
+
+	function testFuzz_P9_checkAfterExecutionNeverReverts(bytes32 h, bool ok) public view {
+		guard.checkAfterExecution(h, ok);
+	}
+
+	/* ==================================================================================== P10 */
+
+	function test_P10_passkeyIsAMemberNotTheCosigner() public {
+		assertTrue(_signAndExec(treasury, _signers(_s(address(passkey)), _s(cosigner)), recipient, 1 ether, '', Operation.Call));
+		bytes memory sigs = _sign(treasury, _signers(_s(address(passkey)), _s(member)), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(_missing(address(treasury)));
+		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
+	}
+
+	/// A contract co-signer (`v == 0`) is identified by `r`, like any contract owner.
+	function test_P10_contractCosignerCounts() public {
+		MockPasskey contractCosigner = new MockPasskey();
+		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _initWith(address(contractCosigner)), 3));
+		vm.deal(address(t), 1 ether);
+		assertTrue(_signAndExec(t, _signers(_s(member), _s(address(contractCosigner))), recipient, 1 ether, '', Operation.Call));
+	}
+
+	function _initWith(address cs) internal view returns (bytes memory) {
+		TreasurySetup.Config memory c = _config(_admins(), 2);
+		c.cosigner = cs;
+		return _treasuryInitializer(_owners3(member, address(passkey), cs), 2, c);
+	}
+
+	/* ==================================================================================== P11 */
+
+	function test_P11_setupWiresGuardTimelockAndRecovery() public view {
+		assertEq(address(uint160(uint256(vm.load(address(treasury), GUARD_SLOT)))), address(guard));
+		assertEq(guard.cosignerOf(address(treasury)), cosigner);
+		assertEq(treasury.getThreshold(), 2);
+
+		assertTrue(treasury.isModuleEnabled(address(delay)));
+		assertEq(delay.owner(), address(treasury));
+		assertEq(delay.avatar(), address(treasury));
+		assertEq(delay.target(), address(treasury));
+		assertEq(delay.txCooldown(), COOLDOWN);
+		assertEq(delay.txExpiration(), EXPIRATION);
+		assertTrue(delay.isModuleEnabled(address(recovery)));
+
+		address[] memory owners = recovery.getOwners();
+		assertEq(owners.length, 3);
+		assertEq(owners[0], admin1);
+		assertEq(owners[1], admin2);
+		assertEq(owners[2], admin3);
+		assertEq(recovery.getThreshold(), 2);
+		assertTrue(recovery.isModuleEnabled(address(treasury)));
+		assertEq(uint256(vm.load(address(recovery), GUARD_SLOT)), 0, 'recovery has no guard');
+	}
+
+	function test_P11_thresholdBelowTwoRejected() public {
+		vm.expectRevert();
+		factory.createProxyWithNonce(safeL2, _treasuryInitializer(_owners3(member, address(passkey), cosigner), 1, _config(_admins(), 2)), 4);
+
+		// The helper's own check, reached through a delegatecall from a threshold-1 context.
+		vm.mockCall(address(this), abi.encodeWithSelector(ISafeView.getThreshold.selector), abi.encode(uint256(1)));
+		(bool ok, bytes memory ret) = address(setupHelper).delegatecall(abi.encodeCall(TreasurySetup.setupTreasury, (_config(_admins(), 2))));
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.TreasuryThresholdTooLow.selector, 1));
+	}
+
+	function test_P11_onlyDelegateCall() public {
+		vm.expectRevert(TreasurySetup.OnlyDelegateCall.selector);
+		setupHelper.setupTreasury(_config(_admins(), 2));
+		vm.expectRevert(TreasurySetup.OnlyDelegateCall.selector);
+		setupHelper.setupRecovery(address(treasury));
+	}
+
+	/// A single-admin business: 1-of-1 recovery with a 7-day wait.
+	function test_P11_singleAdminRecovery() public {
+		address[] memory one = new address[](1);
+		one[0] = admin1;
+		TreasurySetup.Config memory c = _config(one, 1);
+		c.recoveryCooldown = 7 days;
+		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c), 5));
+		(IDelay d, ISafe r) = _recoveryOf(address(t));
+		assertEq(d.txCooldown(), 7 days);
+		assertEq(r.getThreshold(), 1);
+	}
+
+	/* ==================================================================================== P12 */
+
+	function test_P12_recoveryWaitsForCooldown() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		_queueRecovery(_signers(_s(admin1), _s(admin2)), address(token), 0, data, Operation.Call);
+		vm.warp(block.timestamp + COOLDOWN - 1);
+		vm.expectRevert(bytes('Transaction is still in cooldown'));
+		delay.executeNextTx(address(token), 0, data, Operation.Call);
+		vm.warp(block.timestamp + 1);
+		delay.executeNextTx(address(token), 0, data, Operation.Call);
+		assertEq(token.balanceOf(recipient), 1e6);
+	}
+
+	function test_P12_recoveryNeedsAdminMajority() public {
+		bytes memory q = abi.encodeCall(IDelay.execTransactionFromModule, (address(token), 0, _transferData(recipient, 1e6), Operation.Call));
+		bytes memory sigs = _sign(recovery, _signers(_s(admin1)), address(delay), 0, q, Operation.Call);
+		vm.expectRevert(bytes('GS020'));
+		_exec(recovery, address(delay), 0, q, Operation.Call, sigs);
+		// Members and the co-signer are not admins.
+		vm.expectRevert(bytes('Module not authorized'));
+		vm.prank(cosigner);
+		delay.execTransactionFromModule(address(token), 0, _transferData(recipient, 1e6), Operation.Call);
+	}
+
+	function test_P12_recoveryExpires() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		_queueRecovery(_signers(_s(admin1), _s(admin2)), address(token), 0, data, Operation.Call);
+		vm.warp(block.timestamp + COOLDOWN + EXPIRATION + 1);
+		vm.expectRevert(bytes('Transaction expired'));
+		delay.executeNextTx(address(token), 0, data, Operation.Call);
+	}
+
+	/// While a recovery waits, a member and the co-signer cancel it.
+	function test_P12_treasuryCancelsRecovery() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		_queueRecovery(_signers(_s(admin1), _s(admin2)), address(token), 0, data, Operation.Call);
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), address(delay), 0, abi.encodeCall(IDelay.setTxNonce, (delay.queueNonce())), Operation.Call));
+		vm.warp(block.timestamp + COOLDOWN);
+		vm.expectRevert(bytes('Transaction queue is empty'));
+		delay.executeNextTx(address(token), 0, data, Operation.Call);
+		// Members alone can't cancel.
+		_queueRecovery(_signers(_s(admin1), _s(admin2)), address(token), 0, data, Operation.Call);
+		bytes memory cancel = abi.encodeCall(IDelay.setTxNonce, (delay.queueNonce()));
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(address(passkey))), address(delay), 0, cancel, Operation.Call);
+		vm.expectRevert(_missing(address(treasury)));
+		_exec(treasury, address(delay), 0, cancel, Operation.Call, sigs);
+	}
+
+	/// The treasury (normal path) keeps the recovery Safe's admins in step with the team, as its module.
+	function test_P12_treasuryManagesRecoveryOwners() public {
+		bytes memory swap = abi.encodeCall(ISafe.swapOwner, (admin2, admin3, member));
+		bytes memory viaModule = abi.encodeCall(ISafe.execTransactionFromModule, (address(recovery), 0, swap, Operation.Call));
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), address(recovery), 0, viaModule, Operation.Call));
+		assertTrue(recovery.isOwner(member));
+		assertFalse(recovery.isOwner(admin3));
+	}
+
+	/* ==================================================================================== P13 */
+
+	function test_P13_addressesPredictable() public {
+		TreasurySetup.Config memory c = _config(_admins(), 2);
+		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c);
+		address predicted = _predictSafe(safeL2, init, 42);
+		address predictedDelay = Clones.predictDeterministicAddress(delayMastercopy, setupHelper.DELAY_SALT(), predicted);
+		address predictedRecovery = _predictSafe(
+			safeL2,
+			setupHelper.recoveryInitializer(predicted, _admins(), 2, fallbackHandler),
+			uint256(uint160(predicted))
+		);
+		address t = factory.createProxyWithNonce(safeL2, init, 42);
+		(IDelay d, ISafe r) = _recoveryOf(t);
+		assertEq(t, predicted);
+		assertEq(address(d), predictedDelay);
+		assertEq(address(r), predictedRecovery);
+	}
+
+	/// Same initializer and salt: same treasury, timelock and recovery Safe on every chain.
+	function test_P13_sameAddressesOnEveryChain() public {
+		uint256[6] memory chains = [uint256(1), 137, 8453, 56, 42161, 42220];
+		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, _config(_admins(), 2));
+		address first;
+		address firstDelay;
+		address firstRecovery;
+		for (uint256 i = 0; i < chains.length; ++i) {
+			uint256 snap = vm.snapshotState();
+			vm.chainId(chains[i]);
+			address t = factory.createProxyWithNonce(safeL2, init, 77);
+			(IDelay d, ISafe r) = _recoveryOf(t);
+			if (i == 0) (first, firstDelay, firstRecovery) = (t, address(d), address(r));
+			assertEq(t, first);
+			assertEq(address(d), firstDelay);
+			assertEq(address(r), firstRecovery);
+			vm.revertToState(snap);
+		}
+	}
+
+	/// The singleton is part of the address: "Safe on Ethereum, SafeL2 elsewhere" would split the treasury
+	/// across two addresses, so every network uses SafeL2.
+	function test_P13_singletonChangesAddress() public view {
+		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, _config(_admins(), 2));
+		assertTrue(_predictSafe(safeL2, init, 42) != _predictSafe(safeL1, init, 42));
+	}
+
+	/* ==================================================================================== P14 */
+
+	/// Rotate the co-signer key in one co-signed transaction, without recovery.
+	function test_P14_cosignerRotation() public {
+		address[] memory tos = new address[](2);
+		bytes[] memory datas = new bytes[](2);
+		tos[0] = address(treasury);
+		datas[0] = abi.encodeCall(ISafe.swapOwner, (address(passkey), cosigner, newCosigner));
+		tos[1] = address(guard);
+		datas[1] = abi.encodeCall(TreasuryGuard.setCosigner, (newCosigner));
+		bytes memory ms = _multi(tos, datas);
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), multiSendCallOnly, 0, ms, Operation.DelegateCall));
+		assertEq(guard.cosignerOf(address(treasury)), newCosigner);
+
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(bytes('GS026'));
+		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(newCosigner)), recipient, 1 ether, '', Operation.Call));
+	}
+
+	/// Re-registering before the owner swap fails, so the guard never points at a non-owner by mistake.
+	function test_P14_rotationOrderEnforced() public {
+		address[] memory tos = new address[](2);
+		bytes[] memory datas = new bytes[](2);
+		tos[0] = address(guard);
+		datas[0] = abi.encodeCall(TreasuryGuard.setCosigner, (newCosigner));
+		tos[1] = address(treasury);
+		datas[1] = abi.encodeCall(ISafe.swapOwner, (address(passkey), cosigner, newCosigner));
+		bytes memory ms = _multi(tos, datas);
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), multiSendCallOnly, 0, ms, Operation.DelegateCall);
+		vm.expectRevert();
+		_exec(treasury, multiSendCallOnly, 0, ms, Operation.DelegateCall, sigs);
+		assertEq(guard.cosignerOf(address(treasury)), cosigner);
+	}
+
+	/* ==================================================================================== gas (report only) */
+
+	function test_gasReport() public {
+		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, _config(_admins(), 2));
+		uint256 g = gasleft();
+		factory.createProxyWithNonce(safeL2, init, 1234);
+		emit log_named_uint('create treasury + timelock + recovery Safe (gas)', g - gasleft());
+
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call);
+		g = gasleft();
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+		emit log_named_uint('token transfer, EOA member + co-signer (gas)', g - gasleft());
+
+		sigs = _sign(treasury, _signers(_s(address(passkey)), _s(cosigner)), address(token), 0, data, Operation.Call);
+		g = gasleft();
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+		emit log_named_uint('token transfer, contract-signature member + co-signer (gas, mock verifier)', g - gasleft());
+	}
+}
