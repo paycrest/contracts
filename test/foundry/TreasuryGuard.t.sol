@@ -151,6 +151,14 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(token.balanceOf(recipient), 0);
 	}
 
+	/// Members alone with no room for an attestation revert `DeadlineAttestationMissing` before the co-signer check.
+	function test_P1_membersWithoutRoomRevertAttestationMissingFirst() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes memory sigs = _stripAttestation(_sign(treasury, _signers(_s(member), _s(address(passkey))), address(token), 0, data, Operation.Call));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(treasury)));
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+	}
+
 	function test_P1_cosignerEthSignCounts() public {
 		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner, Kind.EthSign)), recipient, 1 ether, '', Operation.Call));
 		assertEq(recipient.balance, 1 ether);
@@ -261,6 +269,20 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.warp(block.timestamp + COOLDOWN);
 		delay.executeNextTx(address(treasury), 0, abi.encodeCall(ISafe.changeThreshold, (2)), Operation.Call);
 		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), recipient, 1 ether, '', Operation.Call));
+	}
+
+	/// A threshold-1 Safe that set the guard but registered no co-signer reverts `CosignerNotSet` first.
+	function test_P2_noCosignerRevertsBeforeThreshold() public {
+		address[] memory owners = new address[](2);
+		owners[0] = member;
+		owners[1] = cosigner;
+		bytes memory init = abi.encodeCall(ISafeSetup.setup, (owners, 1, address(0), bytes(''), address(0), address(0), 0, payable(address(0))));
+		ISafe plain = ISafe(factory.createProxyWithNonce(safeL2, init, 98));
+		vm.deal(address(plain), 1 ether);
+		assertTrue(_signAndExec(plain, _signers(_s(member)), address(plain), 0, abi.encodeCall(ISafeSetup.setGuard, (address(guard))), Operation.Call));
+		bytes memory sigs = _sign(plain, _signers(_s(member)), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.CosignerNotSet.selector, address(plain)));
+		_exec(plain, recipient, 1 ether, '', Operation.Call, sigs);
 	}
 
 	/* ==================================================================================== P3 */
@@ -642,6 +664,16 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(predicted.code.length, 0);
 	}
 
+	/// The refusal above is `RecoveryNotWired(recovery)`, shown through the delegatecall path (the factory drops it).
+	function test_P11_unwiredRecoveryNamedError() public {
+		bytes memory rInit = setupHelper.recoveryInitializer(address(this), _admins(), 2, fallbackHandler);
+		ISafe early = ISafe(factory.createProxyWithNonce(safeL2, rInit, uint256(uint160(address(this)))));
+		assertTrue(_signAndExec(early, _signers(_s(admin1), _s(admin2)), address(early), 0, abi.encodeCall(ISafe.disableModule, (SENTINEL, address(this))), Operation.Call));
+		(bool ok, bytes memory ret) = _setupFromHere(_config(_admins(), 2));
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryNotWired.selector, address(early)));
+	}
+
 	/* ==================================================================================== P12 */
 
 	function test_P12_recoveryWaitsForCooldown() public {
@@ -801,6 +833,23 @@ contract TreasuryGuardTest is TreasuryBase {
 		}
 	}
 
+	/// Fixed boundary cases: a co-signature runs at exactly its deadline, and the full 256-bit deadline is compared.
+	function test_P15_deadlineBoundaries() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes32 h = _hash(treasury, address(token), 0, data, Operation.Call);
+		uint256 deadline = block.timestamp + 100;
+		bytes memory sigs = _reattest(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, deadline);
+		vm.warp(deadline);
+		assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
+
+		// A deadline above 2^64 is not truncated: its low 64 bits are already in the past.
+		h = _hash(treasury, address(token), 0, data, Operation.Call);
+		deadline = (uint256(1) << 64) + 5;
+		sigs = _reattest(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, deadline);
+		assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
+		assertEq(token.balanceOf(recipient), 2e6);
+	}
+
 	/// The co-signer service's supersede case: a co-signature expires at nonce N, the service co-signs a
 	/// replacement at the same nonce, and only the replacement can run; the expired one never does.
 	function test_P15_expiredCosignatureCannotRunAfterReplacement() public {
@@ -863,6 +912,15 @@ contract TreasuryGuardTest is TreasuryBase {
 		h = _hash(treasury, address(token), 0, data, Operation.Call);
 		sigs = _reattest(_sign(treasury, _signers(_s(member), _s(newCosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, block.timestamp + COSIGN_TTL);
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), newCosigner));
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+	}
+
+	/// An attestation that is not the co-signer's is refused as such even when its deadline has also passed.
+	function test_P16_forgedAttestationRefusedBeforeExpiry() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes32 h = _hash(treasury, address(token), 0, data, Operation.Call);
+		bytes memory sigs = _reattest(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call), memberPk, h, block.timestamp - 1);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
 		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
 	}
 
@@ -1031,6 +1089,17 @@ contract TreasuryGuardTest is TreasuryBase {
 		guard.checkAfterExecution(h, ok);
 	}
 
+	/// A handler slot with bits set above the address (Safe's setter never writes one) reverts while decoding.
+	function test_P17_dirtyHandlerSlotRevertsDecoding() public {
+		bytes32[2] memory words = [bytes32(uint256(1) << 160), bytes32((uint256(1) << 160) | uint256(uint160(fallbackHandler)))];
+		for (uint256 i = 0; i < words.length; ++i) {
+			vm.store(address(treasury), HANDLER_SLOT, words[i]);
+			vm.prank(address(treasury));
+			vm.expectRevert(bytes(''));
+			guard.checkAfterExecution(bytes32(0), true);
+		}
+	}
+
 	/* ==================================================================================== P18 */
 
 	/// Runs `setupTreasury(c)` by delegatecall from this contract, playing a threshold-2 Safe without a handler.
@@ -1065,17 +1134,11 @@ contract TreasuryGuardTest is TreasuryBase {
 		(bool ok, bytes memory ret) = _setupFromHere(c);
 		assertFalse(ok);
 		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryExpirationRequired.selector));
-		// Below Delay's own minute: Delay refuses it, so no treasury is created...
+		// Below Delay's own minute: Delay's own check refuses it, and setup passes its reason through.
 		c.recoveryExpiration = 59;
-		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c);
-		address predicted = _predictSafe(safeL2, init, 80);
-		vm.expectRevert();
-		factory.createProxyWithNonce(safeL2, init, 80);
-		assertEq(predicted.code.length, 0);
-		// ...and the refusal is Delay's own check (the factory drops revert data, so it is shown on a bare clone).
-		IDelay clone = IDelay(Clones.clone(delayMastercopy));
-		vm.expectRevert(bytes('Expiratition must be 0 or at least 60 seconds'));
-		clone.setUp(abi.encode(address(this), address(this), address(this), 24 hours, uint256(59)));
+		(ok, ret) = _setupFromHere(c);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSignature('Error(string)', 'Expiratition must be 0 or at least 60 seconds'));
 	}
 
 	function test_P18_recoveryThresholdIsAMajority() public {
