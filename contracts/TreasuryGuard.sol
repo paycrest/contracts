@@ -57,8 +57,8 @@ contract TreasuryGuard is ISafeGuard {
 	error ThresholdTooLow(uint256 threshold);
 	/// @notice None of the signatures Safe counted is the co-signer's.
 	error MissingCosignerSignature(address safe, address cosigner);
-	/// @notice The caller did not return a transaction hash, or its call ends `data` before the ten head words
-	/// `getTransactionHash` takes (it is not a Safe v1.4.1).
+	/// @notice The caller did not return a transaction hash, or its call has `data` end before byte 0x144, where
+	/// the ten head words `getTransactionHash` takes end (it is not a Safe v1.4.1).
 	error TransactionHashUnavailable(address safe);
 	/// @notice `signatures` has no room for a deadline attestation after the counted signatures.
 	error DeadlineAttestationMissing(address safe);
@@ -145,11 +145,11 @@ contract TreasuryGuard is ISafeGuard {
 	 * @dev The Safe's own hash of the transaction being checked, from `getTransactionHash` on the calling Safe.
 	 * The first nine ABI head words of `checkTransaction` (to … refundReceiver, with `data`'s offset) are exactly
 	 * those of `getTransactionHash`; word nine (`signatures`' offset) becomes the nonce. `data` stays where its
-	 * offset points, and the trailing words are ignored by the decoder, so the Safe hashes the same transaction
-	 * it just verified. Passing the head through avoids re-implementing Safe's EIP-712 encoding here.
+	 * offset points, the call ends where `data` does, and the decoder ignores word ten, so the Safe hashes the same
+	 * transaction it just verified. Passing the head through avoids re-implementing Safe's EIP-712 encoding here.
 	 */
 	function _safeTxHash(uint256 txNonce) private view returns (bytes32) {
-		// Only the head and `data` go to the Safe: `signatures` (and anything else after `data`) is left out. Head
+		// The call is cut where `data` ends, so a Safe's `signatures` (which follow `data`) are not sent again. Head
 		// word 2 is `data`'s offset; the decoder has already checked that `data` lies within the calldata.
 		uint256 end;
 		// solhint-disable-next-line no-inline-assembly
