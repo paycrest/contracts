@@ -148,7 +148,18 @@ contract TreasuryGuard is ISafeGuard {
 	 * it just verified. Passing the head through avoids re-implementing Safe's EIP-712 encoding here.
 	 */
 	function _safeTxHash(uint256 txNonce) private view returns (bytes32) {
-		bytes memory payload = bytes.concat(ISafeView.getTransactionHash.selector, msg.data[4:]);
+		// Only the head and `data` go to the Safe: `signatures` (and anything else after `data`) is left out. Head
+		// word 2 is `data`'s offset; the decoder has already checked that `data` lies within the calldata.
+		uint256 end;
+		// solhint-disable-next-line no-inline-assembly
+		assembly {
+			let start := add(4, calldataload(0x44))
+			end := add(add(start, 0x20), calldataload(start))
+		}
+		// The nonce goes in word 9, so the payload must hold getTransactionHash's ten head words: a Safe's own
+		// encoding always does (its `data` follows all eleven), so anything shorter is not a Safe.
+		if (end < 0x144) revert TransactionHashUnavailable(msg.sender);
+		bytes memory payload = bytes.concat(ISafeView.getTransactionHash.selector, msg.data[4:end]);
 		// solhint-disable-next-line no-inline-assembly
 		assembly {
 			// payload: 32-byte length, 4-byte selector, then head words; word 9 starts at 0x20 + 4 + 9 * 0x20.

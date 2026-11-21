@@ -48,6 +48,22 @@ contract FakeSafe {
 		g.checkTransaction(address(0), 0, '', Operation.Call, 0, 0, 0, address(0), payable(address(0)), sigs, address(0));
 	}
 
+	/// `checkTransaction` with `data`'s offset (head word 2) replaced: an encoding no Safe produces. With offset
+	/// 0x100, `data`'s length is head word 8 (`refundReceiver`), so `dataEnd` sets where `data` ends.
+	function checkWithDataInHead(TreasuryGuard g, bytes memory sigs, uint256 dataEnd) external view returns (bool ok, bytes memory ret) {
+		address payable len = payable(address(uint160(dataEnd - (4 + 0x100 + 0x20))));
+		bytes memory cd = abi.encodeCall(
+			TreasuryGuard.checkTransaction,
+			(address(0), 0, '', Operation.Call, 0, 0, 0, address(0), len, sigs, address(0))
+		);
+		uint256 dataOffset = 0x100;
+		// solhint-disable-next-line no-inline-assembly
+		assembly {
+			mstore(add(cd, 0x64), dataOffset)
+		}
+		(ok, ret) = address(g).staticcall(cd);
+	}
+
 	fallback(bytes calldata) external returns (bytes memory) {
 		if (revertWithWord) {
 			// solhint-disable-next-line no-inline-assembly
@@ -424,6 +440,15 @@ contract TreasuryGuardTest is TreasuryBase {
 		// Too-short signatures never pass.
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(fake)));
 		fake.check(guard, new bytes(64));
+
+		// `data` placed inside the head, ending one byte short of the ten head words getTransactionHash takes: the
+		// guard refuses rather than send the Safe a shortened head. Ending exactly there, the Safe is asked.
+		(bool ok, bytes memory ret) = fake.checkWithDataInHead(guard, new bytes(130 + 97), 0x143);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		(ok, ret) = fake.checkWithDataInHead(guard, new bytes(130 + 97), 0x144);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
 
 		// nonce 0: there is no transaction in flight. Long enough to pass the length check, so the revert is the
 		// nonce underflow itself.
