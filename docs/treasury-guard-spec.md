@@ -101,6 +101,20 @@ Neither contract has an owner, admin, upgrade path or pause. `TreasuryGuard` is 
   check that an initializer is exactly `setup(owners, threshold, TreasurySetup, setupTreasury(config), 0, 0, 0, 0)`
   with the canonical guard, setup helper, Delay mastercopy, Safe factory, singleton and handler before using or
   showing its address.
+- **The co-signer registration is policy too**: `setCosigner` accepts any owner (P6), members included. A
+  co-signed `setCosigner(member)` would let two members act alone from then on. The policy must refuse any call
+  to `TreasuryGuard.setCosigner`, directly or inside a MultiSend, unless the new key is a Paycrest co-signer key
+  (the P14 rotation).
+- **The recovery Safe is reachable from the normal path**: the treasury is a module of the recovery Safe (so it
+  can manage the admins), which means a co-signed `recovery.execTransactionFromModule(...)` can make the
+  recovery Safe do anything, including queue an unguarded treasury transaction on the timelock or delegatecall.
+  The policy may only allow the recovery Safe's own owner-management calls (`addOwnerWithThreshold`,
+  `removeOwner`, `swapOwner`, `changeThreshold`) with operation `Call`, and only when the admins approved them.
+- The co-signer service in paycrest/aggregator#1338 co-signs only a plain `Call` of ERC-20 `transfer` on a wallet
+  asset, with no value and no gas refund, so today it refuses every administrative call above; any wider policy
+  (KAN-1038) must keep these rules.
+- **Admin clients queue recovery with `execTransactionFromModule`**: in Delay 1.0.0,
+  `execTransactionFromModuleReturnData` returns `(false, "")` and queues nothing.
 - **Rotation swaps, never adds**: the co-signer is rotated with `swapOwner` (P14). The policy must refuse adding
   a second Paycrest key as an owner: with two Paycrest owners at threshold 2, Paycrest could act alone.
 - With no fallback handler (P17) a treasury can't receive ERC-721 or ERC-1155 tokens by `safeTransferFrom`
