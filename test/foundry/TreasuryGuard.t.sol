@@ -48,23 +48,31 @@ contract FakeSafe {
 		g.checkTransaction(address(0), 0, '', Operation.Call, 0, 0, 0, address(0), payable(address(0)), sigs, address(0));
 	}
 
-	/// `checkTransaction` with `data`'s offset (head word 2) replaced: an encoding no Safe produces. With offset
-	/// 0x100, `data`'s length is head word 8 (`refundReceiver`), so `dataEnd` sets where `data` ends.
-	function checkWithDataInHead(TreasuryGuard g, bytes memory sigs, uint256 dataEnd) external view returns (bool ok, bytes memory ret) {
-		address payable len = payable(address(uint160(dataEnd - (4 + 0x100 + 0x20))));
+	/// `checkTransaction` with `data` moved into the head, an encoding no Safe produces: `data`'s offset (head word
+	/// 2) points at head word `word`, which is set to `len` and so becomes `data`'s length. `data` then ends at
+	/// byte 4 + 32 * word + 32 + len of the call.
+	function checkWithDataAt(TreasuryGuard g, bytes memory sigs, uint256 word, uint256 len) external view returns (bool ok, bytes memory ret) {
 		bytes memory cd = abi.encodeCall(
 			TreasuryGuard.checkTransaction,
-			(address(0), 0, '', Operation.Call, 0, 0, 0, address(0), len, sigs, address(0))
+			(address(0), 0, '', Operation.Call, 0, 0, 0, address(0), payable(address(0)), sigs, address(0))
 		);
-		uint256 dataOffset = 0x100;
 		// solhint-disable-next-line no-inline-assembly
 		assembly {
-			mstore(add(cd, 0x64), dataOffset)
+			mstore(add(cd, 0x64), mul(word, 0x20))
+			mstore(add(add(cd, 0x24), mul(word, 0x20)), len)
 		}
 		(ok, ret) = address(g).staticcall(cd);
 	}
 
+	/// When non-zero, the size the guard's getTransactionHash call may have at most.
+	uint256 public maxHashCall;
+
+	function setMaxHashCall(uint256 n) external {
+		maxHashCall = n;
+	}
+
 	fallback(bytes calldata) external returns (bytes memory) {
+		require(maxHashCall == 0 || msg.data.length <= maxHashCall, 'hash call too long');
 		if (revertWithWord) {
 			// solhint-disable-next-line no-inline-assembly
 			assembly {
@@ -398,6 +406,22 @@ contract TreasuryGuardTest is TreasuryBase {
 		_guardCheck(treasury, t, _sigsFor(_safeHash(treasury, t, treasury.nonce() - 1)));
 	}
 
+	/// The hash is asked for with the head and `data` only: the signatures (often the bulk of the call) are not
+	/// sent to the Safe again.
+	function test_P4_hashCallCarriesHeadAndDataOnly() public {
+		FakeSafe fake = new FakeSafe();
+		fake.register(guard, cosigner);
+		fake.setHashReturn(abi.encode(bytes32(uint256(1))));
+		// selector + eleven head words + data's length word (data is empty).
+		fake.setMaxHashCall(4 + 0x160 + 0x20);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
+		fake.check(guard, new bytes(130 + 97));
+		// One byte less is too short for that call: the cap is exact.
+		fake.setMaxHashCall(4 + 0x160 + 0x20 - 1);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		fake.check(guard, new bytes(130 + 97));
+	}
+
 	/* ==================================================================================== P5 */
 
 	/// A Safe that installs the guard without registering a co-signer can't use the normal path at all.
@@ -441,12 +465,13 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(fake)));
 		fake.check(guard, new bytes(64));
 
-		// `data` placed inside the head, ending one byte short of the ten head words getTransactionHash takes: the
-		// guard refuses rather than send the Safe a shortened head. Ending exactly there, the Safe is asked.
-		(bool ok, bytes memory ret) = fake.checkWithDataInHead(guard, new bytes(130 + 97), 0x143);
+		// `data` moved into the head (word 6, gasPrice, as its length): ending one byte short of the ten head words
+		// getTransactionHash takes, the guard refuses rather than send the Safe a shortened head; ending exactly
+		// there, the Safe is asked (testFuzz_P5_dataEndingInHeadRefused covers every end).
+		(bool ok, bytes memory ret) = fake.checkWithDataAt(guard, new bytes(130 + 97), 6, 0x143 - 0xe4);
 		assertFalse(ok);
 		assertEq(ret, abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
-		(ok, ret) = fake.checkWithDataInHead(guard, new bytes(130 + 97), 0x144);
+		(ok, ret) = fake.checkWithDataAt(guard, new bytes(130 + 97), 6, 0x144 - 0xe4);
 		assertFalse(ok);
 		assertEq(ret, abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
 
@@ -455,6 +480,29 @@ contract TreasuryGuardTest is TreasuryBase {
 		fake.setNonce(0);
 		vm.expectRevert(stdError.arithmeticError);
 		fake.check(guard, new bytes(130 + 97));
+	}
+
+	/// Whichever head word serves as `data`'s length (any but `operation`, whose decoder takes only 0 or 1), and
+	/// whatever it holds, the guard refuses exactly when
+	/// `data` ends before getTransactionHash's ten head words (byte 0x144); otherwise the Safe's answer decides.
+	function testFuzz_P5_dataEndingInHeadRefused(uint8 pick, uint256 len) public {
+		FakeSafe fake = new FakeSafe();
+		fake.register(guard, cosigner);
+		fake.setHashReturn(abi.encode(bytes32(uint256(1))));
+		// to, value, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver (the lengths fit an address)
+		uint256[7] memory words = [uint256(0), 1, 4, 5, 6, 7, 8];
+		uint256 word = words[pick % 7];
+		bytes memory sigs = new bytes(130 + 97);
+		// The call is 4 + 0x160 (head) + 0x20 (data's own length word) + 0x20 + 0x100 (signatures) bytes long.
+		uint256 start = 4 + word * 0x20 + 0x20;
+		len = bound(len, 0, 4 + 0x160 + 0x20 + 0x20 + 0x100 - start);
+		(bool ok, bytes memory ret) = fake.checkWithDataAt(guard, sigs, word, len);
+		assertFalse(ok);
+		if (start + len < 0x144) {
+			assertEq(ret, abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		} else {
+			assertEq(ret, abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
+		}
 	}
 
 	/* ==================================================================================== P6 */

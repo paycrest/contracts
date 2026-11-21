@@ -57,7 +57,8 @@ contract TreasuryGuard is ISafeGuard {
 	error ThresholdTooLow(uint256 threshold);
 	/// @notice None of the signatures Safe counted is the co-signer's.
 	error MissingCosignerSignature(address safe, address cosigner);
-	/// @notice The caller did not return a transaction hash (it is not a Safe v1.4.1).
+	/// @notice The caller did not return a transaction hash, or its call ends `data` before the ten head words
+	/// `getTransactionHash` takes (it is not a Safe v1.4.1).
 	error TransactionHashUnavailable(address safe);
 	/// @notice `signatures` has no room for a deadline attestation after the counted signatures.
 	error DeadlineAttestationMissing(address safe);
