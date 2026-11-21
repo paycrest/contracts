@@ -36,6 +36,10 @@ contract FakeSafe {
 		revertWithWord = true;
 	}
 
+	function setThreshold(uint256 t) external {
+		threshold = t;
+	}
+
 	function setNonce(uint256 n) external {
 		nonce = n;
 	}
@@ -86,9 +90,9 @@ contract FakeSafe {
 }
 
 /// @notice A Delay stand-in for setup's timelock checks. It records its setup honestly and enables nothing, then
-/// fails exactly one check: `lie` 0..4 misreports owner, avatar, target, cooldown or expiration (and claims every
-/// module is enabled); `lie` 5 reports everything right but never enables the recovery Safe; `lie` 6 and 7 report
-/// a cooldown or an expiration 2^255 too long (the whole word is compared, not its low bits).
+/// fails exactly one check: `lie` 0..4 misreports owner, avatar, target, cooldown or expiration; `lie` 5 reports
+/// everything right but never enables the recovery Safe; `lie` 6 and 7 report a cooldown or an expiration 2^255 too
+/// long (the whole word is compared, not its low bits). Every lie but 5 claims every module is enabled.
 contract FakeDelay {
 	uint8 internal immutable lie;
 	address internal _owner;
@@ -286,6 +290,29 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertTrue(_exec(t, recipient, 1 ether, '', Operation.Call, sigs));
 	}
 
+	/// Any threshold from 2 to 8 with the co-signer sorted last: one byte short is DeadlineAttestationMissing, the full
+	/// set runs. The guard reads exactly `threshold` counted parts, however many that is.
+	function testFuzz_P1_anyThresholdReadsEveryCountedPart(uint8 raw) public {
+		uint256 n = 2 + (uint256(raw) % 7);
+		address[] memory owners = new address[](n);
+		uint256 found;
+		for (uint256 pk = 0x7000; found < n - 1; ++pk) {
+			address a = vm.addr(pk);
+			if (a < cosigner) owners[found++] = _key(pk);
+		}
+		owners[n - 1] = cosigner;
+		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _treasuryInitializer(owners, n, _config(_admins(), 2)), 900 + n));
+		vm.deal(address(t), 1 ether);
+		Signer[] memory signers = new Signer[](n);
+		for (uint256 i = 0; i < n; ++i) signers[i] = _s(owners[i]);
+		bytes memory sigs = _sign(t, signers, recipient, 1 ether, '', Operation.Call);
+		bytes memory short = new bytes(sigs.length - 1);
+		for (uint256 i = 0; i < short.length; ++i) short[i] = sigs[i];
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(t)));
+		_exec(t, recipient, 1 ether, '', Operation.Call, short);
+		assertTrue(_exec(t, recipient, 1 ether, '', Operation.Call, sigs));
+	}
+
 	/* ==================================================================================== P2 */
 
 	/// With threshold 2, the co-signer's signature alone is not enough for Safe (GS020), let alone the guard.
@@ -469,6 +496,11 @@ contract TreasuryGuardTest is TreasuryBase {
 	function test_P5_nonSafeCallerRejected() public {
 		FakeSafe fake = new FakeSafe();
 		fake.register(guard, cosigner);
+		// The threshold is checked before the hash is asked for: a threshold-1 caller with no hash gets ThresholdTooLow.
+		fake.setThreshold(1);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.ThresholdTooLow.selector, 1));
+		fake.check(guard, new bytes(130 + 97));
+		fake.setThreshold(2);
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
 		fake.check(guard, new bytes(130));
 
@@ -1200,6 +1232,18 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.store(address(this), HANDLER_SLOT, bytes32(0));
 	}
 
+	/// setupTreasury refuses every non-zero handler, including the guard, the co-signer and a precompile address.
+	function testFuzz_P17_setupRefusesAnyHandler(address handler, uint8 pick) public {
+		address[4] memory special = [address(guard), cosigner, address(1), fallbackHandler];
+		if (pick % 5 < 4) handler = special[pick % 5];
+		vm.assume(handler != address(0));
+		vm.mockCall(address(this), abi.encodeWithSelector(ISafeView.getThreshold.selector), abi.encode(uint256(2)));
+		vm.store(address(this), HANDLER_SLOT, bytes32(uint256(uint160(handler))));
+		(bool ok, bytes memory ret) = address(setupHelper).delegatecall(abi.encodeCall(TreasurySetup.setupTreasury, (_config(_admins(), 2))));
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.FallbackHandlerSet.selector, handler));
+	}
+
 	/// A co-signed transaction can't set a fallback handler: not Safe's, not the guard (whose `setCosigner` would
 	/// then be callable by anyone through the treasury), not one set while removing the guard in the same batch.
 	function test_P17_cosignedHandlerChangeRefused() public {
@@ -1263,6 +1307,7 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryCooldownTooShort.selector, 24 hours - 1));
 		c.recoveryCooldown = 0;
 		(ok, ret) = _setupFromHere(c);
+		assertFalse(ok);
 		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryCooldownTooShort.selector, 0));
 
 		// Exactly a day, with the shortest expiration Delay allows, is accepted.
