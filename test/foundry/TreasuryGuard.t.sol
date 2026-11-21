@@ -87,8 +87,8 @@ contract FakeSafe {
 
 /// @notice A Delay stand-in for setup's timelock checks. It records its setup honestly and enables nothing, then
 /// fails exactly one check: `lie` 0..4 misreports owner, avatar, target, cooldown or expiration (and claims every
-/// module is enabled); `lie` 5 reports everything right but never enables the recovery Safe; `lie` 6 reports a
-/// cooldown 2^64 too long (the whole word is compared, not its low bits).
+/// module is enabled); `lie` 5 reports everything right but never enables the recovery Safe; `lie` 6 and 7 report
+/// a cooldown or an expiration 2^255 too long (the whole word is compared, not its low bits).
 contract FakeDelay {
 	uint8 internal immutable lie;
 	address internal _owner;
@@ -118,11 +118,12 @@ contract FakeDelay {
 	}
 
 	function txCooldown() external view returns (uint256) {
-		if (lie == 6) return _cooldown + (uint256(1) << 64);
+		if (lie == 6) return _cooldown + (uint256(1) << 255);
 		return lie == 3 ? _cooldown - 1 : _cooldown;
 	}
 
 	function txExpiration() external view returns (uint256) {
+		if (lie == 7) return _expiration + (uint256(1) << 255);
 		return lie == 4 ? 0 : _expiration;
 	}
 
@@ -257,6 +258,27 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.deal(address(t), 1 ether);
 		bytes memory sigs = _sign(t, _signers(_s(owners[0]), _s(owners[1]), _s(cosigner)), recipient, 1 ether, '', Operation.Call);
 		// One byte short of three parts plus the attestation.
+		bytes memory short = new bytes(sigs.length - 1);
+		for (uint256 i = 0; i < short.length; ++i) short[i] = sigs[i];
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(t)));
+		_exec(t, recipient, 1 ether, '', Operation.Call, short);
+		assertTrue(_exec(t, recipient, 1 ether, '', Operation.Call, sigs));
+	}
+
+	/// The same at threshold 4, so the guard reads `threshold` counted parts rather than a fixed number.
+	function test_P1_thresholdFourReadsEveryCountedPart() public {
+		address[] memory owners = new address[](4);
+		uint256 found;
+		for (uint256 pk = 0x6000; found < 3; ++pk) {
+			address a = vm.addr(pk);
+			if (a < cosigner) owners[found++] = _key(pk);
+		}
+		owners[3] = cosigner;
+		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _treasuryInitializer(owners, 4, _config(_admins(), 2)), 84));
+		vm.deal(address(t), 1 ether);
+		Signer[] memory signers = new Signer[](4);
+		for (uint256 i = 0; i < 4; ++i) signers[i] = _s(owners[i]);
+		bytes memory sigs = _sign(t, signers, recipient, 1 ether, '', Operation.Call);
 		bytes memory short = new bytes(sigs.length - 1);
 		for (uint256 i = 0; i < short.length; ++i) short[i] = sigs[i];
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(t)));
@@ -459,6 +481,14 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
 		fake.check(guard, new bytes(130 + 97));
 
+		// A successful call that returns fewer than 32 bytes is not a hash either.
+		fake.setHashReturn(new bytes(0));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		fake.check(guard, new bytes(130 + 97));
+		fake.setHashReturn(new bytes(31));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		fake.check(guard, new bytes(130 + 97));
+
 		fake.setHashReturn(abi.encode(bytes32(uint256(1))));
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
 		fake.check(guard, new bytes(130 + 97));
@@ -484,8 +514,8 @@ contract TreasuryGuardTest is TreasuryBase {
 		fake.check(guard, new bytes(130 + 97));
 	}
 
-	/// Whichever plain head word serves as `data`'s length (all but `operation`, whose decoder takes only 0 or 1,
-	/// and the three offset words), and whatever it holds, the guard refuses exactly when
+	/// Whichever plain head word serves as `data`'s length (all but `data`'s own offset, `operation` (whose decoder
+	/// takes only 0 or 1), `signatures`' offset and `msgSender`), and whatever it holds, the guard refuses exactly when
 	/// `data` ends before getTransactionHash's ten head words (byte 0x144); otherwise the Safe's answer decides.
 	function testFuzz_P5_dataEndingInHeadRefused(uint8 pick, uint256 len) public {
 		FakeSafe fake = new FakeSafe();
@@ -574,6 +604,7 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertTrue(guard.supportsInterface(guardId));
 		assertTrue(guard.supportsInterface(type(IERC165).interfaceId));
 		assertFalse(guard.supportsInterface(0xffffffff));
+		assertFalse(guard.supportsInterface(0x1626ba7e)); // ERC-1271: the guard validates no signatures for anyone
 		// Safe accepted it at setup (setGuard checks supportsInterface).
 		assertEq(address(uint160(uint256(vm.load(address(treasury), GUARD_SLOT)))), address(guard));
 	}
@@ -924,12 +955,16 @@ contract TreasuryGuardTest is TreasuryBase {
 		sigs = _reattest(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, deadline);
 		assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
 
-		// Nor above 2^128: signed and compared as the full word.
+		// Nor above 2^128 or with the top bit set: signed and compared as the full word.
 		h = _hash(treasury, address(token), 0, data, Operation.Call);
 		deadline = (uint256(1) << 128) + 5;
 		sigs = _reattest(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, deadline);
 		assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
-		assertEq(token.balanceOf(recipient), 3e6);
+		h = _hash(treasury, address(token), 0, data, Operation.Call);
+		deadline = (uint256(1) << 255) + 5;
+		sigs = _reattest(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, deadline);
+		assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
+		assertEq(token.balanceOf(recipient), 4e6);
 	}
 
 	/// The co-signer service's supersede case: a co-signature expires at nonce N, the service co-signs a
@@ -1006,16 +1041,31 @@ contract TreasuryGuardTest is TreasuryBase {
 		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
 	}
 
-	/// Every bit of the deadline word is signed: flipping any one of them makes the attestation invalid.
-	function testFuzz_P16_everyDeadlineBitSigned(uint8 bit) public {
+	/// Every bit of the deadline word is signed: flipping any one of the 256 makes the attestation invalid.
+	function test_P16_everyDeadlineBitSigned() public {
 		bytes memory data = _transferData(recipient, 1e6);
-		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call);
-		uint256 mask = uint256(1) << bit;
-		// solhint-disable-next-line no-inline-assembly
-		assembly {
-			let p := add(add(sigs, 0x20), sub(mload(sigs), 97))
-			mstore(p, xor(mload(p), mask))
+		bytes memory signed = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call);
+		for (uint256 bit = 0; bit < 256; ++bit) {
+			bytes memory sigs = bytes.concat(signed);
+			uint256 mask = uint256(1) << bit;
+			// solhint-disable-next-line no-inline-assembly
+			assembly {
+				let p := add(add(sigs, 0x20), sub(mload(sigs), 97))
+				mstore(p, xor(mload(p), mask))
+			}
+			vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
+			_exec(treasury, address(token), 0, data, Operation.Call, sigs);
 		}
+	}
+
+	/// The co-signer's Safe signature over the transaction hash is not a deadline attestation: placed after a
+	/// deadline word, it does not recover to the co-signer for the deadline digest.
+	function test_P16_safeSignatureIsNotAnAttestation() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes32 h = _hash(treasury, address(token), 0, data, Operation.Call);
+		bytes memory signed = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call);
+		(uint8 v, bytes32 r, bytes32 sv) = vm.sign(cosignerPk, h);
+		bytes memory sigs = bytes.concat(_stripAttestation(signed), bytes32(block.timestamp + 60), r, sv, bytes1(v));
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
 		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
 	}
@@ -1223,11 +1273,11 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(d.txCooldown(), 24 hours);
 		assertEq(d.txExpiration(), 60);
 
-		// The bound reads the whole cooldown: 2^64 seconds (whose low 64 bits are zero) is accepted.
-		c.recoveryCooldown = uint256(1) << 64;
+		// The bound reads the whole cooldown: 2^255 seconds (whose lower bits are all zero) is accepted.
+		c.recoveryCooldown = uint256(1) << 255;
 		t = ISafe(factory.createProxyWithNonce(safeL2, _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c), 81));
 		(d, ) = _recoveryOf(address(t));
-		assertEq(d.txCooldown(), uint256(1) << 64);
+		assertEq(d.txCooldown(), uint256(1) << 255);
 	}
 
 	function test_P18_expirationRequired() public {
@@ -1277,7 +1327,7 @@ contract TreasuryGuardTest is TreasuryBase {
 	/// fake fails exactly one of setup's checks.
 	function test_P18_misconfiguredDelayRefused() public {
 		TreasurySetup.Config memory c = _config(_admins(), 2);
-		for (uint8 lie = 0; lie <= 6; ++lie) {
+		for (uint8 lie = 0; lie <= 7; ++lie) {
 			c.delayMastercopy = address(new FakeDelay(lie));
 			address clone = Clones.predictDeterministicAddress(c.delayMastercopy, setupHelper.DELAY_SALT(), address(this));
 			(bool ok, bytes memory ret) = _setupFromHere(c);
