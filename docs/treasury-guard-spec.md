@@ -13,7 +13,8 @@ co-signer key, threshold 2. Two rules must hold on-chain:
 1. **Paycrest's policy can't be skipped**: no transaction on the normal path goes through without the co-signer,
    and a co-signature stops working at the deadline the co-signer gave it.
 2. **Paycrest can't act alone, and the business never depends on Paycrest**: the co-signer can't move funds by
-   itself, and the business's admins can always recover the treasury through a timelock, without Paycrest.
+   itself, and the business's admins can always recover the treasury through a timelock, without Paycrest
+   (as long as their own recovery Safe stays usable: it is theirs to configure, §4).
 
 `TreasuryGuard` enforces rule 1 and the first half of rule 2. `TreasurySetup` wires the recovery path (a Zodiac
 Delay 1.0.0 timelock driven by a recovery Safe of the business's admins) and installs the guard, in the
@@ -74,7 +75,9 @@ Neither contract has an owner, admin, upgrade path or pause. `TreasuryGuard` is 
 - The attestation is a separate signature, not part of Safe's: the co-signer key also signs Safe transaction
   hashes directly, and no `deadlineDigest` can equal a Safe transaction hash (different preimages: Safe's start
   with `0x1901`).
-- The recovery Safe has no guard by design: it must work without Paycrest.
+- The recovery Safe is created without a guard: it must work without Paycrest. It belongs to the admins, who can
+  change its owners or threshold or install a guard (before setup, if they deployed it first, P11, or at any time
+  after); a guard they install can block their own recovery path. Recovery depends on that configuration.
 - Recovery protects the business from Paycrest, not from Paycrest plus a member: the normal path (a member plus
   the co-signer) can cancel queued recovery, change the timelock's settings, or change the recovery Safe's owners.
   The co-signer policy must refuse those unless the business's admins approved them.
