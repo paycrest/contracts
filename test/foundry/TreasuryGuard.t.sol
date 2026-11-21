@@ -90,7 +90,7 @@ contract TreasuryGuardTest is TreasuryBase {
 		(uint8 v, bytes32 r, bytes32 s) = vm.sign(memberPk, h);
 		bytes memory m = bytes.concat(r, s, bytes1(v));
 		bytes memory c = bytes.concat(bytes32(uint256(uint160(cosigner))), bytes32(0), bytes1(0x01));
-		bytes memory sigs = member < cosigner ? bytes.concat(m, c) : bytes.concat(c, m);
+		bytes memory sigs = bytes.concat(member < cosigner ? bytes.concat(m, c) : bytes.concat(c, m), _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL));
 		vm.prank(cosigner);
 		assertTrue(treasury.execTransaction(recipient, 1 ether, '', Operation.Call, 0, 0, 0, address(0), payable(address(0)), sigs));
 		assertEq(recipient.balance, 1 ether);
@@ -118,10 +118,14 @@ contract TreasuryGuardTest is TreasuryBase {
 	/* ==================================================================================== P2 */
 
 	/// With threshold 2, the co-signer's signature alone is not enough for Safe (GS020), let alone the guard.
+	/// With its attestation appended, Safe reads the attestation as a second signature and refuses that (GS026).
 	function test_P2_cosignerAloneCannotExecute() public {
 		bytes memory sigs = _sign(treasury, _signers(_s(cosigner)), recipient, 1 ether, '', Operation.Call);
 		vm.expectRevert(bytes('GS020'));
+		_exec(treasury, recipient, 1 ether, '', Operation.Call, _stripAttestation(sigs));
+		vm.expectRevert(bytes('GS026'));
 		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
+		assertEq(recipient.balance, 0);
 	}
 
 	/// Lowering the threshold to 1 (even co-signed) freezes the normal path instead of letting one key act; the
@@ -150,9 +154,10 @@ contract TreasuryGuardTest is TreasuryBase {
 	function test_P3_cosignerSignatureBeyondThresholdIgnored() public {
 		ISafe t = ISafe(_createTreasury(_owners3(member, admin1, cosigner), 2, _admins(), 2, 7, safeL2));
 		vm.deal(address(t), 1 ether);
-		bytes memory sigs = _sign(t, _signers(_s(member), _s(admin1)), recipient, 1 ether, '', Operation.Call);
-		(uint8 v, bytes32 r, bytes32 s) = vm.sign(cosignerPk, _hash(t, recipient, 1 ether, '', Operation.Call));
-		sigs = bytes.concat(sigs, r, s, bytes1(v));
+		bytes32 h = _hash(t, recipient, 1 ether, '', Operation.Call);
+		bytes memory sigs = _stripAttestation(_sign(t, _signers(_s(member), _s(admin1)), recipient, 1 ether, '', Operation.Call));
+		(uint8 v, bytes32 r, bytes32 s) = vm.sign(cosignerPk, h);
+		sigs = bytes.concat(sigs, r, s, bytes1(v), _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL));
 		vm.expectRevert(_missing(address(t)));
 		_exec(t, recipient, 1 ether, '', Operation.Call, sigs);
 	}
@@ -176,7 +181,7 @@ contract TreasuryGuardTest is TreasuryBase {
 		(uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(cosignerPk, h);
 		bytes memory a = bytes.concat(r1, s1, bytes1(v1));
 		bytes memory b = bytes.concat(r2, s2, bytes1(v2));
-		return member < cosigner ? bytes.concat(a, b) : bytes.concat(b, a);
+		return bytes.concat(member < cosigner ? bytes.concat(a, b) : bytes.concat(b, a), _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL));
 	}
 
 	function _safeHash(ISafe safe, Tx memory t, uint256 n) internal view returns (bytes32) {
@@ -383,12 +388,20 @@ contract TreasuryGuardTest is TreasuryBase {
 		_exec(treasury, recipient, 1 ether, '', Operation.Call, sigs);
 	}
 
-	/// A contract co-signer (`v == 0`) is identified by `r`, like any contract owner.
-	function test_P10_contractCosignerCounts() public {
+	/// A contract co-signer (`v == 0`) is identified by `r`, like any contract owner, so it passes the counted-
+	/// signature check; but it can't make the ECDSA deadline attestation (P16), so the normal path stays closed.
+	/// The co-signer must be an EOA.
+	function test_P10_contractCosignerCountedButCannotAttest() public {
 		MockPasskey contractCosigner = new MockPasskey();
 		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _initWith(address(contractCosigner)), 3));
 		vm.deal(address(t), 1 ether);
-		assertTrue(_signAndExec(t, _signers(_s(member), _s(address(contractCosigner))), recipient, 1 ether, '', Operation.Call));
+		bytes32 h = _hash(t, recipient, 1 ether, '', Operation.Call);
+		bytes memory sigs = _sign(t, _signers(_s(member), _s(address(contractCosigner))), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(t)));
+		_exec(t, recipient, 1 ether, '', Operation.Call, sigs);
+		sigs = bytes.concat(sigs, _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(t), address(contractCosigner)));
+		_exec(t, recipient, 1 ether, '', Operation.Call, sigs);
 	}
 
 	function _initWith(address cs) internal view returns (bytes memory) {
@@ -588,6 +601,131 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.expectRevert();
 		_exec(treasury, multiSendCallOnly, 0, ms, Operation.DelegateCall, sigs);
 		assertEq(guard.cosignerOf(address(treasury)), cosigner);
+	}
+
+	/* ==================================================================================== P15 */
+
+	/// A co-signature runs up to and including its deadline, and never after it.
+	function testFuzz_P15_validUntilDeadline(uint32 ttl, uint32 dt) public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes32 h = _hash(treasury, address(token), 0, data, Operation.Call);
+		uint256 deadline = block.timestamp + ttl;
+		bytes memory sigs = _reattest(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, deadline);
+		vm.warp(block.timestamp + dt);
+		if (block.timestamp > deadline) {
+			vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.CosignatureExpired.selector, deadline, block.timestamp));
+			_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+			assertEq(token.balanceOf(recipient), 0);
+		} else {
+			assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
+			assertEq(token.balanceOf(recipient), 1e6);
+		}
+	}
+
+	/// The co-signer service's supersede case: a co-signature expires at nonce N, the service co-signs a
+	/// replacement at the same nonce, and only the replacement can run; the expired one never does.
+	function test_P15_expiredCosignatureCannotRunAfterReplacement() public {
+		bytes memory first = _transferData(recipient, 100e6);
+		bytes memory second = _transferData(address(0xCAFE), 100e6);
+		uint256 firstDeadline = block.timestamp + COSIGN_TTL;
+		bytes memory firstSigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, first, Operation.Call);
+		vm.warp(firstDeadline + 1);
+		bytes memory secondSigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, second, Operation.Call);
+
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.CosignatureExpired.selector, firstDeadline, block.timestamp));
+		_exec(treasury, address(token), 0, first, Operation.Call, firstSigs);
+		assertTrue(_exec(treasury, address(token), 0, second, Operation.Call, secondSigs));
+		assertEq(token.balanceOf(recipient), 0);
+		assertEq(token.balanceOf(address(0xCAFE)), 100e6);
+	}
+
+	/// Cancelling a queued recovery (normal path) needs a live co-signature too.
+	function test_P15_expiredCancelRefused() public {
+		_queueRecovery(_signers(_s(admin1), _s(admin2)), address(token), 0, _transferData(recipient, 1e6), Operation.Call);
+		bytes memory cancel = abi.encodeCall(IDelay.setTxNonce, (delay.queueNonce()));
+		uint256 deadline = block.timestamp + COSIGN_TTL;
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(delay), 0, cancel, Operation.Call);
+		vm.warp(deadline + 1);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.CosignatureExpired.selector, deadline, block.timestamp));
+		_exec(treasury, address(delay), 0, cancel, Operation.Call, sigs);
+	}
+
+	/* ==================================================================================== P16 */
+
+	/// Without an attestation after the counted signatures, a fully signed transaction is refused.
+	function test_P16_attestationRequired() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes memory sigs = _stripAttestation(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(treasury)));
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+		// One byte short of an attestation after the two counted parts.
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(treasury)));
+		_exec(treasury, address(token), 0, data, Operation.Call, bytes.concat(sigs, new bytes(96)));
+	}
+
+	/// Only the registered co-signer's attestation counts: not a member's, and not a rotated-out co-signer's.
+	function test_P16_attestationMustBeCosigners() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes32 h = _hash(treasury, address(token), 0, data, Operation.Call);
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call);
+		bytes memory bad = _reattest(sigs, memberPk, h, block.timestamp + COSIGN_TTL);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
+		_exec(treasury, address(token), 0, data, Operation.Call, bad);
+		assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
+
+		// Rotate to the new co-signer; the old key's attestation no longer counts.
+		address[] memory tos = new address[](2);
+		bytes[] memory datas = new bytes[](2);
+		tos[0] = address(treasury);
+		datas[0] = abi.encodeCall(ISafe.swapOwner, (address(passkey), cosigner, newCosigner));
+		tos[1] = address(guard);
+		datas[1] = abi.encodeCall(TreasuryGuard.setCosigner, (newCosigner));
+		assertTrue(_signAndExec(treasury, _signers(_s(member), _s(cosigner)), multiSendCallOnly, 0, _multi(tos, datas), Operation.DelegateCall));
+		h = _hash(treasury, address(token), 0, data, Operation.Call);
+		sigs = _reattest(_sign(treasury, _signers(_s(member), _s(newCosigner)), address(token), 0, data, Operation.Call), cosignerPk, h, block.timestamp + COSIGN_TTL);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), newCosigner));
+		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
+	}
+
+	/// An attestation is bound to its transaction and deadline: one for another transaction, or with the
+	/// deadline word changed (to extend it), does not verify.
+	function test_P16_attestationBoundToTransactionAndDeadline() public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes32 h = _hash(treasury, address(token), 0, data, Operation.Call);
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call);
+
+		bytes32 other = _hash(treasury, address(token), 0, _transferData(recipient, 2e6), Operation.Call);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
+		_exec(treasury, address(token), 0, data, Operation.Call, _reattest(sigs, cosignerPk, other, block.timestamp + COSIGN_TTL));
+
+		bytes memory extended = _stripAttestation(sigs);
+		bytes memory tail = _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL);
+		// solhint-disable-next-line no-inline-assembly
+		assembly {
+			mstore(add(tail, 0x20), add(mload(add(tail, 0x20)), 86400))
+		}
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
+		_exec(treasury, address(token), 0, data, Operation.Call, bytes.concat(extended, tail));
+
+		assertTrue(_exec(treasury, address(token), 0, data, Operation.Call, sigs));
+	}
+
+	/// Fuzzed tails: any 97 bytes that are not the co-signer's attestation for this transaction are refused.
+	function testFuzz_P16_randomTailRefused(uint256 deadline, bytes32 r, bytes32 s, uint8 v) public {
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes memory sigs = _stripAttestation(_sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call));
+		bytes32 h = _hash(treasury, address(token), 0, data, Operation.Call);
+		vm.assume(ecrecover(_deadlineDigest(h, deadline), v, r, s) != cosigner);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
+		_exec(treasury, address(token), 0, data, Operation.Call, bytes.concat(sigs, bytes32(deadline), r, s, bytes1(v)));
+	}
+
+	/// The digest is the documented one (the co-signer service computes it independently).
+	function test_P16_digestEncoding() public view {
+		assertEq(guard.DEADLINE_TYPEHASH(), keccak256('TreasuryDeadline(bytes32 safeTxHash,uint256 deadline)'));
+		bytes32 h = keccak256('tx');
+		assertEq(guard.deadlineDigest(h, 1_800_000_900), keccak256(abi.encode(guard.DEADLINE_TYPEHASH(), h, uint256(1_800_000_900))));
+		assertEq(guard.ATTESTATION_LENGTH(), 97);
 	}
 
 	/* ==================================================================================== gas (report only) */

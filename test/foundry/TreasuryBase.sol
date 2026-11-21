@@ -90,6 +90,8 @@ abstract contract TreasuryBase is Test {
 	address internal constant SENTINEL = address(1);
 	uint256 internal constant COOLDOWN = 48 hours;
 	uint256 internal constant EXPIRATION = 7 days;
+	/// How long the tests' co-signatures stay valid (the co-signer service's maximum TTL).
+	uint256 internal constant COSIGN_TTL = 15 minutes;
 
 	// Real bytecode
 	address internal safeL2;
@@ -355,7 +357,39 @@ abstract contract TreasuryBase is Test {
 			statics = bytes.concat(statics, st);
 			dynamics = bytes.concat(dynamics, dyn);
 		}
-		return bytes.concat(statics, dynamics);
+		return bytes.concat(statics, dynamics, _autoAttestation(safe, h));
+	}
+
+	/// @dev The deadline digest, computed here independently of the guard (no external call, so it is safe to
+	/// use inside an `expectRevert`).
+	function _deadlineDigest(bytes32 h, uint256 deadline) internal pure returns (bytes32) {
+		return keccak256(abi.encode(keccak256('TreasuryDeadline(bytes32 safeTxHash,uint256 deadline)'), h, deadline));
+	}
+
+	/// @dev The co-signer's deadline attestation for `h`: deadline ‖ r ‖ s ‖ v, signed with `pk`.
+	function _attestation(uint256 pk, bytes32 h, uint256 deadline) internal pure returns (bytes memory) {
+		(uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, _deadlineDigest(h, deadline));
+		return bytes.concat(bytes32(deadline), r, s, bytes1(v));
+	}
+
+	/// @dev `sigs` (as `_sign` packed them, with an attestation at the end) with that attestation replaced.
+	function _reattest(bytes memory sigs, uint256 pk, bytes32 h, uint256 deadline) internal pure returns (bytes memory) {
+		return bytes.concat(_stripAttestation(sigs), _attestation(pk, h, deadline));
+	}
+
+	/// @dev `sigs` without its trailing attestation.
+	function _stripAttestation(bytes memory sigs) internal pure returns (bytes memory out) {
+		out = new bytes(sigs.length - 97);
+		for (uint256 i = 0; i < out.length; ++i) out[i] = sigs[i];
+	}
+
+	/// @dev A valid attestation for the registered co-signer of a Safe that uses the guard, expiring after
+	/// `COSIGN_TTL`; empty for a Safe without the guard (the recovery Safe) or a co-signer with no test key.
+	function _autoAttestation(ISafe safe, bytes32 h) internal view returns (bytes memory) {
+		if (address(uint160(uint256(vm.load(address(safe), GUARD_SLOT)))) != address(guard)) return '';
+		uint256 pk = keyOf[guard.cosignerOf(address(safe))];
+		if (pk == 0) return '';
+		return _attestation(pk, h, block.timestamp + COSIGN_TTL);
 	}
 
 	function _txData(ISafe safe, address to, uint256 value, bytes memory data, Operation op) internal view returns (bytes memory) {

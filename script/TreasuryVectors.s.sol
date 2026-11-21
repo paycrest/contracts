@@ -8,7 +8,9 @@ import {Operation} from '../contracts/interfaces/ISafe.sol';
 /**
  * Writes test/vectors/treasury-safe-tx.json: Safe v1.4.1 transactions on a treasury built from the real Safe
  * bytecode, with the Safe's own hash, the packed signatures it accepted and the execTransaction calldata, so the
- * aggregator's keeper encoding (services/wallets, KAN-1042) can be checked against the deployed contracts.
+ * aggregator's keeper encoding (services/wallets, KAN-1042) can be checked against the deployed contracts. Each
+ * vector's signatures end with the co-signer's deadline attestation (P16), with the deadline and its digest
+ * written alongside.
  *
  *   forge script script/TreasuryVectors.s.sol
  *
@@ -57,7 +59,8 @@ contract TreasuryVectors is TreasuryBase {
 	function _vector(string memory name, Signer[] memory signers, SafeTx memory t) internal {
 		t.nonce = treasury.nonce();
 		bytes32 h = _txHash(treasury, t);
-		bytes memory sigs = _signFull(signers, t);
+		uint256 deadline = block.timestamp + COSIGN_TTL;
+		bytes memory sigs = bytes.concat(_signFull(signers, t), _attestation(cosignerPk, h, deadline));
 		bytes memory execData = _flat(ISafe.execTransaction.selector, abi.encode(ExecArgs(t.to, t.value, t.data, t.operation, t.safeTxGas, t.baseGas, t.gasPrice, t.gasToken, t.refundReceiver, sigs)));
 		vm.prank(keeper, keeper);
 		(bool ok, ) = address(treasury).call(execData);
@@ -76,6 +79,8 @@ contract TreasuryVectors is TreasuryBase {
 		vm.serializeAddress(k, 'refundReceiver', t.refundReceiver);
 		vm.serializeUint(k, 'nonce', t.nonce);
 		vm.serializeBytes32(k, 'safeTxHash', h);
+		vm.serializeUint(k, 'deadline', deadline);
+		vm.serializeBytes32(k, 'deadlineDigest', guard.deadlineDigest(h, deadline));
 		vm.serializeBytes(k, 'signatures', sigs);
 		string memory v = vm.serializeBytes(k, 'execTransactionCalldata', execData);
 		allJson = vm.serializeString(all, k, v);

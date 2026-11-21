@@ -24,8 +24,19 @@ contract TreasuryHandler is TreasuryBase {
 	uint256 public uncosignedSuccesses;
 	uint256 public cosignerAloneSuccesses;
 	uint256 public earlyRecoveries;
+	uint256 public expiredSuccesses;
 	uint256 public calls;
 	mapping(uint256 => Queued) internal queued;
+
+	struct Held {
+		bytes data;
+		bytes sigs;
+		uint256 amount;
+		uint256 deadline;
+	}
+
+	/// Co-signed transfers someone kept instead of relaying.
+	Held[] internal held;
 
 	function init() external {
 		setUp();
@@ -76,9 +87,32 @@ contract TreasuryHandler is TreasuryBase {
 		if (how == 0) sigs = one;
 		else if (how == 1) sigs = bytes.concat(one, one);
 		else sigs = bytes.concat(one, bytes32(uint256(uint160(cosigner))), bytes32(0), bytes1(0x01));
+		// With a valid attestation, so only the co-signer-alone rule (P2) stands in the way.
+		sigs = bytes.concat(sigs, _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL));
 		if (_execRaw(treasury, address(token), data, sigs)) {
 			++cosignerAloneSuccesses;
 			cosignedOut += amount;
+		}
+	}
+
+	/// A member and the co-signer sign a transfer that someone keeps instead of relaying.
+	function hold(uint256 raw) external {
+		++calls;
+		uint256 amount = _amount(raw);
+		if (amount == 0) return;
+		bytes memory data = _transferData(recipient, amount);
+		bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call);
+		held.push(Held(data, sigs, amount, block.timestamp + COSIGN_TTL));
+	}
+
+	/// Whoever kept a co-signed transfer relays it, whenever.
+	function relayHeld(uint256 which) external {
+		++calls;
+		if (held.length == 0) return;
+		Held memory hd = held[bound(which, 0, held.length - 1)];
+		if (_execRaw(treasury, address(token), hd.data, hd.sigs)) {
+			if (block.timestamp > hd.deadline) ++expiredSuccesses;
+			cosignedOut += hd.amount;
 		}
 	}
 
@@ -165,13 +199,15 @@ contract TreasuryGuardInvariants is Test {
 		handler = new TreasuryHandler();
 		handler.init();
 		startBalance = TestToken(handler.tokenAddr()).balanceOf(handler.treasuryAddr());
-		bytes4[] memory selectors = new bytes4[](6);
+		bytes4[] memory selectors = new bytes4[](8);
 		selectors[0] = TreasuryHandler.normal.selector;
 		selectors[1] = TreasuryHandler.cosignerAlone.selector;
 		selectors[2] = TreasuryHandler.queueRecovery.selector;
 		selectors[3] = TreasuryHandler.executeRecovery.selector;
 		selectors[4] = TreasuryHandler.cancelRecovery.selector;
 		selectors[5] = TreasuryHandler.warp.selector;
+		selectors[6] = TreasuryHandler.hold.selector;
+		selectors[7] = TreasuryHandler.relayHeld.selector;
 		targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
 		targetContract(address(handler));
 	}
@@ -184,6 +220,11 @@ contract TreasuryGuardInvariants is Test {
 	/// The co-signer never moves funds alone, in any encoding.
 	function invariant_P2_cosignerNeverAlone() public view {
 		assertEq(handler.cosignerAloneSuccesses(), 0);
+	}
+
+	/// No co-signed transaction ever runs after its deadline.
+	function invariant_P15_noExpiredCosignatureRuns() public view {
+		assertEq(handler.expiredSuccesses(), 0);
 	}
 
 	/// Recovery transactions only ever run after their cooldown.

@@ -13,7 +13,9 @@ import {ISafeGuard, IERC165, Operation} from '../../contracts/interfaces/ISafe.s
  * symbolic storage, and `getTransactionHash` hashes the ten fields it receives (with `data` replaced by its
  * hash, like Safe). Signatures are symbolic 65-byte parts. Halmos models `ecrecover` as an uninterpreted
  * function, so "signer i is the co-signer" is a free choice of the solver unless the property pins it; checks
- * compare the guard's verdict with a plain-Solidity reference of Safe's owner-identification rules.
+ * compare the guard's verdict with a plain-Solidity reference of Safe's owner-identification rules. The
+ * deadline attestation (the last 97 bytes) is symbolic too; "it is the co-signer's, for this transaction, and not
+ * expired" is part of each reference verdict, so every check also covers P15 and P16.
  *
  * What the Foundry suite covers instead: the real Safe's own signature check (Halmos can't run the deployed
  * bytecode with symbolic signatures in reasonable time), and that the real Safe's `getTransactionHash` agrees
@@ -82,6 +84,45 @@ contract TreasuryGuardHalmos is Test {
 
 	/* ------------------------------------------------------------------ helpers */
 
+	/// One 65-byte signature part.
+	struct Part {
+		bytes32 r;
+		bytes32 s;
+		uint8 v;
+	}
+
+	/// The deadline attestation at the end of `signatures`.
+	struct Att {
+		uint256 deadline;
+		bytes32 r;
+		bytes32 s;
+		uint8 v;
+	}
+
+	function _p(Part memory x) internal pure returns (bytes memory) {
+		return bytes.concat(x.r, x.s, bytes1(x.v));
+	}
+
+	function _tail(Att memory a) internal pure returns (bytes memory) {
+		return bytes.concat(bytes32(a.deadline), a.r, a.s, bytes1(a.v));
+	}
+
+	/// Reference for P15 + P16: the attestation is the co-signer's over this transaction's hash, not expired.
+	function _attested(bytes32 h, Att memory a) internal view returns (bool) {
+		bytes32 digest = keccak256(abi.encode(keccak256('TreasuryDeadline(bytes32 safeTxHash,uint256 deadline)'), h, a.deadline));
+		return ecrecover(digest, a.v, a.r, a.s) == COSIGNER && block.timestamp <= a.deadline;
+	}
+
+	/// An approved-hash part for a fixed owner that is not the co-signer.
+	function _otherOwner() internal pure returns (bytes memory) {
+		return bytes.concat(bytes32(uint256(0x1234)), bytes32(0), bytes1(0x01));
+	}
+
+	/// An approved-hash part naming the co-signer (counted without any ECDSA).
+	function _cosignerApproved() internal pure returns (bytes memory) {
+		return bytes.concat(bytes32(uint256(uint160(COSIGNER))), bytes32(0), bytes1(0x01));
+	}
+
 	function _register() internal {
 		guard.setCosigner(COSIGNER);
 	}
@@ -106,27 +147,19 @@ contract TreasuryGuardHalmos is Test {
 
 	/* ==================================================================================== P1 */
 
-	/// The guard passes exactly when one of the first `threshold` parts is the co-signer's (threshold 2 or 3,
-	/// three parts supplied).
-	function check_P1_passesIffCosignerCounted(
-		uint256 t,
-		uint8 v0,
-		bytes32 r0,
-		bytes32 s0,
-		uint8 v1,
-		bytes32 r1,
-		bytes32 s1,
-		uint8 v2,
-		bytes32 r2,
-		bytes32 s2
-	) public {
+	/// The guard passes exactly when one of the first `threshold` parts is the co-signer's and the attestation
+	/// holds (threshold 2 or 3, three parts supplied).
+	function check_P1_passesIffCosignerCounted(uint256 t, Part memory p0, Part memory p1, Part memory p2, Att memory a, uint256 ts) public {
 		vm.assume(t == 2 || t == 3);
+		vm.warp(ts);
 		threshold = t;
 		_register();
-		bytes memory sigs = bytes.concat(r0, s0, bytes1(v0), r1, s1, bytes1(v1), r2, s2, bytes1(v2));
+		bytes memory sigs = bytes.concat(_p(p0), _p(p1), _p(p2), _tail(a));
 		bytes32 h = _expected(address(0xBEEF), 1, '', safeNonce - 1);
-		bool counted = _owner(h, v0, r0, s0) == COSIGNER || _owner(h, v1, r1, s1) == COSIGNER || (t == 3 && _owner(h, v2, r2, s2) == COSIGNER);
-		assertEq(_call(address(0xBEEF), 1, '', sigs), counted);
+		bool counted = _owner(h, p0.v, p0.r, p0.s) == COSIGNER ||
+			_owner(h, p1.v, p1.r, p1.s) == COSIGNER ||
+			(t == 3 && _owner(h, p2.v, p2.r, p2.s) == COSIGNER);
+		assertEq(_call(address(0xBEEF), 1, '', sigs), counted && _attested(h, a));
 	}
 
 	/* ==================================================================================== P2 */
@@ -141,31 +174,34 @@ contract TreasuryGuardHalmos is Test {
 
 	/* ==================================================================================== P3 */
 
-	/// Parts after the first `threshold` never change the verdict.
-	function check_P3_extraPartsIgnored(bytes32 r0, bytes32 s0, uint8 v0, bytes32 r1, bytes32 s1, uint8 v1, bytes32 rx, bytes32 sx, uint8 vx) public {
+	/// Parts after the first `threshold` (before the attestation) never change the verdict.
+	function check_P3_extraPartsIgnored(Part memory p0, Part memory p1, Part memory px, Att memory att) public {
 		_register();
-		bytes memory counted = bytes.concat(r0, s0, bytes1(v0), r1, s1, bytes1(v1));
-		bool a = _call(address(0xBEEF), 0, '', counted);
-		bool b = _call(address(0xBEEF), 0, '', bytes.concat(counted, rx, sx, bytes1(vx)));
+		bytes memory counted = bytes.concat(_p(p0), _p(p1));
+		bool a = _call(address(0xBEEF), 0, '', bytes.concat(counted, _tail(att)));
+		bool b = _call(address(0xBEEF), 0, '', bytes.concat(counted, _p(px), _tail(att)));
 		assertEq(a, b);
 		// In particular an appended v == 1 part naming the co-signer.
-		bool c = _call(address(0xBEEF), 0, '', bytes.concat(counted, bytes32(uint256(uint160(COSIGNER))), bytes32(0), bytes1(0x01)));
+		bool c = _call(address(0xBEEF), 0, '', bytes.concat(counted, _cosignerApproved(), _tail(att)));
 		assertEq(a, c);
 	}
 
 	/* ==================================================================================== P4 */
 
-	/// An ECDSA co-signature only counts if it is over the Safe's hash of this transaction at `nonce - 1`.
-	function check_P4_cosignatureBoundToTransaction(address to, uint256 value, bytes32 word, uint256 n, bytes32 r, bytes32 s, bool high) public {
+	/// An ECDSA co-signature, and the attestation, only count if they are for the Safe's hash of this
+	/// transaction at `nonce - 1`.
+	function check_P4_cosignatureBoundToTransaction(address to, uint256 value, bytes32 word, uint256 n, Part memory c, Att memory a) public {
 		vm.assume(n > 0);
+		vm.assume(c.v == 27 || c.v == 28);
 		safeNonce = n;
 		_register();
 		bytes memory data = abi.encodePacked(word);
-		uint8 v = high ? 28 : 27;
 		// Second part: an approved-hash entry for some non-co-signer owner, so only the first part can satisfy.
-		bytes memory sigs = bytes.concat(r, s, bytes1(v), bytes32(uint256(0x1234)), bytes32(0), bytes1(0x01));
+		bytes memory sigs = bytes.concat(_p(c), _otherOwner(), _tail(a));
 		if (_call(to, value, data, sigs)) {
-			assertEq(ecrecover(_expected(to, value, data, n - 1), v, r, s), COSIGNER);
+			bytes32 h = _expected(to, value, data, n - 1);
+			assertEq(ecrecover(h, c.v, c.r, c.s), COSIGNER);
+			assertTrue(_attested(h, a));
 		}
 	}
 
@@ -225,11 +261,48 @@ contract TreasuryGuardHalmos is Test {
 
 	/// A contract-signature part (v == 0) is identified by `r`: it counts for the co-signer only if `r` is the
 	/// co-signer.
-	function check_P10_contractPartIdentifiedByR(bytes32 r, bytes32 s, bytes32 r1, bytes32 s1) public {
+	function check_P10_contractPartIdentifiedByR(bytes32 r, bytes32 s, bytes32 r1, bytes32 s1, Att memory a) public {
 		_register();
 		// Second part: approved hash for a fixed non-co-signer, so the verdict depends on the first part only.
-		bool ok = _call(address(0xBEEF), 0, '', bytes.concat(r, s, bytes1(0), r1, s1, bytes1(0x01)));
+		bool ok = _call(address(0xBEEF), 0, '', bytes.concat(r, s, bytes1(0), r1, s1, bytes1(0x01), _tail(a)));
 		vm.assume(address(uint160(uint256(r1))) != COSIGNER);
-		assertEq(ok, address(uint160(uint256(r))) == COSIGNER);
+		bytes32 h = _expected(address(0xBEEF), 0, '', safeNonce - 1);
+		assertEq(ok, address(uint160(uint256(r))) == COSIGNER && _attested(h, a));
+	}
+
+	/* ==================================================================================== P15 */
+
+	/// With the co-signer counted, the verdict is exactly "the attestation is valid and not expired", at any
+	/// block time; in particular nothing passes once `block.timestamp > deadline`.
+	function check_P15_expiredNeverPasses(uint256 ts, Att memory a) public {
+		vm.warp(ts);
+		_register();
+		bytes memory sigs = bytes.concat(_cosignerApproved(), _otherOwner(), _tail(a));
+		bool ok = _call(address(0xBEEF), 0, '', sigs);
+		assertEq(ok, _attested(_expected(address(0xBEEF), 0, '', safeNonce - 1), a));
+		if (ts > a.deadline) assertFalse(ok);
+	}
+
+	/* ==================================================================================== P16 */
+
+	/// Fewer than 97 bytes after the counted parts never pass, whatever they hold (threshold 2: 2 parts and 96
+	/// bytes; threshold 3: 3 parts and 96 bytes).
+	function check_P16_missingAttestationFails(bool three, bytes32 x0, bytes32 x1, bytes32 x2) public {
+		_register();
+		threshold = three ? 3 : 2;
+		bytes memory parts = three ? bytes.concat(_cosignerApproved(), _otherOwner(), _otherOwner()) : bytes.concat(_cosignerApproved(), _otherOwner());
+		assertFalse(_call(address(0xBEEF), 0, '', bytes.concat(parts, x0, x1, x2)));
+	}
+
+	/// A passing attestation is the co-signer's for this transaction at `nonce - 1`: one made for any other
+	/// transaction or deadline does not verify.
+	function check_P16_attestationBoundToTransaction(address to, uint256 value, bytes32 word, uint256 n, Att memory a) public {
+		vm.assume(n > 0);
+		safeNonce = n;
+		_register();
+		bytes memory data = abi.encodePacked(word);
+		if (_call(to, value, data, bytes.concat(_cosignerApproved(), _otherOwner(), _tail(a)))) {
+			assertTrue(_attested(_expected(to, value, data, n - 1), a));
+		}
 	}
 }

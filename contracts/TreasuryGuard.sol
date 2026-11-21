@@ -14,6 +14,14 @@ import {ISafeGuard, ISafeView, IERC165, Operation} from './interfaces/ISafe.sol'
  * member passkeys cannot move funds without Paycrest's policy check, and, because the threshold must be at
  * least 2 and Safe counts each owner once, Paycrest's key cannot move funds alone either.
  *
+ * Every co-signature also expires on-chain. A Safe transaction has no deadline of its own, so the co-signer
+ * appends a deadline attestation after the signatures Safe checks: the last 97 bytes of `signatures` are
+ * `uint256 deadline ‖ r ‖ s ‖ v`, the co-signer's ECDSA signature over `deadlineDigest(safeTxHash, deadline)`.
+ * The guard refuses the transaction once `block.timestamp > deadline`, so a co-signature that expired off-chain
+ * (or was superseded after expiring) can't be executed later by whoever holds it. Safe itself ignores bytes past
+ * the signatures it reads, so the attestation doesn't change Safe's own check. The co-signer must be an EOA:
+ * the attestation is recovered with `ecrecover`.
+ *
  * Module transactions (`execTransactionFromModule`) never call a guard in Safe v1.4.1. The treasury's recovery
  * path is a module (a timelocked Zodiac Delay controlled by the business's admins), so recovery works without
  * Paycrest, and can remove this guard or replace the co-signer if either ever misbehaves.
@@ -26,6 +34,11 @@ import {ISafeGuard, ISafeView, IERC165, Operation} from './interfaces/ISafe.sol'
  * owner each counted signature belongs to, using the same encoding rules as `Safe.checkNSignatures`.
  */
 contract TreasuryGuard is ISafeGuard {
+	/// @notice EIP-712-style type hash of the deadline attestation.
+	bytes32 public constant DEADLINE_TYPEHASH = keccak256('TreasuryDeadline(bytes32 safeTxHash,uint256 deadline)');
+	/// @notice Length of the attestation at the end of `signatures`: deadline (32) ‖ r (32) ‖ s (32) ‖ v (1).
+	uint256 public constant ATTESTATION_LENGTH = 97;
+
 	/// @notice The co-signer each Safe registered for itself.
 	mapping(address => address) private _cosigners;
 
@@ -44,6 +57,18 @@ contract TreasuryGuard is ISafeGuard {
 	error MissingCosignerSignature(address safe, address cosigner);
 	/// @notice The caller did not return a transaction hash (it is not a Safe v1.4.1).
 	error TransactionHashUnavailable(address safe);
+	/// @notice `signatures` has no room for a deadline attestation after the counted signatures.
+	error DeadlineAttestationMissing(address safe);
+	/// @notice The deadline attestation is not the co-signer's signature over this transaction and deadline.
+	error InvalidDeadlineAttestation(address safe, address cosigner);
+	/// @notice The co-signature's deadline has passed.
+	error CosignatureExpired(uint256 deadline, uint256 timestamp);
+
+	/// @notice The digest the co-signer signs to give the Safe transaction `safeTxHash` a deadline. `safeTxHash`
+	/// already commits to the chain, the Safe and the nonce.
+	function deadlineDigest(bytes32 safeTxHash, uint256 deadline) public pure returns (bytes32) {
+		return keccak256(abi.encode(DEADLINE_TYPEHASH, safeTxHash, deadline));
+	}
 
 	/// @notice The co-signer `safe` registered, or the zero address.
 	function cosignerOf(address safe) external view returns (address) {
@@ -87,6 +112,7 @@ contract TreasuryGuard is ISafeGuard {
 		if (!_countedSigner(signatures, threshold, txHash, cosigner)) {
 			revert MissingCosignerSignature(msg.sender, cosigner);
 		}
+		_checkDeadline(signatures, threshold, txHash, cosigner);
 	}
 
 	/// @inheritdoc ISafeGuard
@@ -114,6 +140,33 @@ contract TreasuryGuard is ISafeGuard {
 		(bool ok, bytes memory ret) = msg.sender.staticcall(payload);
 		if (!ok || ret.length != 32) revert TransactionHashUnavailable(msg.sender);
 		return abi.decode(ret, (bytes32));
+	}
+
+	/**
+	 * @dev Require the deadline attestation at the end of `signatures` to be the co-signer's, for `txHash`, and
+	 * not expired. It must start after the `count` static parts Safe read; contract signatures' dynamic parts
+	 * sit between the two, at the offsets their static parts name.
+	 */
+	function _checkDeadline(bytes memory signatures, uint256 count, bytes32 txHash, address cosigner) private view {
+		uint256 len = signatures.length;
+		if (len < count * 65 + ATTESTATION_LENGTH) revert DeadlineAttestationMissing(msg.sender);
+		uint256 deadline;
+		bytes32 r;
+		bytes32 s;
+		uint8 v;
+		// solhint-disable-next-line no-inline-assembly
+		assembly {
+			let p := add(add(signatures, 0x20), sub(len, 97))
+			deadline := mload(p)
+			r := mload(add(p, 0x20))
+			s := mload(add(p, 0x40))
+			v := byte(0, mload(add(p, 0x60)))
+		}
+		if (ecrecover(deadlineDigest(txHash, deadline), v, r, s) != cosigner) {
+			revert InvalidDeadlineAttestation(msg.sender, cosigner);
+		}
+		// solhint-disable-next-line not-rely-on-time
+		if (block.timestamp > deadline) revert CosignatureExpired(deadline, block.timestamp);
 	}
 
 	/**
