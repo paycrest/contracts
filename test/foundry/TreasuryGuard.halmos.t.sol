@@ -177,12 +177,13 @@ contract TreasuryGuardHalmos is Test {
 
 	/* ==================================================================================== P2 */
 
-	/// A threshold below 2 always fails, whatever the signatures.
-	function check_P2_thresholdBelowTwoAlwaysFails(uint256 t, bytes32 r, bytes32 s, uint8 v) public {
+	/// A threshold below 2 always fails, whatever the signatures: even with the co-signer's part counted first and
+	/// a symbolic attestation (which, without the threshold check, the solver could make valid at threshold 1).
+	function check_P2_thresholdBelowTwoAlwaysFails(uint256 t, Part memory p1, Att memory a) public {
 		_register();
 		vm.assume(t < 2);
 		threshold = t;
-		assertFalse(_call(address(0xBEEF), 0, '', bytes.concat(r, s, bytes1(v), r, s, bytes1(v))));
+		assertFalse(_call(address(0xBEEF), 0, '', bytes.concat(_cosignerApproved(), _p(p1), _tail(a))));
 	}
 
 	/* ==================================================================================== P3 */
@@ -220,11 +221,13 @@ contract TreasuryGuardHalmos is Test {
 
 	/* ==================================================================================== P5 */
 
-	/// Without a registered co-signer, nothing passes.
-	function check_P5_unregisteredAlwaysFails(uint256 t, bytes32 r, bytes32 s, uint8 v) public {
+	/// Without a registered co-signer, nothing passes: not even well-formed counted parts and attestation at a
+	/// valid threshold (without the check, a part naming address(0) and an attestation `ecrecover` maps to 0
+	/// would match the empty entry).
+	function check_P5_unregisteredAlwaysFails(uint256 t, Part memory p0, Part memory p1, Att memory a) public {
+		vm.assume(t == 2);
 		threshold = t;
-		bytes memory sigs = bytes.concat(bytes32(uint256(uint160(COSIGNER))), bytes32(0), bytes1(0x01), r, s, bytes1(v));
-		assertFalse(_call(address(0xBEEF), 0, '', sigs));
+		assertFalse(_call(address(0xBEEF), 0, '', bytes.concat(_p(p0), _p(p1), _tail(a))));
 	}
 
 	/* ==================================================================================== P6 */
