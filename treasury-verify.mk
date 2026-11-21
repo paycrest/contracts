@@ -1,7 +1,7 @@
 # TreasuryGuard + TreasurySetup verification gate (KAN-1042), included from the Makefile.
 #
 #   make treasury-verify   build, unit+fuzz+integration (real Safe v1.4.1 and Zodiac Delay 1.0.0 bytecode),
-#                          invariants, 100% coverage, halmos, slither, traceability, hardhat parity,
+#                          invariants, 100% coverage, halmos, slither, traceability, vectors, hardhat parity,
 #                          against docs/treasury-guard-spec.md
 #
 # Shared toolchain from the Makefile (FORGE, HALMOS, SLITHER, COVERAGE_MIN). CI: .github/workflows/treasury-verify.yml.
@@ -14,7 +14,7 @@ TREASURY_COVERAGE_SUMMARY := cache_forge/treasury-coverage-summary.txt
 # Everything but the two treasury contracts is excluded from their coverage figure.
 TREASURY_COVERAGE_EXCLUDE := (^test/|^lib/|contracts/mocks/|contracts/interfaces/|contracts/Gateway\.sol|contracts/GatewaySettingManager|contracts/ProviderBatchCallAndSponsor|contracts/BatchCallAndSponsor)
 
-.PHONY: treasury-test treasury-invariants treasury-coverage treasury-halmos treasury-slither treasury-traceability treasury-verify
+.PHONY: treasury-test treasury-invariants treasury-coverage treasury-halmos treasury-slither treasury-traceability treasury-vectors treasury-verify
 
 treasury-test: verify-build ## Treasury unit, fuzz and integration tests
 	$(FORGE) test --match-path '$(TREASURY_TESTS)' --no-match-path '*invariants*' -vv
@@ -40,5 +40,9 @@ treasury-slither: ## Static analysis of the treasury contracts; fails on medium 
 treasury-traceability: ## Every P-id in docs/treasury-guard-spec.md has a named treasury test
 	scripts/check-spec-traceability.sh $(TREASURY_SPEC) '$(TREASURY_TESTS).sol'
 
-treasury-verify: verify-build treasury-test treasury-invariants treasury-coverage treasury-halmos treasury-slither treasury-traceability hardhat-parity ## Full gate for the treasury contracts
+treasury-vectors: verify-build ## The keeper vectors still match what the real Safe and the guard execute
+	$(FORGE) script script/TreasuryVectors.s.sol >/dev/null
+	git diff --exit-code -- test/vectors/treasury-safe-tx.json
+
+treasury-verify: verify-build treasury-test treasury-invariants treasury-coverage treasury-halmos treasury-slither treasury-traceability treasury-vectors hardhat-parity ## Full gate for the treasury contracts
 	@echo "treasury-verify: all gates green"
