@@ -69,8 +69,8 @@ contract TreasuryHandler is TreasuryBase {
 		for (uint256 i = 0; i < 3; ++i) if (mask & (1 << i) != 0) signers[k++] = _s(all[i]);
 		bytes memory data = _transferData(recipient, amount);
 		bool ok = _execRaw(treasury, address(token), data, _sign(treasury, signers, address(token), 0, data, Operation.Call));
-		if (ok && mask & 4 == 0) ++uncosignedSuccesses;
-		if (ok) cosignedOut += amount;
+		if (ok && (mask & 4 == 0 || ISafe(address(treasury)).getThreshold() < 2)) ++uncosignedSuccesses;
+		else if (ok) cosignedOut += amount;
 	}
 
 	/// The co-signer tries to act alone: once, twice (duplicate), or in two encodings.
@@ -89,10 +89,8 @@ contract TreasuryHandler is TreasuryBase {
 		else sigs = bytes.concat(one, bytes32(uint256(uint160(cosigner))), bytes32(0), bytes1(0x01));
 		// With a valid attestation, so only the co-signer-alone rule (P2) stands in the way.
 		sigs = bytes.concat(sigs, _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL));
-		if (_execRaw(treasury, address(token), data, sigs)) {
-			++cosignerAloneSuccesses;
-			cosignedOut += amount;
-		}
+		// Not counted as an accounted outflow: if it ever succeeds, P2 and P7 both fail.
+		if (_execRaw(treasury, address(token), data, sigs)) ++cosignerAloneSuccesses;
 	}
 
 	/// A member and the co-signer sign a transfer that someone keeps instead of relaying.
@@ -112,7 +110,7 @@ contract TreasuryHandler is TreasuryBase {
 		Held memory hd = held[bound(which, 0, held.length - 1)];
 		if (_execRaw(treasury, address(token), hd.data, hd.sigs)) {
 			if (block.timestamp > hd.deadline) ++expiredSuccesses;
-			cosignedOut += hd.amount;
+			else cosignedOut += hd.amount;
 		}
 	}
 
@@ -160,6 +158,23 @@ contract TreasuryHandler is TreasuryBase {
 		_execRaw(treasury, address(delay), data, _sign(treasury, _signers(_s(member), _s(cosigner)), address(delay), 0, data, Operation.Call));
 	}
 
+	/// A member and the co-signer lower the threshold to 1 (P2: the normal path then refuses everything,
+	/// including the co-signer alone, which Safe itself would now accept).
+	function lowerThreshold() external {
+		++calls;
+		if (ISafe(address(treasury)).getThreshold() < 2) return;
+		bytes memory data = abi.encodeCall(ISafe.changeThreshold, (1));
+		_execRaw(treasury, address(treasury), data, _sign(treasury, _signers(_s(member), _s(cosigner)), address(treasury), 0, data, Operation.Call));
+	}
+
+	/// Recovery restores the threshold (modelled directly: recovery's own path is P7/P12's subject).
+	function restoreThreshold() external {
+		++calls;
+		if (ISafe(address(treasury)).getThreshold() >= 2) return;
+		vm.prank(address(delay));
+		ISafe(address(treasury)).execTransactionFromModule(address(treasury), 0, abi.encodeCall(ISafe.changeThreshold, (2)), Operation.Call);
+	}
+
 	function warp(uint256 dt) external {
 		++calls;
 		vm.warp(block.timestamp + bound(dt, 0, 3 days));
@@ -199,7 +214,7 @@ contract TreasuryGuardInvariants is Test {
 		handler = new TreasuryHandler();
 		handler.init();
 		startBalance = TestToken(handler.tokenAddr()).balanceOf(handler.treasuryAddr());
-		bytes4[] memory selectors = new bytes4[](8);
+		bytes4[] memory selectors = new bytes4[](10);
 		selectors[0] = TreasuryHandler.normal.selector;
 		selectors[1] = TreasuryHandler.cosignerAlone.selector;
 		selectors[2] = TreasuryHandler.queueRecovery.selector;
@@ -208,6 +223,8 @@ contract TreasuryGuardInvariants is Test {
 		selectors[5] = TreasuryHandler.warp.selector;
 		selectors[6] = TreasuryHandler.hold.selector;
 		selectors[7] = TreasuryHandler.relayHeld.selector;
+		selectors[8] = TreasuryHandler.lowerThreshold.selector;
+		selectors[9] = TreasuryHandler.restoreThreshold.selector;
 		targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
 		targetContract(address(handler));
 	}
@@ -240,11 +257,12 @@ contract TreasuryGuardInvariants is Test {
 		assertEq(t.balanceOf(handler.treasuryAddr()) + out, startBalance);
 	}
 
-	/// The guard, its co-signer and the timelock stay as set up.
+	/// The guard, its co-signer and the timelock stay as set up (the threshold moves only between 1 and 2).
 	function invariant_P11_wiringStable() public view {
 		ISafe t = ISafe(handler.treasuryAddr());
 		assertEq(TreasuryGuard(handler.guardAddr()).cosignerOf(address(t)), handler.cosignerAddr());
-		assertEq(t.getThreshold(), 2);
+		assertGe(t.getThreshold(), 1);
+		assertLe(t.getThreshold(), 2);
 		assertTrue(t.isModuleEnabled(handler.delayAddr()));
 	}
 }

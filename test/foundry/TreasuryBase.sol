@@ -94,6 +94,8 @@ abstract contract TreasuryBase is Test {
 	uint256 internal constant EXPIRATION = 7 days;
 	/// How long the tests' co-signatures stay valid (the co-signer service's maximum TTL).
 	uint256 internal constant COSIGN_TTL = 15 minutes;
+	/// Runtime code hash of Zodiac's Delay 1.0.0 mastercopy (as deployed from the fixture).
+	bytes32 internal constant DELAY_RUNTIME_HASH = 0x7967a56259946057a84885ca4c3e427007d37fff3abe632a10ac764987c0297c;
 
 	// Real bytecode
 	address internal safeL2;

@@ -255,11 +255,12 @@ contract TreasuryGuardHalmos is Test {
 
 	/// `checkTransaction` and `checkAfterExecution` never write storage: their verdict under STATICCALL (where
 	/// any write fails) equals the verdict under a plain call, and the registered entries are unchanged.
-	function check_P9_hooksWriteNothing(address other, bytes32 r, bytes32 s, uint8 v, bytes32 txHash, bool success) public {
+	function check_P9_hooksWriteNothing(address other, Part memory p0, Part memory p1, Att memory a, bytes32 txHash, bool success) public {
 		_register();
 		address mine = guard.cosignerOf(address(this));
 		address theirs = guard.cosignerOf(other);
-		bytes memory sigs = bytes.concat(r, s, bytes1(v), r, s, bytes1(v));
+		// Long enough to pass the length check, so every check (and any write after it) can be reached.
+		bytes memory sigs = bytes.concat(_p(p0), _p(p1), _tail(a));
 		bytes memory cd = abi.encodeCall(
 			TreasuryGuard.checkTransaction,
 			(address(0xBEEF), 0, '', Operation.Call, 0, 0, 0, address(0), payable(address(0)), sigs, address(0))

@@ -120,6 +120,21 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(keccak256(multiSendCallOnly.code), 0xecd5bd14a08c5d2122379900b2f272bdf107a7e92423c10dd5fe3254386c9939, 'multisend');
 	}
 
+	/// The Delay fixture is Zodiac's canonical Delay 1.0.0 mastercopy: its creation code, with the constructor
+	/// arguments the tests use, deployed through the ERC-2470 singleton factory with salt 0 (how Zodiac deployed
+	/// it), lands exactly on the canonical mastercopy address. Its runtime code is pinned too.
+	function test_delayFixtureIsCanonicalMastercopy() public view {
+		bytes memory init = bytes.concat(
+			vm.parseJsonBytes(_fixtureJson('Delay'), '.bytecode'),
+			abi.encode(address(1), address(1), address(1), uint256(1), uint256(0))
+		);
+		address erc2470 = 0xce0042B868300000d44A59004Da54A005ffdcf9f;
+		address predicted = address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), erc2470, bytes32(0), keccak256(init))))));
+		assertEq(predicted, 0xD62129BF40CD1694b3d9D9847367783a1A4d5cB4, 'canonical Delay 1.0.0 mastercopy');
+		assertEq(vm.parseJsonAddress(_fixtureJson('Delay'), '.canonicalAddress'), predicted);
+		assertEq(keccak256(delayMastercopy.code), DELAY_RUNTIME_HASH, 'Delay runtime');
+	}
+
 	/* ==================================================================================== P1 */
 
 	function test_P1_memberAndCosignerMoveFunds() public {
@@ -539,6 +554,11 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(recovery.getThreshold(), 2);
 		assertTrue(recovery.isModuleEnabled(address(treasury)));
 		assertEq(uint256(vm.load(address(recovery), GUARD_SLOT)), 0, 'recovery has no guard');
+		assertEq(
+			address(uint160(uint256(vm.load(address(recovery), guard.FALLBACK_HANDLER_SLOT())))),
+			fallbackHandler,
+			'recovery Safe has the configured handler'
+		);
 	}
 
 	function test_P11_thresholdBelowTwoRejected() public {
@@ -858,6 +878,15 @@ contract TreasuryGuardTest is TreasuryBase {
 		// solhint-disable-next-line no-inline-assembly
 		assembly {
 			mstore(add(tail, 0x20), add(mload(add(tail, 0x20)), 86400))
+		}
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
+		_exec(treasury, address(token), 0, data, Operation.Call, bytes.concat(extended, tail));
+
+		// The whole deadline word is signed: a deadline pushed past 2^64 is not the attested one.
+		tail = _attestation(cosignerPk, h, block.timestamp + COSIGN_TTL);
+		// solhint-disable-next-line no-inline-assembly
+		assembly {
+			mstore(add(tail, 0x20), add(mload(add(tail, 0x20)), shl(64, 1)))
 		}
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.InvalidDeadlineAttestation.selector, address(treasury), cosigner));
 		_exec(treasury, address(token), 0, data, Operation.Call, bytes.concat(extended, tail));
