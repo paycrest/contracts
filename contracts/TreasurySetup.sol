@@ -15,7 +15,10 @@ import {TreasuryGuard} from './TreasuryGuard.sol';
  *     avatar and target, at an address derived from the treasury's address;
  *  2. deploys the recovery Safe: the business's admins with a majority threshold and no guard, which can queue
  *     transactions on the timelock, and which has the treasury enabled as a module so the normal path can keep
- *     its owners in step with the team;
+ *     its owners in step with the team. Its address is public (factory, singleton, `recoveryInitializer`, the
+ *     treasury's address as salt) and the factory does not salt with the caller, so anyone can deploy it first;
+ *     an existing recovery Safe at that address is then reused (CREATE2 means only the factory, with exactly this
+ *     initializer and singleton, can have put it there) as long as it still has the treasury enabled as a module;
  *  3. enables the timelock as a module of the treasury, so a queued transaction runs after the cooldown;
  *  4. sets `TreasuryGuard` as the treasury's guard and registers the Paycrest co-signer with it.
  *
@@ -56,6 +59,9 @@ contract TreasurySetup {
 	error OnlyDelegateCall();
 	/// @notice The treasury's threshold is below 2.
 	error TreasuryThresholdTooLow(uint256 threshold);
+	/// @notice A recovery Safe already deployed at the treasury's recovery address no longer has the treasury as a
+	/// module (its admins removed it), so it can't be wired in.
+	error RecoveryNotWired(address recovery);
 
 	constructor() {
 		_self = address(this);
@@ -75,16 +81,33 @@ contract TreasurySetup {
 		address delay = Clones.cloneDeterministic(c.delayMastercopy, DELAY_SALT);
 		IDelay(delay).setUp(abi.encode(address(this), address(this), address(this), c.recoveryCooldown, c.recoveryExpiration));
 
-		address recovery = ISafeProxyFactory(c.safeProxyFactory).createProxyWithNonce(
-			c.safeSingleton,
-			recoveryInitializer(address(this), c.recoveryOwners, c.recoveryThreshold, c.fallbackHandler),
-			uint256(uint160(address(this)))
-		);
+		bytes memory init = recoveryInitializer(address(this), c.recoveryOwners, c.recoveryThreshold, c.fallbackHandler);
+		uint256 salt = uint256(uint160(address(this)));
+		address recovery = predictRecovery(c.safeProxyFactory, c.safeSingleton, init, salt);
+		if (recovery.code.length == 0) {
+			recovery = ISafeProxyFactory(c.safeProxyFactory).createProxyWithNonce(c.safeSingleton, init, salt);
+		} else if (!ISafeSetup(recovery).isModuleEnabled(address(this))) {
+			// Deployed ahead of the treasury (by anyone): reuse it only while it is still wired to the treasury.
+			revert RecoveryNotWired(recovery);
+		}
 		IDelay(delay).enableModule(recovery);
 
 		treasury.enableModule(delay);
 		treasury.setGuard(c.guard);
 		TreasuryGuard(c.guard).setCosigner(c.cosigner);
+	}
+
+	/// @notice The Safe v1.4.1 factory's CREATE2 address for a proxy of `singleton` set up with `initializer` and
+	/// `saltNonce` (`SafeProxyFactory.createProxyWithNonce`).
+	function predictRecovery(
+		address factory,
+		address singleton,
+		bytes memory initializer,
+		uint256 saltNonce
+	) public pure returns (address) {
+		bytes32 salt = keccak256(abi.encodePacked(keccak256(initializer), saltNonce));
+		bytes32 initCodeHash = keccak256(abi.encodePacked(ISafeProxyFactory(factory).proxyCreationCode(), uint256(uint160(singleton))));
+		return address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), factory, salt, initCodeHash)))));
 	}
 
 	/// @notice The recovery Safe's setup: enables the treasury as its module. `data` of the recovery Safe's `Safe.setup`.

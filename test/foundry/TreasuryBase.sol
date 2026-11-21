@@ -45,6 +45,8 @@ interface ISafe is ISafeSetup {
 	function execTransactionFromModule(address to, uint256 value, bytes memory data, Operation operation) external returns (bool);
 
 	function getModulesPaginated(address start, uint256 pageSize) external view returns (address[] memory array, address next);
+
+	function disableModule(address prevModule, address module) external;
 }
 
 interface IMultiSend {

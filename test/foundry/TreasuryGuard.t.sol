@@ -465,6 +465,55 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(r.getThreshold(), 1);
 	}
 
+	/// The recovery Safe's address is public and the factory doesn't salt with the caller, so anyone can deploy it
+	/// before the treasury exists. The treasury's setup then reuses it instead of reverting.
+	function test_P11_recoverySafeDeployedFirstIsReused() public {
+		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, _config(_admins(), 2));
+		address predicted = _predictSafe(safeL2, init, 55);
+		bytes memory recoveryInit = setupHelper.recoveryInitializer(predicted, _admins(), 2, fallbackHandler);
+		vm.prank(address(0xBAD));
+		address early = factory.createProxyWithNonce(safeL2, recoveryInit, uint256(uint160(predicted)));
+		assertEq(early, setupHelper.predictRecovery(address(factory), safeL2, recoveryInit, uint256(uint160(predicted))));
+
+		address t = factory.createProxyWithNonce(safeL2, init, 55);
+		assertEq(t, predicted);
+		(IDelay d, ISafe r) = _recoveryOf(t);
+		assertEq(address(r), early);
+		assertTrue(r.isModuleEnabled(t));
+		assertTrue(ISafe(address(d)).isModuleEnabled(early));
+		assertEq(guard.cosignerOf(t), cosigner);
+
+		// Recovery works through the reused Safe.
+		token.mint(t, 1e6);
+		bytes memory data = _transferData(recipient, 1e6);
+		bytes memory q = abi.encodeCall(IDelay.execTransactionFromModule, (address(token), 0, data, Operation.Call));
+		assertTrue(_signAndExec(r, _signers(_s(admin1), _s(admin2)), address(d), 0, q, Operation.Call));
+		vm.warp(block.timestamp + COOLDOWN);
+		d.executeNextTx(address(token), 0, data, Operation.Call);
+		assertEq(token.balanceOf(recipient), 1e6);
+	}
+
+	/// A recovery Safe deployed first whose admins then removed the treasury as its module can't be wired in: the
+	/// treasury's setup is refused rather than left without a working recovery path.
+	function test_P11_unwiredRecoverySafeRefused() public {
+		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, _config(_admins(), 2));
+		address predicted = _predictSafe(safeL2, init, 56);
+		ISafe early = ISafe(
+			factory.createProxyWithNonce(
+				safeL2,
+				setupHelper.recoveryInitializer(predicted, _admins(), 2, fallbackHandler),
+				uint256(uint160(predicted))
+			)
+		);
+		assertTrue(_signAndExec(early, _signers(_s(admin1), _s(admin2)), address(early), 0, abi.encodeCall(ISafe.disableModule, (SENTINEL, predicted)), Operation.Call));
+		assertFalse(early.isModuleEnabled(predicted));
+
+		// SafeProxyFactory drops the setup's revert data; the treasury is not created.
+		vm.expectRevert();
+		factory.createProxyWithNonce(safeL2, init, 56);
+		assertEq(predicted.code.length, 0);
+	}
+
 	/* ==================================================================================== P12 */
 
 	function test_P12_recoveryWaitsForCooldown() public {
