@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts/proxy/Clones.sol';
+import '@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol';
 import {TreasuryGuard} from '../../contracts/TreasuryGuard.sol';
 import {TreasurySetup} from '../../contracts/TreasurySetup.sol';
 import {ISafeSetup, ISafeView, ISafeGuard, IERC165, IDelay, Operation} from '../../contracts/interfaces/ISafe.sol';
@@ -42,6 +43,31 @@ contract FakeSafe {
 	fallback(bytes calldata) external returns (bytes memory) {
 		require(!hashReverts, 'no hash');
 		return hashReturn;
+	}
+}
+
+/// @notice A Delay stand-in for setup's timelock checks, each failing one of them: `honest` records its setup but
+/// never enables a module; otherwise it ignores its setup but claims every module is enabled.
+contract FakeDelay {
+	bool internal immutable honest;
+	address public owner;
+	address public avatar;
+	address public target;
+	uint256 public txCooldown;
+	uint256 public txExpiration;
+
+	constructor(bool honest_) {
+		honest = honest_;
+	}
+
+	function setUp(bytes memory initParams) external {
+		if (honest) (owner, avatar, target, txCooldown, txExpiration) = abi.decode(initParams, (address, address, address, uint256, uint256));
+	}
+
+	function enableModule(address) external {}
+
+	function isModuleEnabled(address) external view returns (bool) {
+		return !honest;
 	}
 }
 
@@ -375,7 +401,9 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(writes.length, 0);
 	}
 
-	function testFuzz_P9_checkAfterExecutionNeverReverts(bytes32 h, bool ok) public view {
+	/// For a treasury without a fallback handler (P17), the after-execution hook passes whatever the outcome.
+	function testFuzz_P9_checkAfterExecutionPassesWithoutHandler(bytes32 h, bool ok) public {
+		vm.prank(address(treasury));
 		guard.checkAfterExecution(h, ok);
 	}
 
@@ -775,6 +803,207 @@ contract TreasuryGuardTest is TreasuryBase {
 		bytes32 h = keccak256('tx');
 		assertEq(guard.deadlineDigest(h, 1_800_000_900), keccak256(abi.encode(guard.DEADLINE_TYPEHASH(), h, uint256(1_800_000_900))));
 		assertEq(guard.ATTESTATION_LENGTH(), 97);
+	}
+
+	/* ==================================================================================== P17 */
+
+	function _initWithHandler(address handler) internal view returns (bytes memory) {
+		return
+			abi.encodeCall(
+				ISafeSetup.setup,
+				(
+					_owners3(member, address(passkey), cosigner),
+					2,
+					address(setupHelper),
+					abi.encodeCall(TreasurySetup.setupTreasury, (_config(_admins(), 2))),
+					handler,
+					address(0),
+					0,
+					payable(address(0))
+				)
+			);
+	}
+
+	/// The treasury has no fallback handler, so it answers no ERC-1271 check: owner signatures that a Safe with
+	/// Safe's handler accepts (two members, no co-signer) are worthless for permits and off-chain orders.
+	function test_P17_treasuryAnswersNoErc1271() public {
+		assertEq(uint256(vm.load(address(treasury), guard.FALLBACK_HANDLER_SLOT())), 0);
+		// The same owners in a plain Safe with the handler: its ERC-1271 accepts two member signatures.
+		ISafe plain = ISafe(
+			factory.createProxyWithNonce(
+				safeL2,
+				abi.encodeCall(
+					ISafeSetup.setup,
+					(_owners3(member, admin1, cosigner), 2, address(0), '', fallbackHandler, address(0), 0, payable(address(0)))
+				),
+				77
+			)
+		);
+		bytes32 digest = keccak256('permit: spend everything');
+		assertTrue(SignatureChecker.isValidSignatureNow(address(plain), digest, _erc1271Sigs(plain, digest, member, admin1)));
+
+		(bool ok, bytes memory ret) = address(treasury).staticcall(abi.encodeWithSelector(0x1626ba7e, digest, _erc1271Sigs(treasury, digest, member, cosigner)));
+		assertTrue(ok);
+		assertEq(ret.length, 0, 'no handler: empty answer');
+		assertFalse(SignatureChecker.isValidSignatureNow(address(treasury), digest, _erc1271Sigs(treasury, digest, member, cosigner)));
+	}
+
+	/// Two ECDSA owner signatures over Safe's ERC-1271 message hash for `digest`, sorted by owner.
+	function _erc1271Sigs(ISafe safe, bytes32 digest, address a, address b) internal view returns (bytes memory) {
+		bytes32 m = keccak256(
+			abi.encodePacked(
+				bytes1(0x19),
+				bytes1(0x01),
+				_domainSeparator(safe),
+				keccak256(abi.encode(keccak256('SafeMessage(bytes message)'), keccak256(abi.encode(digest))))
+			)
+		);
+		if (a > b) (a, b) = (b, a);
+		(uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(keyOf[a], m);
+		(uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(keyOf[b], m);
+		return bytes.concat(r1, s1, bytes1(v1), r2, s2, bytes1(v2));
+	}
+
+	function _domainSeparator(ISafe safe) internal view returns (bytes32) {
+		(, bytes memory ret) = address(safe).staticcall(abi.encodeWithSignature('domainSeparator()'));
+		return abi.decode(ret, (bytes32));
+	}
+
+	/// A treasury whose `Safe.setup` sets a fallback handler is never created.
+	function test_P17_setupWithHandlerRefused() public {
+		bytes memory init = _initWithHandler(fallbackHandler);
+		address predicted = _predictSafe(safeL2, init, 78);
+		vm.expectRevert();
+		factory.createProxyWithNonce(safeL2, init, 78);
+		assertEq(predicted.code.length, 0);
+		// The helper's own check, reached through a delegatecall from a context that has a handler.
+		vm.mockCall(address(this), abi.encodeWithSelector(ISafeView.getThreshold.selector), abi.encode(uint256(2)));
+		vm.store(address(this), guard.FALLBACK_HANDLER_SLOT(), bytes32(uint256(uint160(fallbackHandler))));
+		(bool ok, bytes memory ret) = address(setupHelper).delegatecall(abi.encodeCall(TreasurySetup.setupTreasury, (_config(_admins(), 2))));
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.FallbackHandlerSet.selector, fallbackHandler));
+		vm.store(address(this), guard.FALLBACK_HANDLER_SLOT(), bytes32(0));
+	}
+
+	/// A co-signed transaction can't set a fallback handler: not Safe's, not the guard (whose `setCosigner` would
+	/// then be callable by anyone through the treasury), not one set while removing the guard in the same batch.
+	function test_P17_cosignedHandlerChangeRefused() public {
+		address[3] memory handlers = [fallbackHandler, address(guard), address(0xF00D)];
+		for (uint256 i = 0; i < handlers.length; ++i) {
+			bytes memory data = abi.encodeWithSignature('setFallbackHandler(address)', handlers[i]);
+			bytes memory sigs = _sign(treasury, _signers(_s(member), _s(cosigner)), address(treasury), 0, data, Operation.Call);
+			vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.FallbackHandlerSet.selector, address(treasury), handlers[i]));
+			_exec(treasury, address(treasury), 0, data, Operation.Call, sigs);
+		}
+
+		address[] memory tos = new address[](2);
+		bytes[] memory datas = new bytes[](2);
+		tos[0] = address(treasury);
+		datas[0] = abi.encodeWithSignature('setFallbackHandler(address)', fallbackHandler);
+		tos[1] = address(treasury);
+		datas[1] = abi.encodeCall(ISafeSetup.setGuard, (address(0)));
+		bytes memory ms = _multi(tos, datas);
+		bytes memory msSigs = _sign(treasury, _signers(_s(member), _s(cosigner)), multiSendCallOnly, 0, ms, Operation.DelegateCall);
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.FallbackHandlerSet.selector, address(treasury), fallbackHandler));
+		_exec(treasury, multiSendCallOnly, 0, ms, Operation.DelegateCall, msSigs);
+
+		assertEq(uint256(vm.load(address(treasury), guard.FALLBACK_HANDLER_SLOT())), 0);
+		assertEq(address(uint160(uint256(vm.load(address(treasury), GUARD_SLOT)))), address(guard));
+	}
+
+	/// The hook refuses any handler a Safe reports, for any transaction outcome.
+	function testFuzz_P17_anyHandlerRefused(address handler, bytes32 h, bool ok) public {
+		vm.assume(handler != address(0));
+		vm.store(address(treasury), guard.FALLBACK_HANDLER_SLOT(), bytes32(uint256(uint160(handler))));
+		vm.prank(address(treasury));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.FallbackHandlerSet.selector, address(treasury), handler));
+		guard.checkAfterExecution(h, ok);
+	}
+
+	/* ==================================================================================== P18 */
+
+	/// Runs `setupTreasury(c)` by delegatecall from this contract, playing a threshold-2 Safe without a handler.
+	function _setupFromHere(TreasurySetup.Config memory c) internal returns (bool ok, bytes memory ret) {
+		vm.mockCall(address(this), abi.encodeWithSelector(ISafeView.getThreshold.selector), abi.encode(uint256(2)));
+		(ok, ret) = address(setupHelper).delegatecall(abi.encodeCall(TreasurySetup.setupTreasury, (c)));
+	}
+
+	function test_P18_cooldownAtLeastADay() public {
+		assertEq(setupHelper.MIN_RECOVERY_COOLDOWN(), 24 hours);
+		TreasurySetup.Config memory c = _config(_admins(), 2);
+		c.recoveryCooldown = 24 hours - 1;
+		(bool ok, bytes memory ret) = _setupFromHere(c);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryCooldownTooShort.selector, 24 hours - 1));
+		c.recoveryCooldown = 0;
+		(ok, ret) = _setupFromHere(c);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryCooldownTooShort.selector, 0));
+
+		// Exactly a day, with the shortest expiration Delay allows, is accepted.
+		c.recoveryCooldown = 24 hours;
+		c.recoveryExpiration = 60;
+		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c), 79));
+		(IDelay d, ) = _recoveryOf(address(t));
+		assertEq(d.txCooldown(), 24 hours);
+		assertEq(d.txExpiration(), 60);
+	}
+
+	function test_P18_expirationRequired() public {
+		TreasurySetup.Config memory c = _config(_admins(), 2);
+		c.recoveryExpiration = 0;
+		(bool ok, bytes memory ret) = _setupFromHere(c);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryExpirationRequired.selector));
+		// Below Delay's own minute: Delay refuses it.
+		c.recoveryExpiration = 59;
+		(ok, ) = _setupFromHere(c);
+		assertFalse(ok);
+	}
+
+	function test_P18_recoveryThresholdIsAMajority() public {
+		address[] memory two = new address[](2);
+		two[0] = admin1;
+		two[1] = admin2;
+		(bool ok, bytes memory ret) = _setupFromHere(_config(_admins(), 1));
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryThresholdNotMajority.selector, 1, 3));
+		(ok, ret) = _setupFromHere(_config(two, 1));
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryThresholdNotMajority.selector, 1, 2));
+		(ok, ret) = _setupFromHere(_config(new address[](0), 0));
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryThresholdNotMajority.selector, 0, 0));
+		// 2 of 2 and 2 of 3 are majorities (the default treasury is 2 of 3).
+		ISafe t = ISafe(_createTreasury(_owners3(member, address(passkey), cosigner), 2, two, 2, 80, safeL2));
+		(, ISafe r) = _recoveryOf(address(t));
+		assertEq(r.getThreshold(), 2);
+	}
+
+	/// Delay at an address without code: refused before a clone is made (a clone of nothing accepts every call
+	/// and anyone could initialise it later).
+	function test_P18_codelessDelayMastercopyRefused() public {
+		TreasurySetup.Config memory c = _config(_admins(), 2);
+		c.delayMastercopy = address(0xDE1A7);
+		(bool ok, bytes memory ret) = _setupFromHere(c);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.NoDelayMastercopy.selector, address(0xDE1A7)));
+		// Through the factory too.
+		vm.expectRevert();
+		factory.createProxyWithNonce(safeL2, _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c), 81);
+	}
+
+	/// A timelock that ignores its setup, or that doesn't enable the recovery Safe, is refused.
+	function test_P18_misconfiguredDelayRefused() public {
+		TreasurySetup.Config memory c = _config(_admins(), 2);
+		c.delayMastercopy = address(new FakeDelay(false));
+		address clone = Clones.predictDeterministicAddress(c.delayMastercopy, setupHelper.DELAY_SALT(), address(this));
+		(bool ok, bytes memory ret) = _setupFromHere(c);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.DelayNotConfigured.selector, clone));
+
+		c.delayMastercopy = address(new FakeDelay(true));
+		clone = Clones.predictDeterministicAddress(c.delayMastercopy, setupHelper.DELAY_SALT(), address(this));
+		(ok, ret) = _setupFromHere(c);
+		assertFalse(ok);
+		assertEq(ret, abi.encodeWithSelector(TreasurySetup.DelayNotConfigured.selector, clone));
 	}
 
 	/* ==================================================================================== gas (report only) */

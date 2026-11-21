@@ -24,6 +24,9 @@ import {TreasuryGuard} from './TreasuryGuard.sol';
  *  3. enables the timelock as a module of the treasury, so a queued transaction runs after the cooldown;
  *  4. sets `TreasuryGuard` as the treasury's guard and registers the Paycrest co-signer with it.
  *
+ * The treasury itself must be set up without a fallback handler (P17). Recovery settings are bounded: a cooldown
+ * of at least `MIN_RECOVERY_COOLDOWN`, a non-zero expiration and a majority threshold (P18).
+ *
  * Everything is derived from the treasury's own address and the arguments in its initializer, so the same
  * initializer gives the same treasury, timelock and recovery Safe addresses on every network where the Safe
  * contracts sit at their canonical addresses.
@@ -39,21 +42,26 @@ contract TreasurySetup {
 		address cosigner;
 		/// Zodiac Delay 1.0.0 mastercopy.
 		address delayMastercopy;
-		/// Seconds between queueing a recovery transaction and running it.
+		/// Seconds between queueing a recovery transaction and running it (>= MIN_RECOVERY_COOLDOWN).
 		uint256 recoveryCooldown;
-		/// Seconds a recovery transaction stays executable after the cooldown (0 = forever, else >= 60).
+		/// Seconds a recovery transaction stays executable after the cooldown: >= 60 (Delay's minimum), never 0, so
+		/// a queued transaction that keeps failing expires instead of blocking the queue.
 		uint256 recoveryExpiration;
 		/// Safe v1.4.1 proxy factory, singleton and fallback handler for the recovery Safe.
 		address safeProxyFactory;
 		address safeSingleton;
 		address fallbackHandler;
-		/// The admins' signers (passkey signer contracts) and how many of them recovery needs.
+		/// The admins' signers (passkey signer contracts) and how many of them recovery needs (a strict majority).
 		address[] recoveryOwners;
 		uint256 recoveryThreshold;
 	}
 
 	/// @notice Salt of the timelock clone; the deployer is the treasury, so the address is per treasury.
 	bytes32 public constant DELAY_SALT = keccak256('paycrest.treasury.delay');
+	/// @notice The shortest recovery cooldown a treasury may have.
+	uint256 public constant MIN_RECOVERY_COOLDOWN = 24 hours;
+	/// @notice Safe v1.4.1's fallback handler slot: keccak256("fallback_manager.handler.address").
+	bytes32 internal constant FALLBACK_HANDLER_SLOT = 0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5;
 
 	address private immutable _self;
 
@@ -64,6 +72,18 @@ contract TreasurySetup {
 	/// @notice A recovery Safe already deployed at the treasury's recovery address no longer has the treasury as a
 	/// module (its admins removed it), so it can't be wired in.
 	error RecoveryNotWired(address recovery);
+	/// @notice The treasury's `Safe.setup` set a fallback handler; a treasury must have none (P17).
+	error FallbackHandlerSet(address handler);
+	/// @notice The recovery cooldown is below `MIN_RECOVERY_COOLDOWN`.
+	error RecoveryCooldownTooShort(uint256 cooldown);
+	/// @notice The recovery expiration is 0: one failing queued transaction would block recovery for good.
+	error RecoveryExpirationRequired();
+	/// @notice The recovery threshold is not a strict majority of the recovery owners.
+	error RecoveryThresholdNotMajority(uint256 threshold, uint256 owners);
+	/// @notice The Delay mastercopy has no code on this chain.
+	error NoDelayMastercopy(address mastercopy);
+	/// @notice The timelock clone is not configured as asked (wrong mastercopy, or it ignored its setup).
+	error DelayNotConfigured(address delay);
 
 	constructor() {
 		_self = address(this);
@@ -79,9 +99,31 @@ contract TreasurySetup {
 		ISafeSetup treasury = ISafeSetup(address(this));
 		uint256 threshold = treasury.getThreshold();
 		if (threshold < 2) revert TreasuryThresholdTooLow(threshold);
+		address handler;
+		bytes32 slot = FALLBACK_HANDLER_SLOT;
+		// solhint-disable-next-line no-inline-assembly
+		assembly {
+			handler := sload(slot)
+		}
+		if (handler != address(0)) revert FallbackHandlerSet(handler);
+		if (c.recoveryCooldown < MIN_RECOVERY_COOLDOWN) revert RecoveryCooldownTooShort(c.recoveryCooldown);
+		if (c.recoveryExpiration == 0) revert RecoveryExpirationRequired();
+		if (2 * c.recoveryThreshold <= c.recoveryOwners.length) {
+			revert RecoveryThresholdNotMajority(c.recoveryThreshold, c.recoveryOwners.length);
+		}
+		// A clone of an address without code accepts every call and does nothing: no timelock now, and anyone
+		// could initialise it once a mastercopy appears there.
+		if (c.delayMastercopy.code.length == 0) revert NoDelayMastercopy(c.delayMastercopy);
 
 		address delay = Clones.cloneDeterministic(c.delayMastercopy, DELAY_SALT);
 		IDelay(delay).setUp(abi.encode(address(this), address(this), address(this), c.recoveryCooldown, c.recoveryExpiration));
+		if (
+			IDelay(delay).owner() != address(this) ||
+			IDelay(delay).avatar() != address(this) ||
+			IDelay(delay).target() != address(this) ||
+			IDelay(delay).txCooldown() != c.recoveryCooldown ||
+			IDelay(delay).txExpiration() != c.recoveryExpiration
+		) revert DelayNotConfigured(delay);
 
 		bytes memory init = recoveryInitializer(address(this), c.recoveryOwners, c.recoveryThreshold, c.fallbackHandler);
 		uint256 salt = uint256(uint160(address(this)));
@@ -93,6 +135,7 @@ contract TreasurySetup {
 			revert RecoveryNotWired(recovery);
 		}
 		IDelay(delay).enableModule(recovery);
+		if (!IDelay(delay).isModuleEnabled(recovery)) revert DelayNotConfigured(delay);
 
 		treasury.enableModule(delay);
 		treasury.setGuard(c.guard);

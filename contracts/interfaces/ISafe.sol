@@ -42,6 +42,9 @@ interface ISafeGuard is IERC165 {
 interface ISafeView {
 	function nonce() external view returns (uint256);
 
+	/// @notice Safe's StorageAccessible: `length` words of its storage from slot `offset`.
+	function getStorageAt(uint256 offset, uint256 length) external view returns (bytes memory);
+
 	function getThreshold() external view returns (uint256);
 
 	function isOwner(address owner) external view returns (bool);

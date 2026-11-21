@@ -223,7 +223,7 @@ abstract contract TreasuryBase is Test {
 					threshold,
 					address(setupHelper),
 					abi.encodeCall(TreasurySetup.setupTreasury, (c)),
-					fallbackHandler,
+					address(0), // no fallback handler: a treasury answers no ERC-1271 (P17)
 					address(0),
 					0,
 					payable(address(0))

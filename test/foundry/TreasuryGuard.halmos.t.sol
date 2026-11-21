@@ -29,6 +29,7 @@ contract TreasuryGuardHalmos is Test {
 	uint256 internal threshold;
 	uint256 internal safeNonce;
 	bool internal ownerAnswer;
+	address internal handler;
 
 	function setUp() public {
 		guard = new TreasuryGuard();
@@ -49,6 +50,18 @@ contract TreasuryGuardHalmos is Test {
 
 	function isOwner(address) external view returns (bool) {
 		return ownerAnswer;
+	}
+
+	/// Safe's StorageAccessible, for the one slot the guard reads: the fallback handler (0 unless a check sets it).
+	function getStorageAt(uint256 offset, uint256 length) external view returns (bytes memory out) {
+		out = new bytes(length * 32);
+		if (length > 0 && offset == uint256(guard.FALLBACK_HANDLER_SLOT())) {
+			address h = handler;
+			// solhint-disable-next-line no-inline-assembly
+			assembly {
+				mstore(add(out, 0x20), h)
+			}
+		}
 	}
 
 	/// keccak256 of the ten head words, with word 2 (`data`'s offset) replaced by keccak256(data).
@@ -255,6 +268,17 @@ contract TreasuryGuardHalmos is Test {
 		assertTrue(afterOk);
 		assertEq(guard.cosignerOf(address(this)), mine);
 		assertEq(guard.cosignerOf(other), theirs);
+	}
+
+	/* ==================================================================================== P17 */
+
+	/// The after-execution hook passes exactly when the Safe reports no fallback handler, for any transaction
+	/// hash and outcome.
+	function check_P17_afterExecutionRefusesAnyHandler(address h, bytes32 txHash, bool success) public {
+		handler = h;
+		(bool ok, bytes memory ret) = address(guard).staticcall(abi.encodeCall(TreasuryGuard.checkAfterExecution, (txHash, success)));
+		assertEq(ok, h == address(0));
+		if (!ok) assertEq(ret, abi.encodeWithSelector(TreasuryGuard.FallbackHandlerSet.selector, address(this), h));
 	}
 
 	/* ==================================================================================== P10 */

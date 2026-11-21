@@ -38,6 +38,8 @@ contract TreasuryGuard is ISafeGuard {
 	bytes32 public constant DEADLINE_TYPEHASH = keccak256('TreasuryDeadline(bytes32 safeTxHash,uint256 deadline)');
 	/// @notice Length of the attestation at the end of `signatures`: deadline (32) ‖ r (32) ‖ s (32) ‖ v (1).
 	uint256 public constant ATTESTATION_LENGTH = 97;
+	/// @notice Safe v1.4.1's fallback handler slot: keccak256("fallback_manager.handler.address").
+	bytes32 public constant FALLBACK_HANDLER_SLOT = 0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5;
 
 	/// @notice The co-signer each Safe registered for itself.
 	mapping(address => address) private _cosigners;
@@ -63,6 +65,8 @@ contract TreasuryGuard is ISafeGuard {
 	error InvalidDeadlineAttestation(address safe, address cosigner);
 	/// @notice The co-signature's deadline has passed.
 	error CosignatureExpired(uint256 deadline, uint256 timestamp);
+	/// @notice A normal-path transaction left the Safe with a fallback handler (P17).
+	error FallbackHandlerSet(address safe, address handler);
 
 	/// @notice The digest the co-signer signs to give the Safe transaction `safeTxHash` a deadline. `safeTxHash`
 	/// already commits to the chain, the Safe and the nonce.
@@ -115,8 +119,19 @@ contract TreasuryGuard is ISafeGuard {
 		_checkDeadline(signatures, threshold, txHash, cosigner);
 	}
 
-	/// @inheritdoc ISafeGuard
-	function checkAfterExecution(bytes32, bool) external pure override {}
+	/**
+	 * @inheritdoc ISafeGuard
+	 * @dev P17: a treasury has no fallback handler, so it answers no ERC-1271 `isValidSignature` (which Safe's
+	 * handler would accept with `threshold` owner signatures, never consulting this guard: members could sign
+	 * token permits and off-chain orders without the co-signer). Setup starts without one; this refuses any
+	 * normal-path transaction that leaves one set, including one pointing at this guard. Safe calls this hook on
+	 * the guard it read before execution, so a transaction that also removes the guard is checked too.
+	 */
+	function checkAfterExecution(bytes32, bool) external view override {
+		bytes memory word = ISafeView(msg.sender).getStorageAt(uint256(FALLBACK_HANDLER_SLOT), 1);
+		address handler = abi.decode(word, (address));
+		if (handler != address(0)) revert FallbackHandlerSet(msg.sender, handler);
+	}
 
 	/// @inheritdoc IERC165
 	function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
