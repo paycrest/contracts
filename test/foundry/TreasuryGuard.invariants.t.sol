@@ -175,6 +175,18 @@ contract TreasuryHandler is TreasuryBase {
 		ISafe(address(treasury)).execTransactionFromModule(address(treasury), 0, abi.encodeCall(ISafe.changeThreshold, (2)), Operation.Call);
 	}
 
+	/// Not a fuzz target: whether a fresh transfer signed by a member and the co-signer still runs now (P9: the
+	/// guard blocks nothing else). The invariant that calls it does not keep its state changes.
+	function probeCosignedTransfer() external returns (bool) {
+		if (ISafe(address(treasury)).getThreshold() < 2) {
+			vm.prank(address(delay));
+			ISafe(address(treasury)).execTransactionFromModule(address(treasury), 0, abi.encodeCall(ISafe.changeThreshold, (2)), Operation.Call);
+		}
+		token.mint(address(treasury), 1);
+		bytes memory data = _transferData(recipient, 1);
+		return _execRaw(treasury, address(token), data, _sign(treasury, _signers(_s(member), _s(cosigner)), address(token), 0, data, Operation.Call));
+	}
+
 	function warp(uint256 dt) external {
 		++calls;
 		vm.warp(block.timestamp + bound(dt, 0, 3 days));
@@ -255,6 +267,12 @@ contract TreasuryGuardInvariants is Test {
 		uint256 out = t.balanceOf(handler.recipientAddr());
 		assertEq(out, handler.cosignedOut() + handler.recoveryOut());
 		assertEq(t.balanceOf(handler.treasuryAddr()) + out, startBalance);
+	}
+
+	/// Whatever happened before, a member and the co-signer can still move funds: the checks above are not met
+	/// by a guard that refuses everything.
+	function invariant_P9_cosignedTransferStillRuns() public {
+		assertTrue(handler.probeCosignedTransfer());
 	}
 
 	/// The guard, its co-signer and the timelock stay as set up (the threshold moves only between 1 and 2).

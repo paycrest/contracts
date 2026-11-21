@@ -89,6 +89,8 @@ contract TestToken {
 abstract contract TreasuryBase is Test {
 	/// Safe v1.4.1 guard slot: keccak256("guard_manager.guard.address").
 	bytes32 internal constant GUARD_SLOT = 0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8;
+	/// Safe v1.4.1 fallback handler slot, derived here rather than read from the contracts under test.
+	bytes32 internal constant HANDLER_SLOT = keccak256('fallback_manager.handler.address');
 	address internal constant SENTINEL = address(1);
 	uint256 internal constant COOLDOWN = 48 hours;
 	uint256 internal constant EXPIRATION = 7 days;

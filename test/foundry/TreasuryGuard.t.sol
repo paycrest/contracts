@@ -7,6 +7,7 @@ import {TreasuryGuard} from '../../contracts/TreasuryGuard.sol';
 import {TreasurySetup} from '../../contracts/TreasurySetup.sol';
 import {ISafeSetup, ISafeView, ISafeGuard, IERC165, IDelay, Operation} from '../../contracts/interfaces/ISafe.sol';
 import {TreasuryBase, ISafe, MockPasskey, TestToken} from './TreasuryBase.sol';
+import {stdError} from 'forge-std/StdError.sol';
 
 /// @notice A contract that registers a co-signer but is not a Safe: it has no (or a broken) getTransactionHash.
 contract FakeSafe {
@@ -402,10 +403,11 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(fake)));
 		fake.check(guard, new bytes(64));
 
-		// nonce 0: there is no transaction in flight.
+		// nonce 0: there is no transaction in flight. Long enough to pass the length check, so the revert is the
+		// nonce underflow itself.
 		fake.setNonce(0);
-		vm.expectRevert();
-		fake.check(guard, new bytes(130));
+		vm.expectRevert(stdError.arithmeticError);
+		fake.check(guard, new bytes(130 + 97));
 	}
 
 	/* ==================================================================================== P6 */
@@ -555,7 +557,7 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertTrue(recovery.isModuleEnabled(address(treasury)));
 		assertEq(uint256(vm.load(address(recovery), GUARD_SLOT)), 0, 'recovery has no guard');
 		assertEq(
-			address(uint160(uint256(vm.load(address(recovery), guard.FALLBACK_HANDLER_SLOT())))),
+			address(uint160(uint256(vm.load(address(recovery), HANDLER_SLOT)))),
 			fallbackHandler,
 			'recovery Safe has the configured handler'
 		);
@@ -700,6 +702,8 @@ contract TreasuryGuardTest is TreasuryBase {
 	/* ==================================================================================== P13 */
 
 	function test_P13_addressesPredictable() public {
+		// The timelock's salt is part of every treasury's predicted timelock address: pinned, not read back.
+		assertEq(setupHelper.DELAY_SALT(), keccak256('paycrest.treasury.delay'));
 		TreasurySetup.Config memory c = _config(_admins(), 2);
 		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c);
 		address predicted = _predictSafe(safeL2, init, 42);
@@ -934,7 +938,7 @@ contract TreasuryGuardTest is TreasuryBase {
 	/// The treasury has no fallback handler, so it answers no ERC-1271 check: owner signatures that a Safe with
 	/// Safe's handler accepts (two members, no co-signer) are worthless for permits and off-chain orders.
 	function test_P17_treasuryAnswersNoErc1271() public {
-		assertEq(uint256(vm.load(address(treasury), guard.FALLBACK_HANDLER_SLOT())), 0);
+		assertEq(uint256(vm.load(address(treasury), HANDLER_SLOT)), 0);
 		// The same owners in a plain Safe with the handler: its ERC-1271 accepts two member signatures.
 		ISafe plain = ISafe(
 			factory.createProxyWithNonce(
@@ -985,11 +989,11 @@ contract TreasuryGuardTest is TreasuryBase {
 		assertEq(predicted.code.length, 0);
 		// The helper's own check, reached through a delegatecall from a context that has a handler.
 		vm.mockCall(address(this), abi.encodeWithSelector(ISafeView.getThreshold.selector), abi.encode(uint256(2)));
-		vm.store(address(this), guard.FALLBACK_HANDLER_SLOT(), bytes32(uint256(uint160(fallbackHandler))));
+		vm.store(address(this), HANDLER_SLOT, bytes32(uint256(uint160(fallbackHandler))));
 		(bool ok, bytes memory ret) = address(setupHelper).delegatecall(abi.encodeCall(TreasurySetup.setupTreasury, (_config(_admins(), 2))));
 		assertFalse(ok);
 		assertEq(ret, abi.encodeWithSelector(TreasurySetup.FallbackHandlerSet.selector, fallbackHandler));
-		vm.store(address(this), guard.FALLBACK_HANDLER_SLOT(), bytes32(0));
+		vm.store(address(this), HANDLER_SLOT, bytes32(0));
 	}
 
 	/// A co-signed transaction can't set a fallback handler: not Safe's, not the guard (whose `setCosigner` would
@@ -1014,14 +1018,14 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.FallbackHandlerSet.selector, address(treasury), fallbackHandler));
 		_exec(treasury, multiSendCallOnly, 0, ms, Operation.DelegateCall, msSigs);
 
-		assertEq(uint256(vm.load(address(treasury), guard.FALLBACK_HANDLER_SLOT())), 0);
+		assertEq(uint256(vm.load(address(treasury), HANDLER_SLOT)), 0);
 		assertEq(address(uint160(uint256(vm.load(address(treasury), GUARD_SLOT)))), address(guard));
 	}
 
 	/// The hook refuses any handler a Safe reports, for any transaction outcome.
 	function testFuzz_P17_anyHandlerRefused(address handler, bytes32 h, bool ok) public {
 		vm.assume(handler != address(0));
-		vm.store(address(treasury), guard.FALLBACK_HANDLER_SLOT(), bytes32(uint256(uint160(handler))));
+		vm.store(address(treasury), HANDLER_SLOT, bytes32(uint256(uint160(handler))));
 		vm.prank(address(treasury));
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.FallbackHandlerSet.selector, address(treasury), handler));
 		guard.checkAfterExecution(h, ok);
@@ -1061,10 +1065,17 @@ contract TreasuryGuardTest is TreasuryBase {
 		(bool ok, bytes memory ret) = _setupFromHere(c);
 		assertFalse(ok);
 		assertEq(ret, abi.encodeWithSelector(TreasurySetup.RecoveryExpirationRequired.selector));
-		// Below Delay's own minute: Delay refuses it.
+		// Below Delay's own minute: Delay refuses it, so no treasury is created...
 		c.recoveryExpiration = 59;
-		(ok, ) = _setupFromHere(c);
-		assertFalse(ok);
+		bytes memory init = _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c);
+		address predicted = _predictSafe(safeL2, init, 80);
+		vm.expectRevert();
+		factory.createProxyWithNonce(safeL2, init, 80);
+		assertEq(predicted.code.length, 0);
+		// ...and the refusal is Delay's own check (the factory drops revert data, so it is shown on a bare clone).
+		IDelay clone = IDelay(Clones.clone(delayMastercopy));
+		vm.expectRevert(bytes('Expiratition must be 0 or at least 60 seconds'));
+		clone.setUp(abi.encode(address(this), address(this), address(this), 24 hours, uint256(59)));
 	}
 
 	function test_P18_recoveryThresholdIsAMajority() public {

@@ -55,7 +55,7 @@ contract TreasuryGuardHalmos is Test {
 	/// Safe's StorageAccessible, for the one slot the guard reads: the fallback handler (0 unless a check sets it).
 	function getStorageAt(uint256 offset, uint256 length) external view returns (bytes memory out) {
 		out = new bytes(length * 32);
-		if (length > 0 && offset == uint256(guard.FALLBACK_HANDLER_SLOT())) {
+		if (length > 0 && offset == uint256(keccak256('fallback_manager.handler.address'))) {
 			address h = handler;
 			// solhint-disable-next-line no-inline-assembly
 			assembly {
