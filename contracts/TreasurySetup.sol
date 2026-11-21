@@ -82,7 +82,8 @@ contract TreasurySetup {
 	error RecoveryThresholdNotMajority(uint256 threshold, uint256 owners);
 	/// @notice The Delay mastercopy has no code on this chain.
 	error NoDelayMastercopy(address mastercopy);
-	/// @notice The timelock clone is not configured as asked (wrong mastercopy, or it ignored its setup).
+	/// @notice The timelock clone does not report the configuration it was set up with, or did not enable the
+	/// recovery Safe. (Getters only: this does not prove the mastercopy is Zodiac's Delay; see the spec, §4.)
 	error DelayNotConfigured(address delay);
 
 	constructor() {

@@ -85,6 +85,24 @@ Neither contract has an owner, admin, upgrade path or pause. `TreasuryGuard` is 
   hash it was handed: a signature over an arbitrary hash could be replayed as an owner signature elsewhere.
 - The policy must check the gas-refund fields (`safeTxGas`, `baseGas`, `gasPrice`, `gasToken`, `refundReceiver`):
   a refund is a payment out of the treasury.
+- **Same address on every chain, bound to the first configuration** (P13): anyone can deploy a treasury's
+  original initializer on a chain where it isn't deployed yet, and there it has the original owners, co-signer
+  and recovery admins, whatever has changed on other chains since. The treasury service (KAN-925) must deploy a
+  treasury on every supported network when it is created; on a network added later, it must deploy it there and
+  bring it up to date (the same owner, co-signer and recovery changes, co-signed there) before showing the
+  address for that network. An address is never shown, or used for deposits, on a network where the treasury is
+  not deployed and current.
+- **Setup checks only what it can see**: `setupTreasury` checks the handler slot and the timelock's getters at
+  the moment it runs. It can't see what an initializer does around it (for example a MultiSend that calls it and
+  then changes the guard, modules or handler), Safe's `payment` fields (with `paymentReceiver = 0`, `Safe.setup`
+  pays `tx.origin`, so whoever deploys first collects it), or whether `c.guard`, `c.delayMastercopy` and the Safe
+  addresses are the canonical ones (a look-alike timelock passes the getter checks). Only the initializer's
+  author can choose these, since CREATE2 binds the address to it. The treasury service and the dashboard must
+  check that an initializer is exactly `setup(owners, threshold, TreasurySetup, setupTreasury(config), 0, 0, 0, 0)`
+  with the canonical guard, setup helper, Delay mastercopy, Safe factory, singleton and handler before using or
+  showing its address.
+- **Rotation swaps, never adds**: the co-signer is rotated with `swapOwner` (P14). The policy must refuse adding
+  a second Paycrest key as an owner: with two Paycrest owners at threshold 2, Paycrest could act alone.
 - With no fallback handler (P17) a treasury can't receive ERC-721 or ERC-1155 tokens by `safeTransferFrom`
   (the receiver hooks are not answered) and can't sign messages (ERC-1271). Plain ERC-20 and ETH transfers in
   are unaffected.
