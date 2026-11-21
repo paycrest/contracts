@@ -59,6 +59,8 @@ funds; when in doubt, stop and ask a maintainer.
 
 - Conventional Commits with the Jira key: `feat(treasury): on-chain co-signature deadline (KAN-1042)`. One
   logical change per commit.
+- Refer to Jira tickets by the bare key (`KAN-1042`) in commits, branches, PRs and comments: no Jira URLs and no
+  ticket content, because this repo is public.
 - No AI co-author trailers in commits and no AI attribution in PR titles or descriptions.
 - Fill in `.github/PULL_REQUEST_TEMPLATE.md`, including which gates you ran and anything not tested.
 - Don't force-push shared branches; bring `main` in with a merge rather than a rebase.
