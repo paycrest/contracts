@@ -26,6 +26,13 @@ contract FakeSafe {
 	function setHashReturn(bytes memory r) external {
 		hashReturn = r;
 		hashReverts = false;
+		revertWithWord = false;
+	}
+
+	bool public revertWithWord;
+
+	function setRevertWithWord() external {
+		revertWithWord = true;
 	}
 
 	function setNonce(uint256 n) external {
@@ -41,33 +48,61 @@ contract FakeSafe {
 	}
 
 	fallback(bytes calldata) external returns (bytes memory) {
+		if (revertWithWord) {
+			// solhint-disable-next-line no-inline-assembly
+			assembly {
+				mstore(0, 1)
+				revert(0, 32)
+			}
+		}
 		require(!hashReverts, 'no hash');
 		return hashReturn;
 	}
 }
 
-/// @notice A Delay stand-in for setup's timelock checks, each failing one of them: `honest` records its setup but
-/// never enables a module; otherwise it ignores its setup but claims every module is enabled.
+/// @notice A Delay stand-in for setup's timelock checks. It records its setup honestly and enables nothing, then
+/// fails exactly one check: `lie` 0..4 misreports owner, avatar, target, cooldown or expiration (and claims every
+/// module is enabled); `lie` 5 reports everything right but never enables the recovery Safe.
 contract FakeDelay {
-	bool internal immutable honest;
-	address public owner;
-	address public avatar;
-	address public target;
-	uint256 public txCooldown;
-	uint256 public txExpiration;
+	uint8 internal immutable lie;
+	address internal _owner;
+	address internal _avatar;
+	address internal _target;
+	uint256 internal _cooldown;
+	uint256 internal _expiration;
 
-	constructor(bool honest_) {
-		honest = honest_;
+	constructor(uint8 lie_) {
+		lie = lie_;
 	}
 
 	function setUp(bytes memory initParams) external {
-		if (honest) (owner, avatar, target, txCooldown, txExpiration) = abi.decode(initParams, (address, address, address, uint256, uint256));
+		(_owner, _avatar, _target, _cooldown, _expiration) = abi.decode(initParams, (address, address, address, uint256, uint256));
+	}
+
+	function owner() external view returns (address) {
+		return lie == 0 ? address(0xBAD) : _owner;
+	}
+
+	function avatar() external view returns (address) {
+		return lie == 1 ? address(0xBAD) : _avatar;
+	}
+
+	function target() external view returns (address) {
+		return lie == 2 ? address(0xBAD) : _target;
+	}
+
+	function txCooldown() external view returns (uint256) {
+		return lie == 3 ? _cooldown - 1 : _cooldown;
+	}
+
+	function txExpiration() external view returns (uint256) {
+		return lie == 4 ? 0 : _expiration;
 	}
 
 	function enableModule(address) external {}
 
 	function isModuleEnabled(address) external view returns (bool) {
-		return !honest;
+		return lie != 5;
 	}
 }
 
@@ -139,6 +174,44 @@ contract TreasuryGuardTest is TreasuryBase {
 		if (!withCosigner) vm.expectRevert(_missing(address(treasury)));
 		_exec(treasury, address(token), 0, data, Operation.Call, sigs);
 		assertEq(token.balanceOf(recipient), withCosigner ? amt : 0);
+	}
+
+	/// At threshold 3 the co-signer counts wherever it sorts among the three counted parts; three members alone fail.
+	function test_P1_thresholdThreeTreasury() public {
+		address[] memory owners = new address[](4);
+		owners[0] = member;
+		owners[1] = admin1;
+		owners[2] = address(passkey);
+		owners[3] = cosigner;
+		TreasurySetup.Config memory c = _config(_admins(), 2);
+		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _treasuryInitializer(owners, 3, c), 82));
+		vm.deal(address(t), 3 ether);
+		assertTrue(_signAndExec(t, _signers(_s(member), _s(admin1), _s(cosigner)), recipient, 1 ether, '', Operation.Call));
+		assertTrue(_signAndExec(t, _signers(_s(address(passkey)), _s(member), _s(cosigner)), recipient, 1 ether, '', Operation.Call));
+		bytes memory sigs = _sign(t, _signers(_s(member), _s(admin1), _s(address(passkey))), recipient, 1 ether, '', Operation.Call);
+		vm.expectRevert(_missing(address(t)));
+		_exec(t, recipient, 1 ether, '', Operation.Call, sigs);
+	}
+
+	/// At threshold 3 the guard reads all three counted parts (the co-signer sorted last still counts) and wants
+	/// room for the attestation after all three.
+	function test_P1_thresholdThreeReadsEveryCountedPart() public {
+		address[] memory owners = new address[](3);
+		uint256 found;
+		for (uint256 pk = 0x5000; found < 2; ++pk) {
+			address a = vm.addr(pk);
+			if (a < cosigner) owners[found++] = _key(pk);
+		}
+		owners[2] = cosigner;
+		ISafe t = ISafe(factory.createProxyWithNonce(safeL2, _treasuryInitializer(owners, 3, _config(_admins(), 2)), 83));
+		vm.deal(address(t), 1 ether);
+		bytes memory sigs = _sign(t, _signers(_s(owners[0]), _s(owners[1]), _s(cosigner)), recipient, 1 ether, '', Operation.Call);
+		// One byte short of three parts plus the attestation.
+		bytes memory short = new bytes(sigs.length - 1);
+		for (uint256 i = 0; i < short.length; ++i) short[i] = sigs[i];
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(t)));
+		_exec(t, recipient, 1 ether, '', Operation.Call, short);
+		assertTrue(_exec(t, recipient, 1 ether, '', Operation.Call, sigs));
 	}
 
 	/* ==================================================================================== P2 */
@@ -301,12 +374,17 @@ contract TreasuryGuardTest is TreasuryBase {
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
 		fake.check(guard, new bytes(130));
 
+		// A call that reverts with exactly one word of revert data: the word is not taken as a hash.
+		fake.setRevertWithWord();
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.TransactionHashUnavailable.selector, address(fake)));
+		fake.check(guard, new bytes(130 + 97));
+
 		fake.setHashReturn(abi.encode(bytes32(uint256(1))));
 		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
-		fake.check(guard, new bytes(130));
+		fake.check(guard, new bytes(130 + 97));
 
 		// Too-short signatures never pass.
-		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.MissingCosignerSignature.selector, address(fake), cosigner));
+		vm.expectRevert(abi.encodeWithSelector(TreasuryGuard.DeadlineAttestationMissing.selector, address(fake)));
 		fake.check(guard, new bytes(64));
 
 		// nonce 0: there is no transaction in flight.
@@ -990,20 +1068,17 @@ contract TreasuryGuardTest is TreasuryBase {
 		factory.createProxyWithNonce(safeL2, _treasuryInitializer(_owners3(member, address(passkey), cosigner), 2, c), 81);
 	}
 
-	/// A timelock that ignores its setup, or that doesn't enable the recovery Safe, is refused.
+	/// A timelock that misreports any one of its settings, or doesn't enable the recovery Safe, is refused: each
+	/// fake fails exactly one of setup's checks.
 	function test_P18_misconfiguredDelayRefused() public {
 		TreasurySetup.Config memory c = _config(_admins(), 2);
-		c.delayMastercopy = address(new FakeDelay(false));
-		address clone = Clones.predictDeterministicAddress(c.delayMastercopy, setupHelper.DELAY_SALT(), address(this));
-		(bool ok, bytes memory ret) = _setupFromHere(c);
-		assertFalse(ok);
-		assertEq(ret, abi.encodeWithSelector(TreasurySetup.DelayNotConfigured.selector, clone));
-
-		c.delayMastercopy = address(new FakeDelay(true));
-		clone = Clones.predictDeterministicAddress(c.delayMastercopy, setupHelper.DELAY_SALT(), address(this));
-		(ok, ret) = _setupFromHere(c);
-		assertFalse(ok);
-		assertEq(ret, abi.encodeWithSelector(TreasurySetup.DelayNotConfigured.selector, clone));
+		for (uint8 lie = 0; lie <= 5; ++lie) {
+			c.delayMastercopy = address(new FakeDelay(lie));
+			address clone = Clones.predictDeterministicAddress(c.delayMastercopy, setupHelper.DELAY_SALT(), address(this));
+			(bool ok, bytes memory ret) = _setupFromHere(c);
+			assertFalse(ok);
+			assertEq(ret, abi.encodeWithSelector(TreasurySetup.DelayNotConfigured.selector, clone));
+		}
 	}
 
 	/* ==================================================================================== gas (report only) */

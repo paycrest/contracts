@@ -113,10 +113,12 @@ contract TreasuryGuard is ISafeGuard {
 		uint256 threshold = ISafeView(msg.sender).getThreshold();
 		if (threshold < 2) revert ThresholdTooLow(threshold);
 		bytes32 txHash = _safeTxHash(ISafeView(msg.sender).nonce() - 1);
+		// The `threshold` static parts Safe read, then the attestation: both helpers below read within this.
+		if (signatures.length < threshold * 65 + ATTESTATION_LENGTH) revert DeadlineAttestationMissing(msg.sender);
 		if (!_countedSigner(signatures, threshold, txHash, cosigner)) {
 			revert MissingCosignerSignature(msg.sender, cosigner);
 		}
-		_checkDeadline(signatures, threshold, txHash, cosigner);
+		_checkDeadline(signatures, txHash, cosigner);
 	}
 
 	/**
@@ -159,12 +161,11 @@ contract TreasuryGuard is ISafeGuard {
 
 	/**
 	 * @dev Require the deadline attestation at the end of `signatures` to be the co-signer's, for `txHash`, and
-	 * not expired. It must start after the `count` static parts Safe read; contract signatures' dynamic parts
-	 * sit between the two, at the offsets their static parts name.
+	 * not expired. `checkTransaction` has checked it starts after the static parts Safe read; contract
+	 * signatures' dynamic parts sit between the two, at the offsets their static parts name.
 	 */
-	function _checkDeadline(bytes memory signatures, uint256 count, bytes32 txHash, address cosigner) private view {
+	function _checkDeadline(bytes memory signatures, bytes32 txHash, address cosigner) private view {
 		uint256 len = signatures.length;
-		if (len < count * 65 + ATTESTATION_LENGTH) revert DeadlineAttestationMissing(msg.sender);
 		uint256 deadline;
 		bytes32 r;
 		bytes32 s;
@@ -185,7 +186,8 @@ contract TreasuryGuard is ISafeGuard {
 	}
 
 	/**
-	 * @dev True if one of the first `count` 65-byte signatures belongs to `signer`. Owner identification
+	 * @dev True if one of the first `count` 65-byte signatures belongs to `signer` (`signatures` holds at least
+	 * that many: `checkTransaction` checked its length). Owner identification
 	 * mirrors `Safe.checkNSignatures`: `v == 0` (contract signature) and `v == 1` (approved hash) carry the
 	 * owner in `r`; `v > 30` is an eth_sign signature over the prefixed hash; anything else is a plain ECDSA
 	 * signature over the hash. Signatures past `count` are ignored because Safe does not check them.
@@ -196,7 +198,6 @@ contract TreasuryGuard is ISafeGuard {
 		bytes32 txHash,
 		address signer
 	) private pure returns (bool) {
-		if (signatures.length < count * 65) return false;
 		for (uint256 i = 0; i < count; ++i) {
 			uint8 v;
 			bytes32 r;
