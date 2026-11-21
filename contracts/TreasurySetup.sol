@@ -18,7 +18,9 @@ import {TreasuryGuard} from './TreasuryGuard.sol';
  *     its owners in step with the team. Its address is public (factory, singleton, `recoveryInitializer`, the
  *     treasury's address as salt) and the factory does not salt with the caller, so anyone can deploy it first;
  *     an existing recovery Safe at that address is then reused (CREATE2 means only the factory, with exactly this
- *     initializer and singleton, can have put it there) as long as it still has the treasury enabled as a module;
+ *     initializer and singleton, can have put it there) as long as it still has the treasury enabled as a module.
+ *     CREATE2 binds only its initial configuration: its admins may already have changed its owners, threshold or
+ *     guard, as they may at any time after setup, since the recovery Safe is theirs;
  *  3. enables the timelock as a module of the treasury, so a queued transaction runs after the cooldown;
  *  4. sets `TreasuryGuard` as the treasury's guard and registers the Paycrest co-signer with it.
  *
