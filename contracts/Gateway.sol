@@ -20,9 +20,16 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		uint256 liquidityProviderAmount;
 	}
 
+	/// @notice Most payees an order can be bound to.
+	uint256 public constant MAX_PAYEES = 8;
+
 	mapping(bytes32 => Order) private order;
 	mapping(address => uint256) private _nonce;
-	uint256[50] private __gap;
+	// keccak256(abi.encode(payees)) of each order's payee list; zero until it is bound. Set once, never changed.
+	mapping(bytes32 => bytes32) private _payeesHash;
+	// While true, settleOut, refund and setPayees revert. Only the owner clears it.
+	bool private _settlementFrozen;
+	uint256[48] private __gap;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
@@ -46,13 +53,29 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		_;
 	}
 
+	/**
+	 * @dev Modifier that allows only the owner or the guardian to call a function.
+	 */
+	modifier onlyOwnerOrGuardian() {
+		require(msg.sender == owner() || (_guardian != address(0) && msg.sender == _guardian), 'OnlyOwnerOrGuardian');
+		_;
+	}
+
+	/**
+	 * @dev Modifier that blocks a function while settlement is frozen.
+	 */
+	modifier whenSettlementNotFrozen() {
+		require(!_settlementFrozen, 'SettlementFrozen');
+		_;
+	}
+
 	/* ##################################################################
                                 OWNER FUNCTIONS
     ################################################################## */
 	/**
-	 * @dev Pause the contract.
+	 * @dev Pause the contract. The owner or the guardian can pause; only the owner can unpause.
 	 */
-	function pause() external onlyOwner {
+	function pause() external onlyOwnerOrGuardian {
 		_pause();
 	}
 
@@ -61,6 +84,20 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	 */
 	function unpause() external onlyOwner {
 		_unpause();
+	}
+
+	/** @dev See {freezeSettlement-IGateway}. */
+	function freezeSettlement() external onlyOwnerOrGuardian {
+		require(!_settlementFrozen, 'SettlementFrozen');
+		_settlementFrozen = true;
+		emit SettlementFrozen(msg.sender);
+	}
+
+	/** @dev See {unfreezeSettlement-IGateway}. */
+	function unfreezeSettlement() external onlyOwner {
+		require(_settlementFrozen, 'SettlementNotFrozen');
+		_settlementFrozen = false;
+		emit SettlementUnfrozen(msg.sender);
 	}
 
 	/* ##################################################################
@@ -76,6 +113,33 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		address _refundAddress,
 		string calldata messageHash
 	) external whenNotPaused returns (bytes32 orderId) {
+		orderId = _createOrder(_token, _amount, _rate, _senderFeeRecipient, _senderFee, _refundAddress, messageHash);
+	}
+
+	/** @dev See {createOrderWithPayees-IGateway}. */
+	function createOrderWithPayees(
+		address _token,
+		uint256 _amount,
+		uint96 _rate,
+		address _senderFeeRecipient,
+		uint256 _senderFee,
+		address _refundAddress,
+		string calldata messageHash,
+		address[] calldata _payees
+	) external whenNotPaused returns (bytes32 orderId) {
+		orderId = _createOrder(_token, _amount, _rate, _senderFeeRecipient, _senderFee, _refundAddress, messageHash);
+		_bindPayees(orderId, _payees);
+	}
+
+	function _createOrder(
+		address _token,
+		uint256 _amount,
+		uint96 _rate,
+		address _senderFeeRecipient,
+		uint256 _senderFee,
+		address _refundAddress,
+		string calldata messageHash
+	) internal returns (bytes32 orderId) {
 		// checks that are required
 		_handler(_token, _amount, _refundAddress, _senderFeeRecipient, _senderFee);
 
@@ -148,21 +212,63 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		}
 	}
 
+	/**
+	 * @dev Binds an order's payee list. The caller has checked the order is open and has no list yet.
+	 */
+	function _bindPayees(bytes32 _orderId, address[] calldata _payees) internal {
+		uint256 count = _payees.length;
+		require(count != 0 && count <= MAX_PAYEES, 'InvalidPayees');
+		for (uint256 i; i < count; ++i) {
+			require(_payees[i] != address(0), 'InvalidPayees');
+		}
+		_payeesHash[_orderId] = keccak256(abi.encode(_payees));
+		emit OrderPayeesSet(_orderId, _payees);
+	}
+
+	/**
+	 * @dev Reverts unless `_payees` is the order's bound list and contains `_liquidityProvider`.
+	 */
+	function _requirePayee(bytes32 _orderId, address _liquidityProvider, address[] calldata _payees) internal view {
+		bytes32 bound = _payeesHash[_orderId];
+		require(bound != bytes32(0), 'PayeesNotSet');
+		require(keccak256(abi.encode(_payees)) == bound, 'PayeesMismatch');
+		uint256 count = _payees.length;
+		for (uint256 i; i < count; ++i) {
+			if (_payees[i] == _liquidityProvider) return;
+		}
+		revert('PayeeNotAllowed');
+	}
+
 	/* ##################################################################
                                 AGGREGATOR FUNCTIONS
     ################################################################## */
+	/** @dev See {setPayees-IGateway}. */
+	function setPayees(
+		bytes32 _orderId,
+		address[] calldata _payees
+	) external onlyAggregator whenSettlementNotFrozen returns (bool) {
+		require(order[_orderId].sender != address(0), 'OrderNotFound');
+		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!order[_orderId].isRefunded, 'OrderRefunded');
+		require(_payeesHash[_orderId] == bytes32(0), 'PayeesAlreadySet');
+		_bindPayees(_orderId, _payees);
+		return true;
+	}
+
 	/** @dev See {settleOut-IGateway}. */
 	function settleOut(
 		bytes32 _splitOrderId,
 		bytes32 _orderId,
 		address _liquidityProvider,
 		uint64 _settlePercent,
-		uint64 _rebatePercent
-	) external onlyAggregator returns (bool) {
+		uint64 _rebatePercent,
+		address[] calldata _payees
+	) external onlyAggregator whenSettlementNotFrozen returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
-		require(_rebatePercent <= MAX_BPS, 'InvalidRebatePercent');
+		require(_rebatePercent <= _maxRebatePercent, 'InvalidRebatePercent');
+		_requirePayee(_orderId, _liquidityProvider, _payees);
 
 		// load the token into memory
 		address token = order[_orderId].token;
@@ -316,7 +422,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	}
 
 	/** @dev See {refund-IGateway}. */
-	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator returns (bool) {
+	function refund(uint256 _fee, bytes32 _orderId) external onlyAggregator whenSettlementNotFrozen returns (bool) {
 		// ensure the transaction has not been fulfilled
 		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
 		require(!order[_orderId].isRefunded, 'OrderRefunded');
@@ -366,6 +472,16 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {getAggregator-IGateway}. */
 	function getAggregator() external view returns (address) {
 		return _aggregatorAddress;
+	}
+
+	/** @dev See {getOrderPayeesHash-IGateway}. */
+	function getOrderPayeesHash(bytes32 _orderId) external view returns (bytes32) {
+		return _payeesHash[_orderId];
+	}
+
+	/** @dev See {isSettlementFrozen-IGateway}. */
+	function isSettlementFrozen() external view returns (bool) {
+		return _settlementFrozen;
 	}
 
 	function _handleTransferFeeSplitting(

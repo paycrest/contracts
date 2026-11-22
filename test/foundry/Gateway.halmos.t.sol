@@ -43,9 +43,23 @@ contract GatewayHalmos is GatewayBase {
 		assert(!_call(caller, abi.encodeCall(gateway.setTokenFeeSettings, (address(token), stt, ptt))));
 	}
 
+	/// With no guardian set, as deployed until the owner sets one, only the owner can pause or freeze.
 	function check_P1_pauseIsOwnerOnly(address caller) public {
 		vm.assume(caller != owner);
 		assert(!_call(caller, abi.encodeCall(gateway.pause, ())));
+		assert(!_call(caller, abi.encodeCall(gateway.freezeSettlement, ())));
+	}
+
+	/// The guardian can never unpause, unfreeze or change a setting.
+	function check_P1_guardianCannotUnpauseOrUnfreeze(address guardian, address value, uint64 cap) public {
+		vm.assume(guardian != owner && guardian != address(0));
+		gateway.setGuardian(guardian);
+		gateway.pause();
+		gateway.freezeSettlement();
+		assert(!_call(guardian, abi.encodeCall(gateway.unpause, ())));
+		assert(!_call(guardian, abi.encodeCall(gateway.unfreezeSettlement, ())));
+		assert(!_call(guardian, abi.encodeCall(gateway.setGuardian, (value))));
+		assert(!_call(guardian, abi.encodeCall(gateway.setMaxRebatePercent, (cap))));
 	}
 
 	/* ==================================================================================== P2 */
@@ -53,7 +67,7 @@ contract GatewayHalmos is GatewayBase {
 	function check_P2_settleOutIsAggregatorOnly(address caller, uint64 pct, uint64 rebate) public {
 		vm.assume(caller != aggregator);
 		bytes32 id = _create(alice, 1_000_000, 0, address(0), refundTo);
-		assert(!_call(caller, abi.encodeCall(gateway.settleOut, (bytes32(0), id, provider, pct, rebate))));
+		assert(!_call(caller, abi.encodeCall(gateway.settleOut, (bytes32(0), id, provider, pct, rebate, _payees()))));
 	}
 
 	function check_P2_refundIsAggregatorOnly(address caller, uint256 fee) public {
@@ -119,13 +133,39 @@ contract GatewayHalmos is GatewayBase {
 		assert(_order(id).amount == amount - gross);
 	}
 
+	/* ==================================================================================== P19 */
+
+	/// For any payee address and any two-address list passed in, a settlement succeeds only if the list is the one
+	/// bound at creation and the payee is in it.
+	function check_P19_settleOutPaysOnlyABoundPayee(address to, address l0, address l1, uint64 pct, uint64 rebate) public {
+		bytes32 id = _create(alice, 1_000_000, 0, address(0), refundTo);
+		address[] memory list = new address[](2);
+		list[0] = l0;
+		list[1] = l1;
+		bool ok = _call(aggregator, abi.encodeCall(gateway.settleOut, (bytes32(0), id, to, pct, rebate, list)));
+		if (ok) {
+			assert(l0 == PAYEE_A && l1 == PAYEE_B);
+			assert(to == PAYEE_A || to == PAYEE_B);
+		}
+	}
+
+	/// An order created without a list never settles, to anyone, with any list, until one is bound.
+	function check_P19_unboundOrderNeverSettles(address to, address l0, uint64 pct, uint64 rebate) public {
+		_fund(alice, 1_000_000);
+		vm.prank(alice);
+		bytes32 id = gateway.createOrder(address(token), 1_000_000, 1500, address(0), 0, refundTo, 'msg');
+		address[] memory list = new address[](1);
+		list[0] = l0;
+		assert(!_call(aggregator, abi.encodeCall(gateway.settleOut, (bytes32(0), id, to, pct, rebate, list))));
+	}
+
 	/* ==================================================================================== P8 */
 
 	/// Once fully settled, no split or refund ever succeeds again.
 	function check_P8_fulfilledOrderIsFinal(uint64 pct, uint64 rebate, uint256 fee) public {
 		bytes32 id = _create(alice, 1_000_000, 10, feeRecipient, refundTo);
 		_settleOut(id, provider, uint64(MAX_BPS), 0);
-		assert(!_call(aggregator, abi.encodeCall(gateway.settleOut, (bytes32(0), id, provider, pct, rebate))));
+		assert(!_call(aggregator, abi.encodeCall(gateway.settleOut, (bytes32(0), id, provider, pct, rebate, _payees()))));
 		assert(!_call(aggregator, abi.encodeCall(gateway.refund, (fee, id))));
 	}
 
@@ -133,7 +173,7 @@ contract GatewayHalmos is GatewayBase {
 	function check_P8_refundedOrderIsFinal(uint64 pct, uint64 rebate, uint256 fee) public {
 		bytes32 id = _create(alice, 1_000_000, 10, feeRecipient, refundTo);
 		_refund(id, 0);
-		assert(!_call(aggregator, abi.encodeCall(gateway.settleOut, (bytes32(0), id, provider, pct, rebate))));
+		assert(!_call(aggregator, abi.encodeCall(gateway.settleOut, (bytes32(0), id, provider, pct, rebate, _payees()))));
 		assert(!_call(aggregator, abi.encodeCall(gateway.refund, (fee, id))));
 	}
 

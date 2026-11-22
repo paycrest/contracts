@@ -32,6 +32,11 @@ contract GatewayTest is GatewayBase {
 	);
 	event SenderFeeTransferred(bytes32 indexed orderId, address indexed sender, uint256 indexed amount);
 	event TransferFeeSplit(bytes32 indexed orderId, uint256 senderAmount, uint256 aggregatorAmount);
+	event OrderPayeesSet(bytes32 indexed orderId, address[] payees);
+	event SettlementFrozen(address indexed by);
+	event SettlementUnfrozen(address indexed by);
+	event GuardianUpdated(address indexed guardian);
+	event MaxRebatePercentUpdated(uint64 maxRebatePercent);
 
 	/* ==================================================================================== P1 */
 
@@ -46,10 +51,18 @@ contract GatewayTest is GatewayBase {
 		gateway.updateProtocolAddress('treasury', address(0x1234));
 		vm.expectRevert(notOwner);
 		gateway.setTokenFeeSettings(address(token), 1, 1);
-		vm.expectRevert(notOwner);
+		vm.expectRevert('OnlyOwnerOrGuardian');
 		gateway.pause();
 		vm.expectRevert(notOwner);
 		gateway.unpause();
+		vm.expectRevert('OnlyOwnerOrGuardian');
+		gateway.freezeSettlement();
+		vm.expectRevert(notOwner);
+		gateway.unfreezeSettlement();
+		vm.expectRevert(notOwner);
+		gateway.setGuardian(caller);
+		vm.expectRevert(notOwner);
+		gateway.setMaxRebatePercent(1);
 		vm.expectRevert(notOwner);
 		gateway.transferOwnership(caller);
 		vm.stopPrank();
@@ -69,8 +82,49 @@ contract GatewayTest is GatewayBase {
 		gateway.acceptOwnership();
 		assertEq(gateway.owner(), next);
 
-		vm.expectRevert('Ownable: caller is not the owner');
+		vm.expectRevert('OnlyOwnerOrGuardian');
 		gateway.pause();
+	}
+
+	function test_P1_guardianCanOnlyPauseAndFreeze() public {
+		address guardian = address(uint160(0x6A2D));
+		vm.expectEmit(true, false, false, true, address(gateway));
+		emit GuardianUpdated(guardian);
+		gateway.setGuardian(guardian);
+		assertEq(gateway.getGuardian(), guardian);
+
+		vm.startPrank(guardian);
+		gateway.pause();
+		assertTrue(gateway.paused());
+		vm.expectRevert('Ownable: caller is not the owner');
+		gateway.unpause();
+		vm.expectEmit(true, false, false, true, address(gateway));
+		emit SettlementFrozen(guardian);
+		gateway.freezeSettlement();
+		assertTrue(gateway.isSettlementFrozen());
+		vm.expectRevert('Ownable: caller is not the owner');
+		gateway.unfreezeSettlement();
+		vm.expectRevert('Ownable: caller is not the owner');
+		gateway.setGuardian(address(0));
+		vm.expectRevert('Ownable: caller is not the owner');
+		gateway.setMaxRebatePercent(0);
+		vm.expectRevert('Ownable: caller is not the owner');
+		gateway.updateProtocolAddress('aggregator', guardian);
+		vm.stopPrank();
+
+		gateway.unpause();
+		vm.expectEmit(true, false, false, true, address(gateway));
+		emit SettlementUnfrozen(owner);
+		gateway.unfreezeSettlement();
+
+		// Removing the guardian takes its powers away; the zero address never holds them.
+		gateway.setGuardian(address(0));
+		vm.prank(guardian);
+		vm.expectRevert('OnlyOwnerOrGuardian');
+		gateway.pause();
+		vm.prank(address(0));
+		vm.expectRevert('OnlyOwnerOrGuardian');
+		gateway.freezeSettlement();
 	}
 
 	/* ==================================================================================== P2 */
@@ -81,9 +135,11 @@ contract GatewayTest is GatewayBase {
 
 		vm.startPrank(caller);
 		vm.expectRevert('OnlyAggregator');
-		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), 0);
+		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), 0, _payees());
 		vm.expectRevert('OnlyAggregator');
 		gateway.refund(0, id);
+		vm.expectRevert('OnlyAggregator');
+		gateway.setPayees(id, _payees());
 		vm.stopPrank();
 	}
 
@@ -270,11 +326,32 @@ contract GatewayTest is GatewayBase {
 		assertEq(_bal(treasury), 0);
 	}
 
+	function test_P7_rebateAboveTheOwnerCapReverts() public {
+		bytes32 id = _create(alice, 1000, 0, address(0), refundTo);
+		vm.expectEmit(false, false, false, true, address(gateway));
+		emit MaxRebatePercentUpdated(50_000);
+		gateway.setMaxRebatePercent(50_000);
+		assertEq(gateway.getMaxRebatePercent(), 50_000);
+		vm.prank(aggregator);
+		vm.expectRevert('InvalidRebatePercent');
+		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), 50_001, _payees());
+		assertTrue(_settleOut(id, provider, uint64(MAX_BPS), 50_000), 'at the cap is allowed');
+	}
+
+	function test_P7_zeroCapAllowsOnlyZeroRebate() public {
+		gateway.setMaxRebatePercent(0);
+		bytes32 id = _create(alice, 1000, 0, address(0), refundTo);
+		vm.prank(aggregator);
+		vm.expectRevert('InvalidRebatePercent');
+		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), 1, _payees());
+		assertTrue(_settleOut(id, provider, uint64(MAX_BPS), 0));
+	}
+
 	function test_P7_rebateAboveMaxReverts() public {
 		bytes32 id = _create(alice, 1000, 0, address(0), refundTo);
 		vm.prank(aggregator);
 		vm.expectRevert('InvalidRebatePercent');
-		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), uint64(MAX_BPS + 1));
+		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), uint64(MAX_BPS + 1), _payees());
 	}
 
 	/* ==================================================================================== P8 */
@@ -285,7 +362,7 @@ contract GatewayTest is GatewayBase {
 
 		vm.startPrank(aggregator);
 		vm.expectRevert('OrderFulfilled');
-		gateway.settleOut(bytes32(0), id, provider, 1, 0);
+		gateway.settleOut(bytes32(0), id, provider, 1, 0, _payees());
 		vm.expectRevert('OrderFulfilled');
 		gateway.refund(0, id);
 		vm.stopPrank();
@@ -297,7 +374,7 @@ contract GatewayTest is GatewayBase {
 
 		vm.startPrank(aggregator);
 		vm.expectRevert('OrderRefunded');
-		gateway.settleOut(bytes32(0), id, provider, 1, 0);
+		gateway.settleOut(bytes32(0), id, provider, 1, 0, _payees());
 		vm.expectRevert('OrderRefunded');
 		gateway.refund(0, id);
 		vm.stopPrank();
@@ -311,9 +388,9 @@ contract GatewayTest is GatewayBase {
 
 		vm.startPrank(aggregator);
 		vm.expectRevert('InvalidSettlePercent');
-		gateway.settleOut(bytes32(0), id, provider, second, 0);
+		gateway.settleOut(bytes32(0), id, provider, second, 0, _payees());
 		vm.expectRevert('InvalidSettlePercent');
-		gateway.settleOut(bytes32(0), id, provider, 0, 0);
+		gateway.settleOut(bytes32(0), id, provider, 0, 0, _payees());
 		vm.stopPrank();
 	}
 
@@ -321,8 +398,10 @@ contract GatewayTest is GatewayBase {
 		_create(alice, 1000, 0, address(0), refundTo); // the Gateway holds tokens
 		vm.assume(id != _orderId(alice, 1));
 		vm.startPrank(aggregator);
-		vm.expectRevert('InvalidSettlePercent');
-		gateway.settleOut(bytes32(0), id, provider, pct, 0);
+		vm.expectRevert('PayeesNotSet');
+		gateway.settleOut(bytes32(0), id, provider, pct, 0, _payees());
+		vm.expectRevert('OrderNotFound');
+		gateway.setPayees(id, _payees());
 		vm.expectRevert(); // token address(0): the transfer has no contract to call
 		gateway.refund(0, id);
 		vm.stopPrank();
@@ -493,6 +572,13 @@ contract GatewayTest is GatewayBase {
 		assertEq(s.providerToAggregator, 0);
 	}
 
+	function test_P14_maxRebatePercentBound() public {
+		vm.expectRevert('Gateway: invalid max rebate percent');
+		gateway.setMaxRebatePercent(uint64(MAX_BPS + 1));
+		gateway.setMaxRebatePercent(uint64(MAX_BPS));
+		assertEq(gateway.getMaxRebatePercent(), MAX_BPS);
+	}
+
 	function test_P14_addressAndStatusChecks() public {
 		vm.expectRevert('Gateway: zero address');
 		gateway.settingManagerBool('token', address(0), 1);
@@ -572,6 +658,23 @@ contract GatewayTest is GatewayBase {
 		assertEq(uint256(vm.load(g, bytes32(uint256(o) + 6))), MAX_BPS, 'order.currentBPS');
 		assertEq(uint256(vm.load(g, bytes32(uint256(o) + 7))), 1000, 'order.amount');
 		assertEq(uint256(vm.load(g, keccak256(abi.encode(alice, uint256(256))))), 1, '_nonce @256');
+	}
+
+	/// The variables this change appends: two from the GatewaySettingManager gap, two from the Gateway gap.
+	function test_P16_newVariablesTakeTheStartOfTheirGaps() public {
+		address g = address(gateway);
+		address guardian = address(uint160(0x6A2D));
+		gateway.setGuardian(guardian);
+		gateway.setMaxRebatePercent(12_345);
+		bytes32 id = _create(alice, 1000, 0, address(0), refundTo);
+		gateway.freezeSettlement();
+
+		uint256 packed = uint256(vm.load(g, bytes32(uint256(156))));
+		assertEq(address(uint160(packed)), guardian, '_guardian @156');
+		assertEq(uint64(packed >> 160), 12_345, '_maxRebatePercent @156+20');
+		assertEq(vm.load(g, keccak256(abi.encode(id, uint256(257)))), keccak256(abi.encode(_payees())), '_payeesHash @257');
+		assertEq(uint256(vm.load(g, bytes32(uint256(258)))) & 0xff, 1, '_settlementFrozen @258');
+		assertEq(uint256(vm.load(g, bytes32(uint256(205)))) & 0xff, 0, '_paused @205 untouched');
 	}
 
 	/* ==================================================================================== P17 */
@@ -730,18 +833,24 @@ contract GatewayTest is GatewayBase {
 		assertEq(held, 1010);
 
 		vm.startPrank(aggregator);
-		vm.expectRevert('InvalidSettlePercent');
-		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), 0);
+		vm.expectRevert('PayeesNotSet');
+		gateway.settleOut(bytes32(0), id, provider, uint64(MAX_BPS), 0, _payees());
+		vm.expectRevert('OrderNotFound');
+		gateway.setPayees(id, _payees());
+		vm.expectRevert('OrderFulfilled');
+		gateway.setPayees(key, _payees());
+		vm.expectRevert('OrderFulfilled');
+		gateway.setPayees(legacy, _payees());
 		vm.expectRevert('FeeExceedsProtocolFee');
 		gateway.refund(1, id);
 		vm.expectRevert();
 		gateway.refund(0, id);
 		vm.expectRevert('OrderFulfilled');
-		gateway.settleOut(bytes32(0), key, provider, uint64(MAX_BPS), 0);
+		gateway.settleOut(bytes32(0), key, provider, uint64(MAX_BPS), 0, _payees());
 		vm.expectRevert('OrderFulfilled');
 		gateway.refund(0, key);
 		vm.expectRevert('OrderFulfilled');
-		gateway.settleOut(bytes32(0), legacy, provider, uint64(MAX_BPS), 0);
+		gateway.settleOut(bytes32(0), legacy, provider, uint64(MAX_BPS), 0, _payees());
 		vm.expectRevert('OrderFulfilled');
 		gateway.refund(0, legacy);
 		vm.stopPrank();
@@ -793,5 +902,162 @@ contract GatewayTest is GatewayBase {
 		assertEq(o.sender, alice);
 		assertFalse(o.isFulfilled);
 		assertEq(o.amount, 100);
+	}
+
+	/* ==================================================================================== P18 */
+
+	function test_P18_freezeStopsSettlementRefundAndBinding() public {
+		bytes32 a = _create(alice, 1000, 0, address(0), refundTo);
+		_fund(bob, 1000);
+		vm.prank(bob);
+		bytes32 b = gateway.createOrder(address(token), 1000, 1500, address(0), 0, refundTo, 'msg');
+		uint256 held = _bal(address(gateway));
+		gateway.freezeSettlement();
+
+		vm.startPrank(aggregator);
+		vm.expectRevert('SettlementFrozen');
+		gateway.settleOut(bytes32(0), a, provider, uint64(MAX_BPS), 0, _payees());
+		vm.expectRevert('SettlementFrozen');
+		gateway.refund(0, a);
+		vm.expectRevert('SettlementFrozen');
+		gateway.setPayees(b, _payees());
+		vm.stopPrank();
+		vm.expectRevert('SettlementFrozen');
+		gateway.freezeSettlement();
+		assertEq(_bal(address(gateway)), held, 'nothing moved');
+
+		// A freeze does not stop money in: that is the pause (P13).
+		_create(alice, 10, 0, address(0), refundTo);
+
+		gateway.unfreezeSettlement();
+		vm.expectRevert('SettlementNotFrozen');
+		gateway.unfreezeSettlement();
+		assertTrue(_settleOut(a, provider, uint64(MAX_BPS), 0));
+		vm.prank(aggregator);
+		assertTrue(gateway.setPayees(b, _payees()));
+		assertTrue(_refund(b, 0));
+	}
+
+	/* ==================================================================================== P19 */
+
+	function _payeesOf(address a, address b) internal pure returns (address[] memory list) {
+		list = new address[](2);
+		list[0] = a;
+		list[1] = b;
+	}
+
+	function test_P19_createOrderWithPayeesBindsTheList() public {
+		_fund(alice, 1000);
+		bytes32 expected = _orderId(alice, 1);
+		vm.expectEmit(true, false, false, true, address(gateway));
+		emit OrderPayeesSet(expected, _payees());
+		vm.prank(alice);
+		bytes32 id = gateway.createOrderWithPayees(address(token), 1000, 1500, address(0), 0, refundTo, 'msg', _payees());
+		assertEq(id, expected);
+		assertEq(gateway.getOrderPayeesHash(id), keccak256(abi.encode(_payees())));
+		assertEq(_bal(address(gateway)), 1000);
+
+		vm.prank(aggregator);
+		vm.expectRevert('PayeesAlreadySet');
+		gateway.setPayees(id, _payeesOf(provider, bob));
+	}
+
+	function test_P19_createOrderWithPayeesRejectsBadLists() public {
+		_fund(alice, 10);
+		address[] memory empty = new address[](0);
+		address[] memory tooMany = new address[](gateway.MAX_PAYEES() + 1);
+		for (uint256 i; i < tooMany.length; i++) tooMany[i] = address(uint160(0x1000 + i));
+		address[] memory withZero = _payeesOf(provider, address(0));
+
+		vm.startPrank(alice);
+		vm.expectRevert('InvalidPayees');
+		gateway.createOrderWithPayees(address(token), 1, 0, address(0), 0, refundTo, 'm', empty);
+		vm.expectRevert('InvalidPayees');
+		gateway.createOrderWithPayees(address(token), 1, 0, address(0), 0, refundTo, 'm', tooMany);
+		vm.expectRevert('InvalidPayees');
+		gateway.createOrderWithPayees(address(token), 1, 0, address(0), 0, refundTo, 'm', withZero);
+		// The createOrder checks still apply (P4).
+		vm.expectRevert('AmountIsZero');
+		gateway.createOrderWithPayees(address(token), 0, 0, address(0), 0, refundTo, 'm', _payees());
+		vm.stopPrank();
+
+		// MAX_PAYEES itself is accepted.
+		address[] memory full = new address[](gateway.MAX_PAYEES());
+		for (uint256 i; i < full.length; i++) full[i] = address(uint160(0x1000 + i));
+		vm.prank(alice);
+		gateway.createOrderWithPayees(address(token), 1, 0, address(0), 0, refundTo, 'm', full);
+		assertEq(_bal(address(gateway)), 1);
+	}
+
+	function test_P19_setPayeesBindsOnceOnOpenOrdersOnly() public {
+		_fund(alice, 3000);
+		vm.startPrank(alice);
+		bytes32 a = gateway.createOrder(address(token), 1000, 1500, address(0), 0, refundTo, 'msg');
+		bytes32 b = gateway.createOrder(address(token), 1000, 1500, address(0), 0, refundTo, 'msg');
+		vm.stopPrank();
+		assertEq(gateway.getOrderPayeesHash(a), bytes32(0), 'createOrder binds nothing');
+
+		vm.startPrank(aggregator);
+		vm.expectRevert('PayeesNotSet');
+		gateway.settleOut(bytes32(0), a, provider, uint64(MAX_BPS), 0, _payees());
+		vm.expectRevert('InvalidPayees');
+		gateway.setPayees(a, new address[](0));
+
+		vm.expectEmit(true, false, false, true, address(gateway));
+		emit OrderPayeesSet(a, _payees());
+		assertTrue(gateway.setPayees(a, _payees()));
+		vm.expectRevert('PayeesAlreadySet');
+		gateway.setPayees(a, _payeesOf(provider, bob));
+
+		// A refund needs no list, and a closed order cannot be bound afterwards.
+		gateway.refund(0, b);
+		vm.expectRevert('OrderRefunded');
+		gateway.setPayees(b, _payees());
+		vm.stopPrank();
+
+		assertTrue(_settleOut(a, provider, uint64(MAX_BPS), 0));
+		assertEq(_bal(provider), 1000);
+	}
+
+	function test_P19_fulfilledOrderCannotBeBound() public {
+		_fund(alice, 1000);
+		vm.prank(alice);
+		bytes32 a = gateway.createOrder(address(token), 1000, 1500, address(0), 0, refundTo, 'msg');
+		// Pre-upgrade orders closed by settlement carry no list; binding one later is refused.
+		vm.store(address(gateway), bytes32(uint256(keccak256(abi.encode(a, uint256(255)))) + 5), bytes32(uint256(1)));
+		vm.prank(aggregator);
+		vm.expectRevert('OrderFulfilled');
+		gateway.setPayees(a, _payees());
+	}
+
+	function testFuzz_P19_settleOutPaysOnlyABoundPayee(address to, uint8 which) public {
+		vm.assume(to != PAYEE_A && to != PAYEE_B && to != address(0) && to != address(gateway));
+		bytes32 id = _create(alice, 1000, 0, address(0), refundTo);
+
+		vm.startPrank(aggregator);
+		vm.expectRevert('PayeeNotAllowed');
+		gateway.settleOut(bytes32(0), id, to, uint64(MAX_BPS), 0, _payees());
+
+		// Any other list, even one naming `to` or reordering the bound one, does not match.
+		vm.expectRevert('PayeesMismatch');
+		gateway.settleOut(bytes32(0), id, to, uint64(MAX_BPS), 0, _payeesOf(PAYEE_A, to));
+		vm.expectRevert('PayeesMismatch');
+		gateway.settleOut(bytes32(0), id, PAYEE_A, uint64(MAX_BPS), 0, _payeesOf(PAYEE_B, PAYEE_A));
+		vm.stopPrank();
+
+		address payee = which % 2 == 0 ? PAYEE_A : PAYEE_B;
+		uint256 toBefore = _bal(to);
+		assertTrue(_settleOut(id, payee, uint64(MAX_BPS), 0));
+		assertEq(_bal(payee), 1000);
+		assertEq(_bal(to), toBefore, 'nothing reached the stranger');
+	}
+
+	function test_P19_splitsMayPayDifferentBoundPayees() public {
+		bytes32 id = _create(alice, 1000, 0, address(0), refundTo);
+		assertTrue(_settleOut(id, PAYEE_A, uint64(MAX_BPS / 2), 0));
+		assertTrue(_settleOut(id, PAYEE_B, uint64(MAX_BPS / 2), 0));
+		assertEq(_bal(PAYEE_A), 500);
+		assertEq(_bal(PAYEE_B), 500);
+		assertTrue(_order(id).isFulfilled);
 	}
 }

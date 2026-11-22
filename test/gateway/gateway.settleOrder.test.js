@@ -77,6 +77,10 @@ describe("Gateway settle order", function () {
 		expect(
 			await mockUSDT.allowance(this.alice.address, gateway.target)
 		).to.equal(ZERO_AMOUNT);
+
+		// Orders settle only to a bound payee list (spec P19); rebates up to MAX_BPS are allowed (P7).
+		this.payees = [this.liquidityProvider.address, this.liquidityProvider2.address];
+		await gateway.connect(this.deployer).setMaxRebatePercent(MAX_BPS);
 	});
 
 	it("Should be able to create order by the sender and settled by the liquidity aggregator", async function () {
@@ -120,6 +124,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -164,7 +169,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0);
@@ -219,6 +224,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -271,7 +277,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0, this.payees)
 		).to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0);
 
@@ -289,7 +295,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0, this.payees)
 		).to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0);
 
@@ -345,6 +351,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -388,7 +395,7 @@ describe("Gateway settle order", function () {
 		expect(
 			await gateway
 				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0);
@@ -445,6 +452,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -461,7 +469,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
@@ -527,6 +535,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -543,7 +552,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, 0)
@@ -609,6 +618,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -632,7 +642,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0);
@@ -640,7 +650,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
@@ -711,6 +721,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -734,7 +745,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, 0);
@@ -742,7 +753,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, 0);
@@ -811,6 +822,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -828,7 +840,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, rebatePercent)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, rebatePercent, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(orderId, orderId, this.liquidityProvider.address, MAX_BPS, rebatePercent)
@@ -900,6 +912,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -924,7 +937,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, rebatePercent)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, rebatePercent, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider.address, splitOrderpercent, rebatePercent);
@@ -932,7 +945,7 @@ describe("Gateway settle order", function () {
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, rebatePercent)
+				.settleOut(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, rebatePercent, this.payees)
 		)
 			.to.emit(gateway, Events.Gateway.SettleOut)
 			.withArgs(splitOrderId, orderId, this.liquidityProvider2.address, splitOrderpercent, rebatePercent);
@@ -1004,13 +1017,14 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		const invalidRebatePercent = MAX_BPS + 1n;
 
 		await expect(
 			gateway
 				.connect(this.aggregator)
-				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, invalidRebatePercent)
+				.settleOut(orderId, orderId, this.liquidityProvider.address, MAX_BPS, invalidRebatePercent, this.payees)
 		).to.be.revertedWith("InvalidRebatePercent");
 	});
 
@@ -1056,6 +1070,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
+		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
 
 		await expect(
 			gateway

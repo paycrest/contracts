@@ -1,44 +1,44 @@
 [
   {
-    "id": "6b4c622725b39cea81c953c1a44ca85a5522673d0da602eb88228336f579bdb1",
+    "id": "0b890705c2c45bed3235db28d8ab2c274d7117cb7044e70081be8019f86a0be0",
     "check": "divide-before-multiply",
     "impact": "Medium",
     "confidence": "Medium",
-    "description": "Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219) performs a multiplication on the result of a division:\n\t- liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / currentOrderBPS (contracts/Gateway.sol#190)\n\t- treasuryFee = (liquidityProviderAmount * settings.providerToTreasury) / MAX_BPS (contracts/Gateway.sol#195)\n"
+    "description": "Gateway.settleOut(bytes32,bytes32,address,uint64,uint64,address[]) (contracts/Gateway.sol#259-325) performs a multiplication on the result of a division:\n\t- liquidityProviderAmount = (order[_orderId].amount * _settlePercent) / currentOrderBPS (contracts/Gateway.sol#296)\n\t- treasuryFee = (liquidityProviderAmount * settings.providerToTreasury) / MAX_BPS (contracts/Gateway.sol#301)\n"
   },
   {
-    "id": "96c01506ccb954a6b9533fbef477bce8746df0ab13dcd627b46da2803bbb3155",
+    "id": "892eb5e2a0d6faf6c695ba38603eecc3df2e80aabf7288a17f942e071ae2266a",
     "check": "divide-before-multiply",
     "impact": "Medium",
     "confidence": "Medium",
-    "description": "Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219) performs a multiplication on the result of a division:\n\t- treasuryFee = (liquidityProviderAmount * settings.providerToTreasury) / MAX_BPS (contracts/Gateway.sol#195)\n\t- rebateAmount = (treasuryFee * _rebatePercent) / MAX_BPS (contracts/Gateway.sol#198)\n"
+    "description": "Gateway.settleOut(bytes32,bytes32,address,uint64,uint64,address[]) (contracts/Gateway.sol#259-325) performs a multiplication on the result of a division:\n\t- treasuryFee = (liquidityProviderAmount * settings.providerToTreasury) / MAX_BPS (contracts/Gateway.sol#301)\n\t- rebateAmount = (treasuryFee * _rebatePercent) / MAX_BPS (contracts/Gateway.sol#304)\n"
   },
   {
-    "id": "1058ceb950055bc9f04435dd94798ba8f67154b26f6acc639bf7c8cfa27072d7",
+    "id": "e0a8f14fecf5957fdf1d4c041a967a1662206ec47985de18b2e1dee6d85bce1c",
     "check": "reentrancy-no-eth",
     "impact": "Medium",
     "confidence": "Medium",
-    "description": "Reentrancy in Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#319-347):\n\tExternal calls:\n\t- IERC20(order[_orderId].token).safeTransfer(treasuryAddress,_fee) (contracts/Gateway.sol#327)\n\tState variables written after the call(s):\n\t- order[_orderId].isRefunded = true (contracts/Gateway.sol#331)\n\tGateway.order (contracts/Gateway.sol#23) can be used in cross function reentrancies:\n\t- Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64) (contracts/Gateway.sol#274-316)\n\t- Gateway.createOrder(address,uint256,uint96,address,uint256,address,string) (contracts/Gateway.sol#70-125)\n\t- Gateway.getOrderInfo(bytes32) (contracts/Gateway.sol#353-358)\n\t- Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#319-347)\n\t- Gateway.settleIn(bytes32,address,uint256,address,uint96,address,uint96,uint64) (contracts/Gateway.sol#226-269)\n\t- Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219)\n\t- order[_orderId].currentBPS = 0 (contracts/Gateway.sol#332)\n\tGateway.order (contracts/Gateway.sol#23) can be used in cross function reentrancies:\n\t- Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64) (contracts/Gateway.sol#274-316)\n\t- Gateway.createOrder(address,uint256,uint96,address,uint256,address,string) (contracts/Gateway.sol#70-125)\n\t- Gateway.getOrderInfo(bytes32) (contracts/Gateway.sol#353-358)\n\t- Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#319-347)\n\t- Gateway.settleIn(bytes32,address,uint256,address,uint96,address,uint96,uint64) (contracts/Gateway.sol#226-269)\n\t- Gateway.settleOut(bytes32,bytes32,address,uint64,uint64) (contracts/Gateway.sol#155-219)\n"
+    "description": "Reentrancy in Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#425-453):\n\tExternal calls:\n\t- IERC20(order[_orderId].token).safeTransfer(treasuryAddress,_fee) (contracts/Gateway.sol#433)\n\tState variables written after the call(s):\n\t- order[_orderId].isRefunded = true (contracts/Gateway.sol#437)\n\tGateway.order (contracts/Gateway.sol#26) can be used in cross function reentrancies:\n\t- Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64) (contracts/Gateway.sol#380-422)\n\t- Gateway._createOrder(address,uint256,uint96,address,uint256,address,string) (contracts/Gateway.sol#134-189)\n\t- Gateway.getOrderInfo(bytes32) (contracts/Gateway.sol#459-464)\n\t- Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#425-453)\n\t- Gateway.setPayees(bytes32,address[]) (contracts/Gateway.sol#246-256)\n\t- Gateway.settleIn(bytes32,address,uint256,address,uint96,address,uint96,uint64) (contracts/Gateway.sol#332-375)\n\t- Gateway.settleOut(bytes32,bytes32,address,uint64,uint64,address[]) (contracts/Gateway.sol#259-325)\n\t- order[_orderId].currentBPS = 0 (contracts/Gateway.sol#438)\n\tGateway.order (contracts/Gateway.sol#26) can be used in cross function reentrancies:\n\t- Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64) (contracts/Gateway.sol#380-422)\n\t- Gateway._createOrder(address,uint256,uint96,address,uint256,address,string) (contracts/Gateway.sol#134-189)\n\t- Gateway.getOrderInfo(bytes32) (contracts/Gateway.sol#459-464)\n\t- Gateway.refund(uint256,bytes32) (contracts/Gateway.sol#425-453)\n\t- Gateway.setPayees(bytes32,address[]) (contracts/Gateway.sol#246-256)\n\t- Gateway.settleIn(bytes32,address,uint256,address,uint96,address,uint96,uint64) (contracts/Gateway.sol#332-375)\n\t- Gateway.settleOut(bytes32,bytes32,address,uint64,uint64,address[]) (contracts/Gateway.sol#259-325)\n"
   },
   {
     "id": "17287c5a7479d2fd5974eb907df156bef99fba4218cabf16a781e1a61e869fcd",
     "check": "uninitialized-local",
     "impact": "Medium",
     "confidence": "Medium",
-    "description": "GatewaySettingManager.updateProtocolAddress(bytes32,address).updated (contracts/GatewaySettingManager.sol#69) is a local variable never initialized\n"
+    "description": "GatewaySettingManager.updateProtocolAddress(bytes32,address).updated (contracts/GatewaySettingManager.sol#76) is a local variable never initialized\n"
   },
   {
-    "id": "64f789fc7b2c35997d6bb06bbb96533ffae9eb00adc45e0f8028cd063a762675",
+    "id": "17aa3d571c35f299d002a11b1c8eb35c036250421033c7ebaad97c371d96a2b9",
     "check": "uninitialized-local",
     "impact": "Medium",
     "confidence": "Medium",
-    "description": "Gateway.createOrder(address,uint256,uint96,address,uint256,address,string)._protocolFee (contracts/Gateway.sol#97) is a local variable never initialized\n"
+    "description": "Gateway._createOrder(address,uint256,uint96,address,uint256,address,string)._protocolFee (contracts/Gateway.sol#161) is a local variable never initialized\n"
   },
   {
     "id": "f0703aaa0e9293ee9121d4c9159c3ee18e352653027b915aa841c0d01bffdebf",
     "check": "uninitialized-local",
     "impact": "Medium",
     "confidence": "Medium",
-    "description": "Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64).rebateAmount (contracts/Gateway.sol#284) is a local variable never initialized\n"
+    "description": "Gateway._bookSettleInAndPayFees(bytes32,address,uint256,address,uint96,address,uint64).rebateAmount (contracts/Gateway.sol#390) is a local variable never initialized\n"
   }
 ]

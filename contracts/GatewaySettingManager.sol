@@ -25,7 +25,12 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 
 	mapping(address => TokenFeeSettings) internal _tokenFeeSettings;
 
-	uint256[49] private __gap;
+	// Can pause the Gateway and freeze settlement; cannot unpause, unfreeze or change settings.
+	address internal _guardian;
+	// Highest rebate `settleOut` accepts, in BPS of the treasury fee. Packed with `_guardian`.
+	uint64 internal _maxRebatePercent;
+
+	uint256[48] private __gap;
 
 	event SettingManagerBool(bytes32 indexed what, address indexed value, uint256 status);
 	event ProtocolAddressUpdated(bytes32 indexed what, address indexed treasuryAddress);
@@ -35,6 +40,8 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 		uint256 senderToTreasury,
 		uint256 providerToTreasury
 	);
+	event GuardianUpdated(address indexed guardian);
+	event MaxRebatePercentUpdated(uint64 maxRebatePercent);
 
 	/* ##################################################################
                                 OWNER FUNCTIONS
@@ -111,6 +118,39 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 			senderToTreasury,
 			providerToTreasury
 		);
+	}
+
+	/**
+	 * @dev Sets the guardian, the key that can pause the Gateway and freeze settlement in an emergency.
+	 * @param guardian The new guardian; the zero address removes it.
+	 */
+	function setGuardian(address guardian) external onlyOwner {
+		_guardian = guardian;
+		emit GuardianUpdated(guardian);
+	}
+
+	/**
+	 * @dev Sets the highest rebate `settleOut` accepts.
+	 * @param maxRebatePercent BPS of the treasury fee, at most MAX_BPS.
+	 */
+	function setMaxRebatePercent(uint64 maxRebatePercent) external onlyOwner {
+		require(maxRebatePercent <= MAX_BPS, 'Gateway: invalid max rebate percent');
+		_maxRebatePercent = maxRebatePercent;
+		emit MaxRebatePercentUpdated(maxRebatePercent);
+	}
+
+	/**
+	 * @dev Gets the guardian.
+	 */
+	function getGuardian() external view returns (address) {
+		return _guardian;
+	}
+
+	/**
+	 * @dev Gets the highest rebate `settleOut` accepts, in BPS of the treasury fee.
+	 */
+	function getMaxRebatePercent() external view returns (uint64) {
+		return _maxRebatePercent;
 	}
 
 	/**
