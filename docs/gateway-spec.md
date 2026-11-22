@@ -116,10 +116,11 @@ Fee settings are read when money moves (settlement time), not when the order was
   raw id is only read. Events carry the caller's raw id. `getOrderInfo(id)` returns the raw record when there is
   one, else the `settleIn` record at the key, so a created order always reads as itself. No `settleIn` order, at
   its key or at a pre-upgrade raw id, can be settled or refunded.
-- **P18 Settlement freeze.** While settlement is frozen, `settleOut`, `refund` and `setPayees` revert and no
-  token moves out of the Gateway; `freezeSettlement` reverts if already frozen and `unfreezeSettlement` if not.
-  A freeze does not stop money in (that is the pause, P13), and after the owner unfreezes, open orders settle and
-  refund as before.
+- **P18 Settlement freeze.** While settlement is frozen, `settleOut`, `refund` and `setPayees` revert, so no
+  escrowed order funds leave the Gateway; `freezeSettlement` reverts if already frozen and `unfreezeSettlement`
+  if not. A freeze does not stop `createOrder` / `createOrderWithPayees` or `settleIn` (that is the pause, P13):
+  `settleIn` still pulls the caller's tokens and pays them out in the same call, without touching escrow. After
+  the owner unfreezes, open orders settle and refund as before.
 - **P19 Payee binding.** An order's payee list is bound at most once: by `createOrderWithPayees`, or by
   `setPayees` on an existing, open (neither fulfilled nor refunded) order that has none. A list holds 1 to
   `MAX_PAYEES` (8) addresses, none zero; the Gateway stores `keccak256(abi.encode(payees))` and emits the list in
