@@ -86,6 +86,31 @@ interface IGateway {
 		uint256 aggregatorAmount
 	);
 
+	/**
+	 * @dev Emitted when an order's payee list is bound, at creation or by the aggregator.
+	 * @param orderId The ID of the order.
+	 * @param payees The addresses `settleOut` may pay for this order.
+	 */
+	event OrderPayeesSet(bytes32 indexed orderId, address[] payees);
+
+	/**
+	 * @dev Emitted when settlement is frozen.
+	 * @param by The owner or guardian that froze it.
+	 */
+	event SettlementFrozen(address indexed by);
+
+	/**
+	 * @dev Emitted when the owner unfreezes settlement.
+	 * @param by The owner.
+	 */
+	event SettlementUnfrozen(address indexed by);
+
+	/**
+	 * @dev Emitted when the owner turns the plain `createOrder` requirement on or off.
+	 * @param required Whether every new order must bind its payees at creation.
+	 */
+	event PayeesRequiredUpdated(bool required);
+
 	/* ##################################################################
                                 STRUCTS
     ################################################################## */
@@ -125,6 +150,7 @@ interface IGateway {
 	 * - `_token` must be an acceptable token. See {isTokenSupported}.
 	 * - `amount` must be greater than minimum.
 	 * - `_refundAddress` refund address must not be zero address.
+	 * - The owner has not turned plain order creation off. See {isPayeesRequired}.
 	 * @param _token The address of the token.
 	 * @param _amount The amount in the decimal of `_token` to be locked.
 	 * @param _rate The rate at which the sender intends to sell `_amount` of `_token`.
@@ -145,12 +171,47 @@ interface IGateway {
 	) external returns (bytes32 _orderId);
 
 	/**
+	 * @notice Locks the sender's amount of token into Gateway and binds the addresses the order may settle to.
+	 * @dev Same requirements as {createOrder}, plus: `_payees` holds 1 to MAX_PAYEES addresses, none of them zero.
+	 * The list is fixed for the life of the order; `settleOut` pays only an address in it.
+	 * @param _payees The provider payout addresses the order may be settled to.
+	 * @return _orderId The ID of the order.
+	 */
+	function createOrderWithPayees(
+		address _token,
+		uint256 _amount,
+		uint96 _rate,
+		address _senderFeeRecipient,
+		uint256 _senderFee,
+		address _refundAddress,
+		string calldata messageHash,
+		address[] calldata _payees
+	) external returns (bytes32 _orderId);
+
+	/**
+	 * @notice Binds the payee list of an order created without one.
+	 * @dev Requirements:
+	 * - Only the payee binder can call this function, and not while settlement is frozen.
+	 * - The order exists, is open and has no payee list yet.
+	 * - `_payees` holds 1 to MAX_PAYEES addresses, none of them zero.
+	 * @param _orderId The ID of the order.
+	 * @param _payees The provider payout addresses the order may be settled to.
+	 * @return bool the list was bound.
+	 */
+	function setPayees(bytes32 _orderId, address[] calldata _payees) external returns (bool);
+
+	/**
 	 * @notice Settles a transaction and distributes rewards accordingly.
+	 * @dev Requirements:
+	 * - Only the aggregator can call this function, and not while settlement is frozen.
+	 * - The order's payee list is bound, `_payees` is that list, and `_liquidityProvider` is in it.
+	 * - `_rebatePercent` is at most the owner-set maximum.
 	 * @param _splitOrderId The ID of the split order.
 	 * @param _orderId The ID of the transaction.
 	 * @param _liquidityProvider The address of the liquidity provider.
 	 * @param _settlePercent The rate at which the transaction is settled.
 	 * @param _rebatePercent The percentage of the aggregator fee that is given back to the provider.
+	 * @param _payees The order's bound payee list, exactly as bound.
 	 * @return bool the settlement is successful.
 	 */
 	function settleOut(
@@ -158,7 +219,8 @@ interface IGateway {
 		bytes32 _orderId,
 		address _liquidityProvider,
 		uint64 _settlePercent,
-		uint64 _rebatePercent
+		uint64 _rebatePercent,
+		address[] calldata _payees
 	) external returns (bool);
 
 	/**
@@ -189,7 +251,7 @@ interface IGateway {
 	/**
 	 * @notice Refunds to the specified refundable address.
 	 * @dev Requirements:
-	 * - Only aggregators can call this function.
+	 * - Only aggregators can call this function, and not while settlement is frozen.
 	 * @param _fee The amount to be deducted from the amount to be refunded.
 	 * @param _orderId The ID of the transaction.
 	 * @return bool the refund is successful.
@@ -215,4 +277,52 @@ interface IGateway {
 	 * @return address The address of the aggregator.
 	 */
 	function getAggregator() external view returns (address);
+
+	/**
+	 * @notice Freezes settlement: `settleOut`, `refund` and `setPayees` revert until the owner unfreezes.
+	 * @dev Only the owner or the guardian can call this function.
+	 */
+	function freezeSettlement() external;
+
+	/**
+	 * @notice Unfreezes settlement.
+	 * @dev Only the owner can call this function.
+	 */
+	function unfreezeSettlement() external;
+
+	/**
+	 * @notice Replaces an open order's payee list, or binds one, while settlement is frozen.
+	 * @dev Only the owner can call this function, and only while settlement is frozen: it repairs lists bound
+	 * wrongly (for example by a compromised payee binder) before settlement resumes.
+	 * - The order exists and is open; `_payees` holds 1 to MAX_PAYEES addresses, none of them zero.
+	 * @param _orderId The ID of the order.
+	 * @param _payees The provider payout addresses the order may be settled to.
+	 * @return bool the list was bound.
+	 */
+	function rebindPayees(bytes32 _orderId, address[] calldata _payees) external returns (bool);
+
+	/**
+	 * @notice Turns the plain `createOrder` requirement on or off.
+	 * @dev Only the owner can call this function. While on, `createOrder` reverts and new orders must use
+	 * `createOrderWithPayees`.
+	 * @param _required Whether every new order must bind its payees at creation.
+	 */
+	function setPayeesRequired(bool _required) external;
+
+	/**
+	 * @notice Whether plain `createOrder` is turned off.
+	 */
+	function isPayeesRequired() external view returns (bool);
+
+	/**
+	 * @notice Gets the hash of an order's bound payee list, `keccak256(abi.encode(payees))`.
+	 * @param _orderId The ID of the order.
+	 * @return bytes32 The hash, or zero when no list is bound.
+	 */
+	function getOrderPayeesHash(bytes32 _orderId) external view returns (bytes32);
+
+	/**
+	 * @notice Whether settlement is frozen.
+	 */
+	function isSettlementFrozen() external view returns (bool);
 }

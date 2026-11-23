@@ -13,8 +13,10 @@ today and is kept out of the gate until the fix lands.
 
 The retail order escrow of the Paycrest protocol.
 
-- **Offramp** (`createOrder` → `settleOut` / `refund`): a sender locks `amount + senderFee` of a supported token.
-  The aggregator settles the order to one or more liquidity providers in percentage splits, or refunds it.
+- **Offramp** (`createOrder` / `createOrderWithPayees` → `settleOut` / `refund`): a sender locks
+  `amount + senderFee` of a supported token. Each order is bound to a payee list, at creation or once afterwards by
+  the aggregator (`setPayees`); the aggregator settles the order in percentage splits to addresses in that list,
+  or refunds it.
 - **Onramp** (`settleIn`): a provider pays `amount + senderFee` in and the Gateway forwards it at once: the
   principal (less the treasury fee) to the recipient, the treasury fee (less the provider's rebate) to the
   treasury, the rebate back to the provider, and the sender fee split between the sender-fee recipient and the
@@ -24,9 +26,11 @@ The retail order escrow of the Paycrest protocol.
 
 | Role | Can | Cannot |
 |---|---|---|
-| owner (`Ownable2Step`) | support/unsupport tokens; set treasury and aggregator; set per-token fee settings; pause/unpause; transfer ownership (two-step) | settle or refund orders |
-| aggregator | `settleOut` and `refund` open orders | create or change settings |
-| anyone | `createOrder` (supported token, not paused); `settleIn` (supported token, not paused) | settle or refund an order |
+| owner (`Ownable2Step`) | support/unsupport tokens; set treasury, aggregator, guardian, payee binder and the rebate cap; set per-token fee settings; pause/unpause; freeze/unfreeze settlement; rebind an open order's payees while frozen (`rebindPayees`); turn plain `createOrder` off (`setPayeesRequired`); transfer ownership (two-step) | settle or refund orders, renounce ownership |
+| guardian (optional) | pause; freeze settlement | unpause, unfreeze, change any setting |
+| payee binder (optional) | bind the payee list of an open order that has none (`setPayees`) | settle, refund, rebind a list; be the aggregator |
+| aggregator | `settleOut` to a bound payee and `refund` open orders | bind a list, create, change settings |
+| anyone | `createOrder` / `createOrderWithPayees` (supported token, not paused); `settleIn` (supported token, not paused) | settle or refund an order |
 | treasury | receives fees | — |
 
 ## 3. Fee model
@@ -36,7 +40,7 @@ The retail order escrow of the Paycrest protocol.
 
 | Flow | Treasury fee | Rebate | Paid out |
 |---|---|---|---|
-| `settleOut` split of `p` (of the order's remaining `c` BPS) | `t = ⌊g·providerToTreasury/MAX⌋`, `g = ⌊remaining·p/c⌋` (`g = remaining` on the last split) | `r = ⌊t·rebate/MAX⌋` to the provider | provider `g − t + r`, treasury `t − r` |
+| `settleOut` split of `p` (of the order's remaining `c` BPS) | `t = ⌊g·providerToTreasury/MAX⌋`, `g = ⌊remaining·p/c⌋` (`g = remaining` on the last split) | `r = ⌊t·rebate/MAX⌋` to the provider, `rebate ≤ maxRebatePercent` | provider `g − t + r`, treasury `t − r` |
 | `settleOut` last split | — | — | sender fee: recipient `f − ⌊f·senderToTreasury/MAX⌋`, treasury the rest |
 | `settleIn` | `t = ⌊amount·providerToTreasury/MAX⌋` | `r = ⌊t·rebate/MAX⌋` to `msg.sender` | recipient `amount − t`, treasury `t − r`, sender fee split as above |
 | `refund(fee)` | `fee ≤ order.protocolFee` (the fee recorded at creation) | — | treasury `fee`, refund address `remaining − fee + senderFee` |
@@ -46,16 +50,23 @@ Fee settings are read when money moves (settlement time), not when the order was
 
 ## 4. Formal properties
 
-- **P1 Owner-only settings.** `settingManagerBool`, `updateProtocolAddress`, `setTokenFeeSettings`, `pause` and
-  `unpause` revert for every caller but the owner. Ownership moves only in two steps (`transferOwnership` then
-  `acceptOwnership` by the pending owner).
-- **P2 Aggregator-only settlement.** `settleOut` and `refund` revert for every caller but the aggregator.
+- **P1 Owner-only settings.** `settingManagerBool`, `updateProtocolAddress`, `setTokenFeeSettings`, `setGuardian`,
+  `setPayeeBinder`, `setMaxRebatePercent`, `setPayeesRequired`, `rebindPayees`, `unpause` and
+  `unfreezeSettlement` revert for every caller but the owner. `pause` and `freezeSettlement` revert for every
+  caller but the owner and the guardian; with no guardian set (the zero address) only the owner. Ownership moves
+  only in two steps (`transferOwnership` then `acceptOwnership` by the pending owner) and cannot be renounced:
+  `renounceOwnership` always reverts, so a freeze or pause can always be lifted.
+- **P2 Settlement and binding roles.** `settleOut` and `refund` revert for every caller but the aggregator;
+  `setPayees` reverts for every caller but the payee binder, and for everyone while no binder is set (the zero
+  address). The two are never the same key (P14), so no single key can both bind an order's list and settle
+  it.
 - **P3 Initialization.** The implementation cannot be initialized; the proxy's `initialize` runs once and sets
   `MAX_BPS = 100_000`, the owner to the initializer, unpaused.
 - **P4 Order creation.** `createOrder` pulls exactly `amount + senderFee` from the caller and records the order
   (sender, token, amount, sender fee and recipient, refund address, `currentBPS = MAX_BPS`,
   `protocolFee = ⌊amount·providerToTreasury/MAX⌋`). It reverts for an unsupported token, a zero amount, a zero
-  refund address, a sender fee without a recipient, or an empty message hash.
+  refund address, a sender fee without a recipient, or an empty message hash. `createOrderWithPayees` does the
+  same and also binds a payee list (P19).
 - **P5 Order ids.** An order created by `sender` as its `n`-th order has id `keccak256(abi.encode(sender, n,
   chainid))`; a sender's nonce rises by exactly one per order, so `createOrder` ids never repeat. `createOrder`
   never overwrites an existing record: if the id it computes already holds an order, it reverts and the record,
@@ -66,7 +77,8 @@ Fee settings are read when money moves (settlement time), not when the order was
   the last split), and the order ends fulfilled with nothing left.
 - **P7 Split math.** Each `settleOut` split pays exactly the amounts in §3: the provider and treasury together
   receive the split's gross `g`, the rebate never exceeds the treasury fee, and the order's remaining amount
-  drops by exactly `g`. A rebate above `MAX_BPS` reverts.
+  drops by exactly `g`. A rebate above the owner-set `maxRebatePercent` reverts; `setMaxRebatePercent` rejects a
+  value above `MAX_BPS`, and until it is set the cap is zero, so only rebate-free settlements go through.
 - **P8 At most once.** A fulfilled order cannot be settled or refunded again; a refunded order cannot be settled
   or refunded again; a split of 0 or above the order's remaining BPS reverts; an unknown order id cannot be
   settled or refunded.
@@ -81,11 +93,13 @@ Fee settings are read when money moves (settlement time), not when the order was
   the rest; together exactly `f`.
 - **P12 Token conservation.** At all times, for each token, the Gateway's balance equals the sum over open
   (neither fulfilled nor refunded) orders of `remaining amount + senderFee`. No flow leaks or creates tokens.
-- **P13 Pause.** While paused, `createOrder` and `settleIn` revert; `settleOut` and `refund` of existing orders
-  still work, so a pause stops new money in without trapping open orders.
-- **P14 Setting bounds.** Fee settings above `MAX_BPS` or for an unsupported token revert; zero addresses and a
-  token status other than 1 or 2 revert; setting the treasury or aggregator to its current value reverts; an
-  unknown setting key changes nothing.
+- **P13 Pause.** While paused, `createOrder`, `createOrderWithPayees` and `settleIn` revert; `settleOut` and
+  `refund` of existing orders still work, so a pause stops new money in without trapping open orders.
+- **P14 Setting bounds.** Fee settings above `MAX_BPS` or for an unsupported token revert; a rebate cap above
+  `MAX_BPS` reverts; zero addresses (except `setGuardian` and `setPayeeBinder`, where zero removes the role)
+  and a token status other than 1 or 2 revert; setting the treasury or aggregator to its current value reverts;
+  setting the payee binder to the aggregator, or the aggregator to the payee binder, reverts; an unknown setting
+  key changes nothing.
 - **P15 Delisting does not strand orders.** After a token is unsupported (status 2), new orders and `settleIn`
   in it revert, but its open orders can still be settled or refunded.
 - **P16 Storage layout.** The layout matches every current implementation recorded in `.openzeppelin/*.json`:
@@ -107,13 +121,40 @@ Fee settings are read when money moves (settlement time), not when the order was
   raw id is only read. Events carry the caller's raw id. `getOrderInfo(id)` returns the raw record when there is
   one, else the `settleIn` record at the key, so a created order always reads as itself. No `settleIn` order, at
   its key or at a pre-upgrade raw id, can be settled or refunded.
+- **P18 Settlement freeze.** While settlement is frozen, `settleOut`, `refund` and `setPayees` revert, so no
+  escrowed order funds leave the Gateway (the owner may still repair lists with `rebindPayees`, P19); `freezeSettlement` reverts if already frozen and `unfreezeSettlement`
+  if not. A freeze does not stop `createOrder` / `createOrderWithPayees` or `settleIn` (that is the pause, P13):
+  `settleIn` still pulls the caller's tokens and pays them out in the same call, without touching escrow. After
+  the owner unfreezes, open orders settle and refund as before.
+- **P19 Payee binding.** An order's payee list is bound by `createOrderWithPayees`, or by the payee binder's
+  `setPayees` on an existing, open (neither fulfilled nor refunded) order that has none, and is not changed
+  after that except by the owner's `rebindPayees`, which binds or replaces the list of an existing, open order
+  and reverts unless settlement is frozen, so a wrongly bound list is repaired before anything settles to it.
+  A list holds 1 to
+  `MAX_PAYEES` (8) addresses, none zero; the Gateway stores `keccak256(abi.encode(payees))` and emits the list in
+  `OrderPayeesSet`. `settleOut` reverts unless a list is bound, the `_payees` argument hashes to it (same
+  addresses, same order) and `_liquidityProvider` is in it, so no call, by the aggregator or anyone, pays an
+  order to an address outside its bound list. Splits may pay different addresses of the same list. `refund`
+  needs no list: its destination is the order's own refund address.
+- **P20 Plain createOrder switch.** While the owner has set `setPayeesRequired(true)`, `createOrder` reverts with
+  `PayeesRequired` and every new order must bind its list through `createOrderWithPayees`; nothing else changes,
+  and turning it off restores `createOrder`. It is off after the upgrade, for integrators still on `createOrder`.
 
 ## 5. Assumptions
 
 - Supported tokens are standard ERC-20s (no fee-on-transfer, rebasing or transfer hooks); the owner only
   supports such tokens. P12 does not hold for a token that charges on transfer.
-- The owner and aggregator keys are honest; P1/P2 only say no one else holds their powers.
-- `settleOut` trusts the aggregator's `_liquidityProvider` and split; the contract only guarantees the amounts.
+- The owner, aggregator and payee binder keys are honest; P1/P2 only say no one else holds their powers. The
+  binder and the aggregator are separate keys (P14): an attacker holding only one of them cannot pay an order
+  out to an address of their choosing, and the owner repairs a list a stolen binder key bound (P19).
+- `settleOut` trusts the aggregator's choice of `_liquidityProvider` within the order's bound payee list, and its
+  split; the contract guarantees the payee is in the list and the amounts. The list itself is whatever
+  `createOrderWithPayees`' caller or the binder's `setPayees` bound: an order created with plain `createOrder`
+  is only as safe as the binder and aggregator keys together until its list is bound. Once integrators have
+  moved to `createOrderWithPayees`, the owner turns plain `createOrder` off (P20).
+- After the upgrade that adds P18/P19, orders created before it have no payee list: the payee binder binds one
+  with `setPayees` before they are settled, so the owner sets the payee binder and `maxRebatePercent` (zero
+  until set) in the same batch as the upgrade.
 - Halmos bounds amounts to `2^96` and proves P6 as its inductive step: any split, from any remaining amount and
   `currentBPS`, conserves tokens exactly and closes the order only when it takes the rest. Two facts the
   solver times out on (nonlinear 256-bit arithmetic) are left to fuzzing and the invariants rather than proved:
@@ -135,5 +176,5 @@ None is a defect; each is pinned by a property.
 | Finding | Where | Why it is accepted |
 |---|---|---|
 | divide-before-multiply (×2) | `settleOut`: gross → treasury fee → rebate | The flooring at each step is the fee model in §3, and the same as `settleIn` and the aggregator. P6/P7 prove the provider and treasury still receive exactly the gross and that the order ends with nothing left; rounding only moves dust between treasury and provider. |
-| reentrancy-no-eth | `refund` writes `isRefunded`/`currentBPS` after the treasury transfer | `refund` is aggregator-only (P2), and supported tokens are standard ERC-20s with no transfer hooks (§5), so nothing can re-enter between the transfer and the write. Even so, a re-entrant `refund` would need the aggregator as caller, and `settleOut` / `settleIn` cannot touch the order mid-refund in a way that pays twice (P8, P12). |
-| uninitialized-local (×3) | `updated` in `updateProtocolAddress`, `_protocolFee` in `createOrder`, `rebateAmount` in `_bookSettleInAndPayFees` | Each relies on Solidity's zero default on purpose: no change for an unknown key (P14), no protocol fee without fee settings (P4), no rebate without a treasury fee (P10). |
+| reentrancy-no-eth | `refund` writes `isRefunded`/`currentBPS` after the treasury transfer | `refund` is aggregator-only (P2), and supported tokens are standard ERC-20s with no transfer hooks (§5), so nothing can re-enter between the transfer and the write. Even so, a re-entrant `refund` would need the aggregator as caller, and `settleOut` / `settleIn` / `setPayees` cannot touch the order mid-refund in a way that pays twice (P8, P12, P19). |
+| uninitialized-local (×3) | `updated` in `updateProtocolAddress`, `_protocolFee` in `_createOrder` (shared by `createOrder` and `createOrderWithPayees`), `rebateAmount` in `_bookSettleInAndPayFees` | Each relies on Solidity's zero default on purpose: no change for an unknown key (P14), no protocol fee without fee settings (P4), no rebate without a treasury fee (P10). |

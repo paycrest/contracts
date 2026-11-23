@@ -25,7 +25,14 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 
 	mapping(address => TokenFeeSettings) internal _tokenFeeSettings;
 
-	uint256[49] private __gap;
+	// Can pause the Gateway and freeze settlement; cannot unpause, unfreeze or change settings.
+	address internal _guardian;
+	// Highest rebate `settleOut` accepts, in BPS of the treasury fee. Packed with `_guardian`.
+	uint64 internal _maxRebatePercent;
+	// The only key that can bind an order's payee list with `setPayees`. Never the aggregator; zero disables binding.
+	address internal _payeeBinder;
+
+	uint256[47] private __gap;
 
 	event SettingManagerBool(bytes32 indexed what, address indexed value, uint256 status);
 	event ProtocolAddressUpdated(bytes32 indexed what, address indexed treasuryAddress);
@@ -35,6 +42,9 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 		uint256 senderToTreasury,
 		uint256 providerToTreasury
 	);
+	event GuardianUpdated(address indexed guardian);
+	event MaxRebatePercentUpdated(uint64 maxRebatePercent);
+	event PayeeBinderUpdated(address indexed payeeBinder);
 
 	/* ##################################################################
                                 OWNER FUNCTIONS
@@ -73,6 +83,7 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 			updated = true;
 		} else if (what == 'aggregator') {
 			require(_aggregatorAddress != value, 'Gateway: aggregator address already set');
+			require(_payeeBinder != value, 'Gateway: aggregator is the payee binder');
 			_aggregatorAddress = value;
 			updated = true;
 		}
@@ -111,6 +122,64 @@ contract GatewaySettingManager is Ownable2StepUpgradeable {
 			senderToTreasury,
 			providerToTreasury
 		);
+	}
+
+	/**
+	 * @dev Sets the guardian, the key that can pause the Gateway and freeze settlement in an emergency.
+	 * @param guardian The new guardian; the zero address removes it.
+	 */
+	function setGuardian(address guardian) external onlyOwner {
+		_guardian = guardian;
+		emit GuardianUpdated(guardian);
+	}
+
+	/**
+	 * @dev Sets the highest rebate `settleOut` accepts.
+	 * @param maxRebatePercent BPS of the treasury fee, at most MAX_BPS.
+	 */
+	function setMaxRebatePercent(uint64 maxRebatePercent) external onlyOwner {
+		require(maxRebatePercent <= MAX_BPS, 'Gateway: invalid max rebate percent');
+		_maxRebatePercent = maxRebatePercent;
+		emit MaxRebatePercentUpdated(maxRebatePercent);
+	}
+
+	/**
+	 * @dev Sets the payee binder, the key that binds payee lists with `setPayees`. It must not be the aggregator, so
+	 * a single stolen key can neither bind a list to itself and settle to it, nor settle an unbound order.
+	 * @param payeeBinder The new binder; the zero address disables `setPayees`.
+	 */
+	function setPayeeBinder(address payeeBinder) external onlyOwner {
+		require(payeeBinder == address(0) || payeeBinder != _aggregatorAddress, 'Gateway: payee binder is the aggregator');
+		_payeeBinder = payeeBinder;
+		emit PayeeBinderUpdated(payeeBinder);
+	}
+
+	/**
+	 * @dev Ownership cannot be renounced: an ownerless Gateway could never be unpaused or unfrozen.
+	 */
+	function renounceOwnership() public pure override {
+		revert('Gateway: renounce disabled');
+	}
+
+	/**
+	 * @dev Gets the payee binder.
+	 */
+	function getPayeeBinder() external view returns (address) {
+		return _payeeBinder;
+	}
+
+	/**
+	 * @dev Gets the guardian.
+	 */
+	function getGuardian() external view returns (address) {
+		return _guardian;
+	}
+
+	/**
+	 * @dev Gets the highest rebate `settleOut` accepts, in BPS of the treasury fee.
+	 */
+	function getMaxRebatePercent() external view returns (uint64) {
+		return _maxRebatePercent;
 	}
 
 	/**

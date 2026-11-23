@@ -23,7 +23,12 @@ abstract contract GatewayBase is Test {
 
 	address internal owner;
 	address internal aggregator = address(uint160(0xA66));
+	// Binds payee lists with setPayees; a key apart from the aggregator's.
+	address internal binder = address(uint160(0xB1D));
 	address internal treasury = address(uint160(0x7EA5));
+	// The default payee list `_create` binds: the two provider addresses the suites settle to.
+	address internal constant PAYEE_A = address(uint160(0x9120));
+	address internal constant PAYEE_B = address(uint160(0x9121));
 
 	function setUp() public virtual {
 		_deploy();
@@ -41,8 +46,10 @@ abstract contract GatewayBase is Test {
 		gateway = Gateway(address(proxy));
 		gateway.updateProtocolAddress('treasury', treasury);
 		gateway.updateProtocolAddress('aggregator', aggregator);
+		gateway.setPayeeBinder(binder);
 		token = new MockUSDT();
 		gateway.settingManagerBool('token', address(token), 1);
+		gateway.setMaxRebatePercent(uint64(MAX_BPS));
 	}
 
 	/* ------------------------------------------------------------------ helpers */
@@ -59,6 +66,14 @@ abstract contract GatewayBase is Test {
 		gateway.setTokenFeeSettings(address(token), senderToTreasury, providerToTreasury);
 	}
 
+	/// The default payee list: PAYEE_A, PAYEE_B.
+	function _payees() internal pure returns (address[] memory list) {
+		list = new address[](2);
+		list[0] = PAYEE_A;
+		list[1] = PAYEE_B;
+	}
+
+	/// Creates an order bound to the default payee list.
 	function _create(
 		address sender,
 		uint256 amount,
@@ -68,12 +83,22 @@ abstract contract GatewayBase is Test {
 	) internal returns (bytes32 id) {
 		_fund(sender, amount + senderFee);
 		vm.prank(sender);
-		id = gateway.createOrder(address(token), amount, 1500, feeRecipient, senderFee, refundAddress, 'msg');
+		id = gateway.createOrderWithPayees(
+			address(token),
+			amount,
+			1500,
+			feeRecipient,
+			senderFee,
+			refundAddress,
+			'msg',
+			_payees()
+		);
 	}
 
+	/// Settles a split to `provider` against the default payee list.
 	function _settleOut(bytes32 id, address provider, uint64 pct, uint64 rebate) internal returns (bool) {
 		vm.prank(aggregator);
-		return gateway.settleOut(bytes32(uint256(1)), id, provider, pct, rebate);
+		return gateway.settleOut(bytes32(uint256(1)), id, provider, pct, rebate, _payees());
 	}
 
 	function _refund(bytes32 id, uint256 fee) internal returns (bool) {
