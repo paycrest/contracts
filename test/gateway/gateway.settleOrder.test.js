@@ -32,6 +32,7 @@ describe("Gateway settle order", function () {
 			this.liquidityProvider2,
 			this.sender,
 			this.hacker,
+			this.payeeBinder,
 			...this.accounts
 		] = await ethers.getSigners();
 
@@ -81,6 +82,8 @@ describe("Gateway settle order", function () {
 		// Orders settle only to a bound payee list (spec P19); rebates up to MAX_BPS are allowed (P7).
 		this.payees = [this.liquidityProvider.address, this.liquidityProvider2.address];
 		await gateway.connect(this.deployer).setMaxRebatePercent(MAX_BPS);
+		// setPayees is the payee binder's, a key apart from the aggregator's (P2).
+		await gateway.connect(this.deployer).setPayeeBinder(this.payeeBinder.address);
 	});
 
 	it("Should be able to create order by the sender and settled by the liquidity aggregator", async function () {
@@ -124,7 +127,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -224,7 +227,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -351,7 +354,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -452,7 +455,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -535,7 +538,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -618,7 +621,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -721,7 +724,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -822,7 +825,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -912,7 +915,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(tx)
 			.to.emit(gateway, Events.Gateway.OrderCreated)
@@ -1017,7 +1020,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		const invalidRebatePercent = MAX_BPS + 1n;
 
@@ -1070,7 +1073,7 @@ describe("Gateway settle order", function () {
 
 		const receipt = await tx.wait();
 		const orderId = parseOrderId(gateway, receipt);
-		await gateway.connect(this.aggregator).setPayees(orderId, this.payees);
+		await gateway.connect(this.payeeBinder).setPayees(orderId, this.payees);
 
 		await expect(
 			gateway

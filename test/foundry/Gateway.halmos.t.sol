@@ -60,6 +60,17 @@ contract GatewayHalmos is GatewayBase {
 		assert(!_call(guardian, abi.encodeCall(gateway.unfreezeSettlement, ())));
 		assert(!_call(guardian, abi.encodeCall(gateway.setGuardian, (value))));
 		assert(!_call(guardian, abi.encodeCall(gateway.setMaxRebatePercent, (cap))));
+		assert(!_call(guardian, abi.encodeCall(gateway.setPayeeBinder, (value))));
+	}
+
+	/// The owner's payee controls are owner-only, and no one, the owner included, can renounce ownership.
+	function check_P1_payeeControlsAreOwnerOnly(address caller, address value, bool required, bytes32 id) public {
+		vm.assume(caller != owner);
+		assert(!_call(caller, abi.encodeCall(gateway.setPayeeBinder, (value))));
+		assert(!_call(caller, abi.encodeCall(gateway.setPayeesRequired, (required))));
+		assert(!_call(caller, abi.encodeCall(gateway.rebindPayees, (id, _payees()))));
+		assert(!_call(caller, abi.encodeCall(gateway.renounceOwnership, ())));
+		assert(!_call(owner, abi.encodeCall(gateway.renounceOwnership, ())));
 	}
 
 	/* ==================================================================================== P2 */
@@ -68,6 +79,17 @@ contract GatewayHalmos is GatewayBase {
 		vm.assume(caller != aggregator);
 		bytes32 id = _create(alice, 1_000_000, 0, address(0), refundTo);
 		assert(!_call(caller, abi.encodeCall(gateway.settleOut, (bytes32(0), id, provider, pct, rebate, _payees()))));
+	}
+
+	/// Only the payee binder binds, and the aggregator is never the binder (P14), so it cannot bind either.
+	function check_P2_setPayeesIsBinderOnly(address caller, address l0) public {
+		vm.assume(caller != binder);
+		_fund(alice, 1_000_000);
+		vm.prank(alice);
+		bytes32 id = gateway.createOrder(address(token), 1_000_000, 1500, address(0), 0, refundTo, 'msg');
+		address[] memory list = new address[](1);
+		list[0] = l0;
+		assert(!_call(caller, abi.encodeCall(gateway.setPayees, (id, list))));
 	}
 
 	function check_P2_refundIsAggregatorOnly(address caller, uint256 fee) public {

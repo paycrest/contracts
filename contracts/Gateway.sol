@@ -29,6 +29,8 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	mapping(bytes32 => bytes32) private _payeesHash;
 	// While true, settleOut, refund and setPayees revert. Only the owner clears it.
 	bool private _settlementFrozen;
+	// While true, plain createOrder reverts: every new order must bind its payees at creation. Packed with the above.
+	bool private _payeesRequired;
 	uint256[48] private __gap;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
@@ -50,6 +52,14 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	 */
 	modifier onlyAggregator() {
 		require(msg.sender == _aggregatorAddress, 'OnlyAggregator');
+		_;
+	}
+
+	/**
+	 * @dev Modifier that allows only the payee binder to call a function.
+	 */
+	modifier onlyPayeeBinder() {
+		require(_payeeBinder != address(0) && msg.sender == _payeeBinder, 'OnlyPayeeBinder');
 		_;
 	}
 
@@ -100,6 +110,20 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		emit SettlementUnfrozen(msg.sender);
 	}
 
+	/** @dev See {setPayeesRequired-IGateway}. */
+	function setPayeesRequired(bool _required) external onlyOwner {
+		_payeesRequired = _required;
+		emit PayeesRequiredUpdated(_required);
+	}
+
+	/** @dev See {rebindPayees-IGateway}. */
+	function rebindPayees(bytes32 _orderId, address[] calldata _payees) external onlyOwner returns (bool) {
+		require(_settlementFrozen, 'SettlementNotFrozen');
+		_requireOpen(_orderId);
+		_bindPayees(_orderId, _payees);
+		return true;
+	}
+
 	/* ##################################################################
                                 USER CALLS
     ################################################################## */
@@ -113,6 +137,7 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 		address _refundAddress,
 		string calldata messageHash
 	) external whenNotPaused returns (bytes32 orderId) {
+		require(!_payeesRequired, 'PayeesRequired');
 		orderId = _createOrder(_token, _amount, _rate, _senderFeeRecipient, _senderFee, _refundAddress, messageHash);
 	}
 
@@ -213,7 +238,16 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	}
 
 	/**
-	 * @dev Binds an order's payee list. The caller has checked the order is open and has no list yet.
+	 * @dev Reverts unless the order exists and is neither fulfilled nor refunded.
+	 */
+	function _requireOpen(bytes32 _orderId) internal view {
+		require(order[_orderId].sender != address(0), 'OrderNotFound');
+		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
+		require(!order[_orderId].isRefunded, 'OrderRefunded');
+	}
+
+	/**
+	 * @dev Binds an order's payee list, replacing any bound one. The caller has checked the order may be bound.
 	 */
 	function _bindPayees(bytes32 _orderId, address[] calldata _payees) internal {
 		uint256 count = _payees.length;
@@ -246,10 +280,8 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	function setPayees(
 		bytes32 _orderId,
 		address[] calldata _payees
-	) external onlyAggregator whenSettlementNotFrozen returns (bool) {
-		require(order[_orderId].sender != address(0), 'OrderNotFound');
-		require(!order[_orderId].isFulfilled, 'OrderFulfilled');
-		require(!order[_orderId].isRefunded, 'OrderRefunded');
+	) external onlyPayeeBinder whenSettlementNotFrozen returns (bool) {
+		_requireOpen(_orderId);
 		require(_payeesHash[_orderId] == bytes32(0), 'PayeesAlreadySet');
 		_bindPayees(_orderId, _payees);
 		return true;
@@ -482,6 +514,11 @@ contract Gateway is IGateway, GatewaySettingManager, PausableUpgradeable {
 	/** @dev See {isSettlementFrozen-IGateway}. */
 	function isSettlementFrozen() external view returns (bool) {
 		return _settlementFrozen;
+	}
+
+	/** @dev See {isPayeesRequired-IGateway}. */
+	function isPayeesRequired() external view returns (bool) {
+		return _payeesRequired;
 	}
 
 	function _handleTransferFeeSplitting(

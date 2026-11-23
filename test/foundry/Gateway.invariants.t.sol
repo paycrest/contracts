@@ -5,8 +5,9 @@ import {IGateway} from '../../contracts/interfaces/IGateway.sol';
 import {GatewayBase} from './GatewayBase.sol';
 
 /**
- * @dev Random-walk handler over one Gateway: creates (with and without a payee list), binds payee lists, settles in
- * splits, refunds, settles in (onramp), changes fee settings, pauses, freezes settlement and delists. Under `fail_on_revert = false` a failed assertion inside a handler is only a
+ * @dev Random-walk handler over one Gateway: creates (with and without a payee list), binds and rebinds payee lists,
+ * settles in splits, refunds, settles in (onramp), changes fee settings, pauses, freezes settlement, requires
+ * payees and delists. Under `fail_on_revert = false` a failed assertion inside a handler is only a
  * reverted call, so every attempt that must fail latches a violation flag if it succeeds, and the invariants read
  * the flags and ghost totals.
  */
@@ -37,6 +38,7 @@ contract GatewayHandler is GatewayBase {
 	bool public violationP15; // money came in for a delisted token
 	bool public violationP18; // settleOut, refund or setPayees succeeded while settlement was frozen
 	bool public violationP19; // an order settled without a bound list, or to an address outside it, or was rebound
+	bool public violationP20; // a plain createOrder succeeded while payees were required
 	uint256 public ghostBound;
 
 	constructor() {
@@ -72,6 +74,7 @@ contract GatewayHandler is GatewayBase {
 		bool listed = gateway.isTokenSupported(address(token));
 		// Half the orders bind their payees at creation; the rest wait for bindPayees.
 		bool withPayees = seed % 2 == 0;
+		bool required = gateway.isPayeesRequired();
 		address[] memory list = _payees();
 		vm.prank(sender);
 		if (withPayees) {
@@ -86,6 +89,7 @@ contract GatewayHandler is GatewayBase {
 			try gateway.createOrder(address(token), amount, 1500, feeRecipient, senderFee, refundTo, 'm') returns (
 				bytes32 id
 			) {
+				if (required) violationP20 = true;
 				_created(sender, id, amount + senderFee, paused, listed, false);
 			} catch Error(string memory reason) {
 				_createFailed(reason, paused, listed);
@@ -111,17 +115,29 @@ contract GatewayHandler is GatewayBase {
 		if (!paused && listed && keccak256(bytes(reason)) == keccak256('OrderAlreadyExists')) violationP17 = true;
 	}
 
-	/// The aggregator binds the default list to an order created without one (P19).
+	/// The payee binder binds the default list to an order created without one (P19).
 	function bindPayees(uint256 seed) external {
 		if (ids.length == 0) return;
 		bytes32 id = ids[seed % ids.length];
 		bool frozen = gateway.isSettlementFrozen();
-		vm.prank(aggregator);
+		vm.prank(binder);
 		try gateway.setPayees(id, _payees()) {
 			if (frozen) violationP18 = true;
 			if (payeesBound[id] || closed[id]) violationP19 = true;
 			payeesBound[id] = true;
 			ghostBound++;
+		} catch {}
+	}
+
+	/// The owner rebinds an order's list; it may only succeed while settlement is frozen, on an open order (P19).
+	function rebindPayees(uint256 seed) external {
+		if (ids.length == 0) return;
+		bytes32 id = ids[seed % ids.length];
+		bool frozen = gateway.isSettlementFrozen();
+		try gateway.rebindPayees(id, _payees()) {
+			if (!frozen || closed[id]) violationP19 = true;
+			if (!payeesBound[id]) ghostBound++;
+			payeesBound[id] = true;
 		} catch {}
 	}
 
@@ -211,6 +227,12 @@ contract GatewayHandler is GatewayBase {
 		else if (seed % 16 == 0) gateway.freezeSettlement();
 	}
 
+	/// Requiring payees is rare and the next toggle lifts it, like togglePause.
+	function togglePayeesRequired(uint256 seed) external {
+		if (gateway.isPayeesRequired()) gateway.setPayeesRequired(false);
+		else if (seed % 16 == 0) gateway.setPayeesRequired(true);
+	}
+
 	function toggleListing(uint256 seed) external {
 		if (!gateway.isTokenSupported(address(token))) gateway.settingManagerBool('token', address(token), 1);
 		else if (seed % 16 == 0) gateway.settingManagerBool('token', address(token), 2);
@@ -236,7 +258,7 @@ contract GatewayInvariants is GatewayBase {
 		handler = new GatewayHandler();
 		targetContract(address(handler));
 		// Only the handler's actions: it inherits the fixture's public setUp(), which would redeploy the Gateway.
-		bytes4[] memory selectors = new bytes4[](9);
+		bytes4[] memory selectors = new bytes4[](11);
 		selectors[0] = GatewayHandler.createOrder.selector;
 		selectors[1] = GatewayHandler.settleOut.selector;
 		selectors[2] = GatewayHandler.refund.selector;
@@ -246,6 +268,8 @@ contract GatewayInvariants is GatewayBase {
 		selectors[6] = GatewayHandler.toggleListing.selector;
 		selectors[7] = GatewayHandler.bindPayees.selector;
 		selectors[8] = GatewayHandler.toggleFreeze.selector;
+		selectors[9] = GatewayHandler.rebindPayees.selector;
+		selectors[10] = GatewayHandler.togglePayeesRequired.selector;
 		targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
 	}
 
@@ -285,9 +309,15 @@ contract GatewayInvariants is GatewayBase {
 		assertFalse(handler.violationP18());
 	}
 
-	/// P19: every settlement went to an address in the order's bound list, and no list was bound twice.
+	/// P19: every settlement went to an address in the order's bound list, no list was bound twice by the binder,
+	/// and the owner rebound only open orders while settlement was frozen.
 	function invariant_P19_settlementPaysOnlyBoundPayees() public view {
 		assertFalse(handler.violationP19());
+	}
+
+	/// P20: no plain createOrder succeeded while payees were required.
+	function invariant_P20_payeesRequiredStopsPlainCreateOrder() public view {
+		assertFalse(handler.violationP20());
 	}
 
 	/// P17: settling in at senders' next createOrder ids never made a createOrder fail with OrderAlreadyExists.

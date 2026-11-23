@@ -23,6 +23,8 @@ abstract contract GatewayBase is Test {
 
 	address internal owner;
 	address internal aggregator = address(uint160(0xA66));
+	// Binds payee lists with setPayees; a key apart from the aggregator's.
+	address internal binder = address(uint160(0xB1D));
 	address internal treasury = address(uint160(0x7EA5));
 	// The default payee list `_create` binds: the two provider addresses the suites settle to.
 	address internal constant PAYEE_A = address(uint160(0x9120));
@@ -44,6 +46,7 @@ abstract contract GatewayBase is Test {
 		gateway = Gateway(address(proxy));
 		gateway.updateProtocolAddress('treasury', treasury);
 		gateway.updateProtocolAddress('aggregator', aggregator);
+		gateway.setPayeeBinder(binder);
 		token = new MockUSDT();
 		gateway.settingManagerBool('token', address(token), 1);
 		gateway.setMaxRebatePercent(uint64(MAX_BPS));
